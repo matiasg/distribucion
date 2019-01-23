@@ -1,0 +1,96 @@
+table
+{
+  border: 2px gray solid;
+  border-collapse: collapse;
+}
+
+.cuatrim
+{
+  font-weight: bold;
+  font-size: 24px;
+  text-align: left;
+  color: #000000;
+  #background-color: #EDD956;
+  #border: thin solid;
+  padding: 12px;
+  margin-top: 48px;
+  margin-bottom: 24px;
+}
+
+.ultcamb
+{
+  font-size: 10px;
+  text-align: left;
+  background-color: #FFFFFF;
+  color: #080808;
+  margin-top: 48px;
+}
+
+.recuadro
+{
+  font-weight: bold;
+  font-size: 20px;
+  text-align: center;
+  color: #B7FFD2;
+  background-color: #FF4E4E;
+  border: thin solid;
+  padding: 12px;
+  margin-top: 48px;
+  margin-bottom: 24px;
+}
+
+.seccion
+{
+  font-weight: bold;
+  font-size: 20px;
+  text-align: center;
+  color: #000000;
+  background-color: #909B75;
+  border: thin solid;
+  padding: 12px;
+  margin-top: 48px;
+  margin-bottom: 24px;
+}
+
+.nombremateria
+{ 
+  font-weight: bold;
+  text-align: left;
+  font-size: 18px;
+  margin-top: 36px;
+  margin-bottom: 4px;
+}
+
+.fondoT
+{
+  background-color: #2C60BA;
+  color: #FFFFFF;
+}
+
+.fondoP
+{
+  background-color: #2D9FCC;
+  color: #FFFFFF;
+}
+
+.fondoA
+{
+  background-color: #5F793B;
+  color: #FFFFFF;
+}
+
+.datosdoc
+{
+  text-align: center;
+}
+
+.link
+{
+  text-decoration: underline;
+}
+
+.link a:hover
+{
+  text-decoration: underline;
+  background-color: #a0a0a0;
+}
