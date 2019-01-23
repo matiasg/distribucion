@@ -1,0 +1,14 @@
+<h1>encuesta</h1>
+
+<form action="{% url 'mandar' %}" method="post">
+{% csrf_token %}
+{% for docente in docentes %}
+    <br>{{ docente }}
+{% endfor %}
+{% for turno in turnos %}
+    <br><input type="radio" name="turno" id="turno_{{ turno.id }}" value="{{ turno.id }}">
+    {{ turno.materia }}
+{% endfor %}
+
+<input type="submit" value="mandar">
+</form>
