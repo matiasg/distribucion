@@ -47,6 +47,34 @@ def choice_enum(enum_cls):
 TurnoInfo = namedtuple('TurnoInfo', ['tipoynumero', 'diayhora', 'aula', 'pabellon'])
 
 
+class Mapeos:
+    '''Esta clase resuelve distintos tipos de mapeos'''
+
+    @staticmethod
+    def docentes(tipo):
+        '''P: profesor, J: JTP y Ay1, A: Ay2'''
+        el_mapa = {'P': [Cargos.Tit.name, Cargos.Aso.name, Cargos.Adj.name],
+                   'J': [Cargos.JTP.name, Cargos.Ay1.name],
+                   'A': [Cargos.Ay2.name],
+                   }
+        cargos = el_mapa[tipo.upper()]
+        return Docente.objects.filter(cargo__in=cargos)
+
+    @staticmethod
+    def encuesta_tipo_turno(tipo_docente):
+        '''
+        Para profesores: teóricas y teórico-prácticas.
+        Para auxiliares: prácticas y teórico-prácticas.
+        '''
+        el_mapa = {'P': [TurnoTipos.T.name, TurnoTipos.A.name],
+                   'J': [TurnoTipos.P.name, TurnoTipos.A.name],
+                   'A': [TurnoTipos.P.name, TurnoTipos.A.name],
+                   }
+        tipos = el_mapa[tipo_docente.upper()]
+        return Turno.objects.filter(tipo__in=tipos)
+
+
+
 class Materia(models.Model):
     nombre = models.CharField(max_length=80)
     obligatoriedad = models.CharField(max_length=1, choices=choice_enum(TipoMateria))
