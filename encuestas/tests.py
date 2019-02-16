@@ -1,5 +1,6 @@
-from django.test import TestCase
+from django.test import TestCase, tag
 from django.test.utils import setup_test_environment
+from django.urls import reverse
 
 from materias.models import Docente, Cargos, Materia, Turno, TurnoTipos, TipoMateria, Cuatrimestres
 from .models import PreferenciasDocente
@@ -69,3 +70,8 @@ class TestEncuesta(TestCase):
             datos['peso{}'.format(opcion)] = str(opcion)
         checkear_y_salvar(datos, 2100, Cuatrimestres.P.name)
         self.assertEqual(len(PreferenciasDocente.objects.all()), 2)
+
+    @tag('current')
+    def test_titulo_correcto(self):
+        response = self.client.get(reverse('encuestas:encuesta', args=('2100', 'P', 'J')))
+        self.assertContains(response, 'cuatrimestre 1 de 2100')
