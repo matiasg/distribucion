@@ -1,6 +1,6 @@
 <h1>encuesta para el cuatrimestre {{ cuatrimestre }} de {{ anno }}</h1>
 
-<form action="{% url 'encuesta' anno cuatrimestre tipo_docente %}" method="post">
+<form action="{% url 'encuestas:encuesta' anno cuatrimestre tipo_docente %}" method="post">
 {% csrf_token %}
 
 <select name="docente">

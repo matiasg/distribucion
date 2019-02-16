@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
 
-from materias.models import Turno, Docente, Cargos, TurnoTipos
+from materias.models import Turno, Docente, Cargos, TurnoTipos, Cuatrimestres
 from .models import PreferenciasDocente
 
 class Mapeos:
@@ -58,17 +58,18 @@ def encuesta(request, anno, cuatrimestre, tipo_docente):
     try:
         docente = Docente.objects.get(pk=request.POST['docente'])
     except (ValueError, KeyError, Turno.DoesNotExist):
+        cuatrimestre_value = Cuatrimestres[cuatrimestre].value
         context = {'turnos': Mapeos.encuesta_tipo_turno(tipo_docente),
                    'docentes': Mapeos.docentes(tipo_docente),
                    'anno': anno,
-                   'cuatrimestre': cuatrimestre,
+                   'cuatrimestre': cuatrimestre_value,
                    'tipo_docente': tipo_docente,
                    'error_message': 'Esto esta mal, muy mal',
                    }
         return render(request, 'encuestas/encuesta.html', context)
     else:
         checkear_y_salvar(request.POST, anno, cuatrimestre)
-        return HttpResponseRedirect(reverse('final_de_encuesta'))  # TODO: mandar las preferencias
+        return HttpResponseRedirect(reverse('encuestas:final_de_encuesta'))  # TODO: mandar las preferencias
 
 
 def final(request):
