@@ -3,11 +3,39 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
 
-from materias.models import Turno, Docente, Mapeos
+from materias.models import Turno, Docente, Cargos, TurnoTipos
 from .models import PreferenciasDocente
+
+class Mapeos:
+    '''Esta clase resuelve distintos tipos de mapeos'''
+
+    @staticmethod
+    def docentes(tipo):
+        '''P: profesor, J: JTP y Ay1, A: Ay2'''
+        el_mapa = {'P': [Cargos.Tit.name, Cargos.Aso.name, Cargos.Adj.name],
+                   'J': [Cargos.JTP.name, Cargos.Ay1.name],
+                   'A': [Cargos.Ay2.name],
+                   }
+        cargos = el_mapa[tipo.upper()]
+        return Docente.objects.filter(cargo__in=cargos)
+
+    @staticmethod
+    def encuesta_tipo_turno(tipo_docente):
+        '''
+        Para profesores: teóricas y teórico-prácticas.
+        Para auxiliares: prácticas y teórico-prácticas.
+        '''
+        el_mapa = {'P': [TurnoTipos.T.name, TurnoTipos.A.name],
+                   'J': [TurnoTipos.P.name, TurnoTipos.A.name],
+                   'A': [TurnoTipos.P.name, TurnoTipos.A.name],
+                   }
+        tipos = el_mapa[tipo_docente.upper()]
+        return Turno.objects.filter(tipo__in=tipos)
+
 
 def index(request):
     raise Http404('eh fiera para')
+
 
 def encuesta(request, anno, cuatrimestre, tipo_docente):
     try:
@@ -37,6 +65,7 @@ def encuesta(request, anno, cuatrimestre, tipo_docente):
             opciones.append((turno, peso))
 
         return HttpResponseRedirect(reverse('final_de_encuesta'))  # TODO: mandar las preferencias
+
 
 def final(request):
     return render(request, 'encuestas/final.html')
