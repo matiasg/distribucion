@@ -33,20 +33,21 @@ class Mapeos:
         return Turno.objects.filter(tipo__in=tipos)
 
 
-def checkear_y_salvar(datos):
+def checkear_y_salvar(datos, anno, cuatrimestre):
     fecha_encuesta = timezone.now()
     docente = Docente.objects.get(pk=datos['docente'])
     opciones = []
     for opcion in range(1, 6):
-        turno = Turno.objects.get(pk=datos['opcion{}'.format(opcion)])
-        peso = int(datos['peso{}'.format(opcion)])
-        
-        preferencia = PreferenciasDocente(docente=docente,
-                                          turno=turno, peso=peso,
-                                          anno=anno, cuatrimestre=cuatrimestre,
-                                          fecha_encuesta=fecha_encuesta)
-        preferencia.save()
-        opciones.append((turno, peso))
+        opcion_id_str = datos['opcion{}'.format(opcion)]
+        if opcion_id_str:
+            turno = Turno.objects.get(pk=opcion_id_str)
+            peso = int(datos['peso{}'.format(opcion)])
+            
+            PreferenciasDocente.objects.create(docente=docente,
+                                               turno=turno, peso=peso,
+                                               anno=anno, cuatrimestre=cuatrimestre,
+                                               fecha_encuesta=fecha_encuesta)
+            opciones.append((turno, peso))
 
 
 def index(request):
@@ -57,16 +58,16 @@ def encuesta(request, anno, cuatrimestre, tipo_docente):
     try:
         docente = Docente.objects.get(pk=request.POST['docente'])
     except (ValueError, KeyError, Turno.DoesNotExist):
-        return render(request, 'encuestas/encuesta.html',
-                      {'turnos': Mapeos.encuesta_tipo_turno(tipo_docente),
-                       'docentes': Mapeos.docentes(tipo_docente),
-                       'anno': anno,
-                       'cuatrimestre': cuatrimestre,
-                       'tipo_docente': tipo_docente,
-                       'error_message': 'Esto esta mal, muy mal',
-                        })
+        context = {'turnos': Mapeos.encuesta_tipo_turno(tipo_docente),
+                   'docentes': Mapeos.docentes(tipo_docente),
+                   'anno': anno,
+                   'cuatrimestre': cuatrimestre,
+                   'tipo_docente': tipo_docente,
+                   'error_message': 'Esto esta mal, muy mal',
+                   }
+        return render(request, 'encuestas/encuesta.html', context)
     else:
-        checkear_y_salvar(request.POST)
+        checkear_y_salvar(request.POST, anno, cuatrimestre)
         return HttpResponseRedirect(reverse('final_de_encuesta'))  # TODO: mandar las preferencias
 
 
