@@ -33,6 +33,22 @@ class Mapeos:
         return Turno.objects.filter(tipo__in=tipos)
 
 
+def checkear_y_salvar(datos):
+    fecha_encuesta = timezone.now()
+    docente = Docente.objects.get(pk=datos['docente'])
+    opciones = []
+    for opcion in range(1, 6):
+        turno = Turno.objects.get(pk=datos['opcion{}'.format(opcion)])
+        peso = int(datos['peso{}'.format(opcion)])
+        
+        preferencia = PreferenciasDocente(docente=docente,
+                                          turno=turno, peso=peso,
+                                          anno=anno, cuatrimestre=cuatrimestre,
+                                          fecha_encuesta=fecha_encuesta)
+        preferencia.save()
+        opciones.append((turno, peso))
+
+
 def index(request):
     raise Http404('eh fiera para')
 
@@ -50,20 +66,7 @@ def encuesta(request, anno, cuatrimestre, tipo_docente):
                        'error_message': 'Esto esta mal, muy mal',
                         })
     else:
-        fecha_encuesta = timezone.now()
-        docente = Docente.objects.get(pk=request.POST['docente'])
-        opciones = []
-        for opcion in range(1, 6):
-            turno = Turno.objects.get(pk=request.POST['opcion{}'.format(opcion)])
-            peso = int(request.POST['peso{}'.format(opcion)])
-            
-            preferencia = PreferenciasDocente(docente=docente,
-                                              turno=turno, peso=peso,
-                                              anno=anno, cuatrimestre=cuatrimestre,
-                                              fecha_encuesta=fecha_encuesta)
-            preferencia.save()
-            opciones.append((turno, peso))
-
+        checkear_y_salvar(request.POST)
         return HttpResponseRedirect(reverse('final_de_encuesta'))  # TODO: mandar las preferencias
 
 
