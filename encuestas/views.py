@@ -51,7 +51,7 @@ def checkear_y_salvar(datos, anno, cuatrimestre):
 
 
 def index(request):
-    raise Http404('eh fiera para')
+    raise Http404('Todavía no hay contenido para esta página')
 
 
 def encuesta(request, anno, cuatrimestre, tipo_docente):
@@ -59,7 +59,8 @@ def encuesta(request, anno, cuatrimestre, tipo_docente):
         docente = Docente.objects.get(pk=request.POST['docente'])
     except (ValueError, KeyError, Turno.DoesNotExist):
         cuatrimestre_value = Cuatrimestres[cuatrimestre].value
-        context = {'turnos': Mapeos.encuesta_tipo_turno(tipo_docente),
+        turnos = Mapeos.encuesta_tipo_turno(tipo_docente).filter(anno=anno, cuatrimestre=cuatrimestre)
+        context = {'turnos': turnos,
                    'docentes': Mapeos.docentes(tipo_docente),
                    'anno': anno,
                    'cuatrimestre': cuatrimestre_value,

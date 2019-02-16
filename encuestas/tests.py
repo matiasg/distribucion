@@ -14,7 +14,7 @@ class TestEncuesta(TestCase):
                                               telefono='1234', cargo=Cargos.JTP, cargas=1)
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B)
         self.turno = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
-                                          numero=1, tipo=TurnoTipos.T.name, necesidades='1,0,0')
+                                          numero=1, tipo=TurnoTipos.A.name, necesidades='1,0,0')
 
     def test_sin_docente(self):
         datos = {}
@@ -71,7 +71,19 @@ class TestEncuesta(TestCase):
         checkear_y_salvar(datos, 2100, Cuatrimestres.P.name)
         self.assertEqual(len(PreferenciasDocente.objects.all()), 2)
 
-    @tag('current')
     def test_titulo_correcto(self):
-        response = self.client.get(reverse('encuestas:encuesta', args=('2100', 'P', 'J')))
+        response = self.client.get(reverse('encuestas:encuesta', args=('2100', Cuatrimestres.P.name, 'J')))
+        self.assertEqual(response.request['PATH_INFO'], '/encuestas/encuesta/2100/P/J')
         self.assertContains(response, 'cuatrimestre 1 de 2100')
+
+    def test_turnos_correctos(self):
+        response = self.client.get(reverse('encuestas:encuesta', args=('2100', Cuatrimestres.P.name, 'J')))
+        self.assertContains(response, self.turno.materia.nombre)
+
+    def test_turnos_otros_cuatrimestres(self):
+        response = self.client.get(reverse('encuestas:encuesta', args=('2100', Cuatrimestres.S.name, 'J')))
+        self.assertNotContains(response, self.turno.materia.nombre)
+
+    def test_turnos_otros_annos(self):
+        response = self.client.get(reverse('encuestas:encuesta', args=('2101', Cuatrimestres.P.name, 'J')))
+        self.assertNotContains(response, self.turno.materia.nombre)
