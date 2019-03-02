@@ -8,8 +8,17 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     ports:
       - "8000:8000"
+    working_dir: /codigo/distribucion
+    environment:
+      - DB_NAME=${DB_NAME:-db.sqlite}
+    volumes:
+      - "${DB_PATH:-/usr/local/share}:/db"
     #depends_on:
     #  - db
   bash:
     build: .
+    environment:
+      - DB_NAME=${DB_NAME:-db.sqlite}
+    volumes:
+      - "${DB_PATH:-/usr/local/share}:/db"
     command: /bin/bash
