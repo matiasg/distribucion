@@ -2,7 +2,7 @@ from django.test import TestCase, tag
 from django.test.utils import setup_test_environment
 from django.urls import reverse
 
-from materias.models import Docente, Cargos, Materia, Turno, TurnoTipos, TipoMateria, Cuatrimestres
+from materias.models import Docente, Cargos, Materia, Turno, TipoTurno, TipoMateria, Cuatrimestres
 from .models import PreferenciasDocente
 from .views import checkear_y_salvar
 
@@ -14,7 +14,7 @@ class TestEncuesta(TestCase):
                                               telefono='1234', cargo=Cargos.JTP, cargas=1)
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B)
         self.turno = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
-                                          numero=1, tipo=TurnoTipos.A.name, necesidades='1,0,0')
+                                          numero=1, tipo=TipoTurno.A.name, necesidades='1,0,0')
 
     def test_sin_docente(self):
         datos = {}
@@ -52,7 +52,7 @@ class TestEncuesta(TestCase):
         datos = {'docente': self.docente.id}
         for opcion in range(1, 6):
             turno = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
-                                         numero=1, tipo=TurnoTipos.T.name, necesidades='1,0,0')
+                                         numero=1, tipo=TipoTurno.T.name, necesidades='1,0,0')
             datos['opcion{}'.format(opcion)] = turno.id
             datos['peso{}'.format(opcion)] = str(opcion)
         checkear_y_salvar(datos, 2100, Cuatrimestres.P.name)
@@ -62,7 +62,7 @@ class TestEncuesta(TestCase):
         datos = {'docente': self.docente.id}
         for opcion in range(1, 3):
             turno = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
-                                         numero=1, tipo=TurnoTipos.T.name, necesidades='1,0,0')
+                                         numero=1, tipo=TipoTurno.T.name, necesidades='1,0,0')
             datos['opcion{}'.format(opcion)] = turno.id
             datos['peso{}'.format(opcion)] = str(opcion)
         for opcion in range(3, 6):

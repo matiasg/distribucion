@@ -22,7 +22,7 @@ class Cargos(Enum):
     Ay2 = 'Ayudante de 2da'
 
 
-class TurnoTipos(Enum):
+class TipoTurno(Enum):
     T = 'Teórica'
     P = 'Práctica'
     A = 'Teórico-Práctica'
@@ -62,7 +62,7 @@ class Turno(models.Model):
     anno = models.IntegerField()
     cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
     numero = models.IntegerField()
-    tipo = models.CharField(max_length=1, choices=choice_enum(TurnoTipos))
+    tipo = models.CharField(max_length=1, choices=choice_enum(TipoTurno))
     necesidades = models.CharField(max_length=5, validators=[validate_comma_separated_integer_list])
 
     def __str__(self):
@@ -80,7 +80,7 @@ class Turno(models.Model):
                 return lst[0]
             return ' y '.join(lst)
 
-        tipoynumero = f'{TurnoTipos[self.tipo].value} {self.numero}'
+        tipoynumero = f'{TipoTurno[self.tipo].value} {self.numero}'
         horarios = self.horario_set.all()
         dias = join([h.dia for h in horarios])
         horas = join([f'{time_str(h.comienzo)} a {time_str(h.final)}' for h in horarios])

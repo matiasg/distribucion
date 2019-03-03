@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
 
-from materias.models import Turno, Docente, Cargos, TurnoTipos, Cuatrimestres
+from materias.models import Turno, Docente, Cargos, TipoTurno, Cuatrimestres
 from .models import PreferenciasDocente
 
 class Mapeos:
@@ -25,9 +25,9 @@ class Mapeos:
         Para profesores: teóricas y teórico-prácticas.
         Para auxiliares: prácticas y teórico-prácticas.
         '''
-        el_mapa = {'P': [TurnoTipos.T.name, TurnoTipos.A.name],
-                   'J': [TurnoTipos.P.name, TurnoTipos.A.name],
-                   'A': [TurnoTipos.P.name, TurnoTipos.A.name],
+        el_mapa = {'P': [TipoTurno.T.name, TipoTurno.A.name],
+                   'J': [TipoTurno.P.name, TipoTurno.A.name],
+                   'A': [TipoTurno.P.name, TipoTurno.A.name],
                    }
         tipos = el_mapa[tipo_docente.upper()]
         return Turno.objects.filter(tipo__in=tipos)
