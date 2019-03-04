@@ -10,3 +10,5 @@ Cosas que debo hacer
 * botón para hacer distribuciones
 * armar dockerfile
 * distribucion/settings.py <-- mirar SECRET_KEY
+* las cargas son por docente/cuatrimestre
+  Hacer la distribucion en una db distinta
