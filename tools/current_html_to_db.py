@@ -13,12 +13,8 @@ django.setup()
 
 from materias.models import Materia, Turno, Horario, Docente, TipoMateria, TipoTurno, Cargos
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger()
-
-tipo_turnos = {'Teórica': TipoTurno.T.name, 'Práctica': TipoTurno.P.name, 'Teórico-Práctica': TipoTurno.A.name}
-cargo_tipoturno = {'Teórica': Cargos.Tit.name, 'Práctica': Cargos.JTP.name, 'Teórico-Práctica': Cargos.JTP.name}
-
 
 def lee_horarios_anteriores(anno, cuatrimestre):
     req = request.urlopen(f'http://cms.dm.uba.ar/horarios/horarios_html?cuatrim={anno}{cuatrimestre}')
@@ -37,6 +33,12 @@ def maymin(materia):
     return numeros_romanos.sub(lambda t: t.group(0).upper(), materia)
 
 
+tipo_turnos = {'Teórica': TipoTurno.T.name,
+               'Práctica': TipoTurno.P.name,
+               'Teórico-Práctica': TipoTurno.A.name}
+cargo_tipoturno = {'Teórica': Cargos.Tit.name,
+                   'Práctica': Cargos.JTP.name,
+                   'Teórico-Práctica': Cargos.JTP.name}
 def salva_datos(html, nuevo_anno, nuevo_cuatrimestre):
     soup = BeautifulSoup(html, 'html.parser')
 
@@ -65,13 +67,13 @@ def salva_datos(html, nuevo_anno, nuevo_cuatrimestre):
             for docente in turno_docentes:
                 docentes.add((docente, cargo))
 
-    logger.info('Voy a agregar %d docentes', len(docentes))
+    logger.info('Voy a agregar hasta %d docentes', len(docentes))
     for docente in docentes:
-        doc, creado = Docente.objects.get_or_create(nombre=docente[0], defaults={'cargas': 1})
+        doc, creado = Docente.objects.get_or_create(nombre=docente[0],
+                                                    defaults={'cargas': 1, 'cargo': docente[1]})
         if creado:
-            doc.cargo = docente[1]
-            doc.save()
             print(f'agregue a: {doc}')
+
 
 if __name__ == '__main__':
     html = lee_horarios_anteriores(2019, 1)
