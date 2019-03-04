@@ -62,6 +62,7 @@ class Turno(models.Model):
     anno = models.IntegerField()
     cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
     numero = models.IntegerField()
+    subnumero = models.CharField(max_length=6, blank=True)
     tipo = models.CharField(max_length=1, choices=choice_enum(TipoTurno))
     necesidades = models.CharField(max_length=5, validators=[validate_comma_separated_integer_list])
 
