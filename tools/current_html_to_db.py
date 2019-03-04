@@ -4,6 +4,8 @@ from pathlib import Path
 import re
 import urllib.request as request
 
+import sys
+sys.path.append(str(Path(__file__).parent.parent))
 import os
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "distribucion.settings")
 import django
@@ -24,10 +26,10 @@ def lee_horarios_anteriores(anno, cuatrimestre):
 
 
 numeros_romanos = re.compile(r'\b(?i:i{1,3}|vi{0,3}|iv|ix)\b')
-palabras_cortas = re.compile(r'\s(\w{1,3})\b')
+palabras_cortas = re.compile(r'\s([AYEOU]|\w{2,3})\b')
 def maymin(materia):
     '''Convierte a mayúsculas cada primera letra de palabra y a minúsculas el resto.
-    Deja en minúscula cualquier palabra de hasta 3 letras.
+    Deja en minúscula algunas palabras de hasta 3 letras.
     Tiene cuidado con poner en mayúsculas los números romanos entre 1 y 9
     '''
     materia = materia.title()
