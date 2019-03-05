@@ -6,6 +6,10 @@ from django.utils import timezone
 from materias.models import Turno, Docente, Cargos, TipoTurno, Cuatrimestres
 from .models import PreferenciasDocente
 
+import logging
+import logging.config
+logger = logging.getLogger(__name__)
+
 class Mapeos:
     '''Esta clase resuelve distintos tipos de mapeos'''
 
@@ -33,7 +37,7 @@ class Mapeos:
         return Turno.objects.filter(tipo__in=tipos)
 
 
-def checkear_y_salvar(datos, anno, cuatrimestre):
+def checkear_y_salvar(datos):
     fecha_encuesta = timezone.now()
     docente = Docente.objects.get(pk=datos['docente'])
     opciones = []
@@ -42,10 +46,11 @@ def checkear_y_salvar(datos, anno, cuatrimestre):
         if opcion_id_str:
             turno = Turno.objects.get(pk=opcion_id_str)
             peso = int(datos['peso{}'.format(opcion)])
+            logger.warning('Agrego preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
+                            docente, turno, peso, fecha_encuesta)
             
             PreferenciasDocente.objects.create(docente=docente,
                                                turno=turno, peso=peso,
-                                               anno=anno, cuatrimestre=cuatrimestre,
                                                fecha_encuesta=fecha_encuesta)
             opciones.append((turno, peso))
 
@@ -69,7 +74,7 @@ def encuesta(request, anno, cuatrimestre, tipo_docente):
                    }
         return render(request, 'encuestas/encuesta.html', context)
     else:
-        checkear_y_salvar(request.POST, anno, cuatrimestre)
+        checkear_y_salvar(request.POST)
         return HttpResponseRedirect(reverse('encuestas:final_de_encuesta'))  # TODO: mandar las preferencias
 
 
