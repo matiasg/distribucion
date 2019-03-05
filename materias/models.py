@@ -97,7 +97,7 @@ class Horario(models.Model):
     dia = models.CharField(max_length=2, choices=choice_enum(Dias))
     comienzo = models.TimeField('comienzo')
     final = models.TimeField('final')
-    aula = models.IntegerField(blank=True, null=True)
+    aula = models.CharField(max_length=5, blank=True, null=True)
     pabellon = models.IntegerField(blank=True, null=True)
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
 
