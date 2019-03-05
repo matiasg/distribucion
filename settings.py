@@ -2,12 +2,14 @@ import os
 
 
 os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# XXX: no dejar esto en github
 SECRET_KEY = '@fb7dxhx7p^+(9b$em=38s$=$$-$9frcrj3wxi2%el&l#_d)j2'
 DEBUG = False
 ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'materias.apps.MateriasConfig',
     'encuestas.apps.EncuestasConfig',
+    'dborrador.apps.DborradorConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

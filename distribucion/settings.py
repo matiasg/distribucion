@@ -33,6 +33,7 @@ ALLOWED_HOSTS = ['localhost']
 INSTALLED_APPS = [
     'materias.apps.MateriasConfig',
     'encuestas.apps.EncuestasConfig',
+    'dborrador.apps.DborradorConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
