@@ -96,7 +96,8 @@ def salva_datos(html, nuevo_anno, nuevo_cuatrimestre):
                                             numero=int(tipoynumero[1]) if len(tipoynumero) > 1 else 0,
                                             tipo=tipo_turno,
                                             defaults={'necesidades': '0,0,0'})
-            turno.save()
+            if creado:
+                logger.info('nuevo turno creado: %s', turno)
             turno_docentes = rows[2].text.split(' — ')
             cargo = cargo_tipoturno[tipoynumero[0]]
 
