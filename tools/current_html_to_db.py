@@ -1,8 +1,11 @@
 from bs4 import BeautifulSoup
+import datetime
 import logging
+import coloredlogs
 from pathlib import Path
 import re
 import urllib.request as request
+from django.utils.dateparse import parse_time
 
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
@@ -11,10 +14,12 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "distribucion.settings")
 import django
 django.setup()
 
-from materias.models import Materia, Turno, Horario, Docente, TipoMateria, TipoTurno, Cargos
+from materias.models import Materia, Turno, Horario, Docente, TipoMateria, TipoTurno, Cargos, Dias
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+# logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 logger = logging.getLogger()
+coloredlogs.install(level='DEBUG')
+
 
 def lee_horarios_anteriores(anno, cuatrimestre):
     req = request.urlopen(f'http://cms.dm.uba.ar/horarios/horarios_html?cuatrim={anno}{cuatrimestre}')
@@ -31,6 +36,36 @@ def maymin(materia):
     materia = materia.title()
     materia = palabras_cortas.sub(lambda t: t.group(0).lower(), materia)
     return numeros_romanos.sub(lambda t: t.group(0).upper(), materia)
+
+
+
+def convierte_a_horarios(text):
+    dia = '({})'.format('|'.join(d.name for d in Dias))
+    hora = r'(\d{1,2}(:\d{2})?)\b'
+    dia_y_hora = re.compile(fr'^({dia}): ({hora}) a ({hora})')
+    dos_dias_y_hora = re.compile(fr'^({dia}) - ({dia}): ({hora}) a ({hora})')
+    tres_dias_y_hora = re.compile(fr'^({dia}) - ({dia}) - ({dia}): ({hora}) a ({hora})')
+
+    def hm(hhmm):
+        ret = parse_time(hhmm) or datetime.time(int(hhmm), 0)
+        return ret
+    
+    m = dia_y_hora.search(text)
+    if m:
+        return [(m.group(1), hm(m.group(3)), hm(m.group(6)))]
+    m = dos_dias_y_hora.search(text)
+    if m:
+        return [(m.group(1), hm(m.group(5)), hm(m.group(8))),
+                (m.group(3), hm(m.group(5)), hm(m.group(8)))]
+    m = tres_dias_y_hora.search(text)
+    if m:
+        return [(m.group(1), hm(m.group(7)), hm(m.group(10))),
+                (m.group(3), hm(m.group(7)), hm(m.group(10))),
+                (m.group(5), hm(m.group(7)), hm(m.group(10)))
+                ]
+    logger.warning('No veo los horarios en "%s"', text)
+    return []
+
 
 
 tipo_turnos = {'Teórica': TipoTurno.T.name,
@@ -54,12 +89,13 @@ def salva_datos(html, nuevo_anno, nuevo_cuatrimestre):
             tipoynumero = rows[0].text.split()
             tipo_turno = tipo_turnos[tipoynumero[0]]
 
-            turno = Turno(materia=materia,
-                          anno=nuevo_anno,
-                          cuatrimestre=nuevo_cuatrimestre,
-                          numero=int(tipoynumero[1]) if len(tipoynumero) > 1 else 0,
-                          tipo=tipo_turno,
-                          necesidades='0,0,0')
+            turno, creado = Turno.objects.get_or_create(
+                                            materia=materia,
+                                            anno=nuevo_anno,
+                                            cuatrimestre=nuevo_cuatrimestre,
+                                            numero=int(tipoynumero[1]) if len(tipoynumero) > 1 else 0,
+                                            tipo=tipo_turno,
+                                            defaults={'necesidades': '0,0,0'})
             turno.save()
             turno_docentes = rows[2].text.split(' — ')
             cargo = cargo_tipoturno[tipoynumero[0]]
@@ -67,12 +103,24 @@ def salva_datos(html, nuevo_anno, nuevo_cuatrimestre):
             for docente in turno_docentes:
                 docentes.add((docente, cargo))
 
-    logger.info('Voy a agregar hasta %d docentes', len(docentes))
+            horarios = convierte_a_horarios(rows[1].text)
+            for horario in horarios:
+                logger.info('horario: %s, %s, %s', horario[0], horario[1], horario[2])
+                h, creado = Horario.objects.get_or_create(
+                                        dia=horario[0],
+                                        comienzo=horario[1],
+                                        final=horario[2],
+                                        turno=turno,
+                                        defaults={'aula': '', 'pabellon': 1})
+                if creado:
+                    logger.debug('Agregué un nuevo horario para %s: %s', turno, h)
+
+    logger.info('Voy a ver docentes. Puedo llegar a agregar hasta %d', len(docentes))
     for docente in docentes:
         doc, creado = Docente.objects.get_or_create(nombre=docente[0],
                                                     defaults={'cargas': 1, 'cargo': docente[1]})
         if creado:
-            print(f'agregue a: {doc}')
+            logger.info('agregue a: %s', doc)
 
 
 if __name__ == '__main__':
