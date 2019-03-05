@@ -13,5 +13,6 @@ RUN git clone https://github.com/matiasg/allocation.git && pip install -e alloca
 
 RUN git clone https://ecebb780114e159b713bbdb48dd3434c57b8c24a@github.com/matiasg/distribucion.git
 COPY settings.py distribucion/distribucion/settings.py
-COPY create_db distribucion/create_db
+COPY tools/* distribucion/
+RUN chmod +x distribucion/create_db
 WORKDIR distribucion
