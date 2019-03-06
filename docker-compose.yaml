@@ -12,7 +12,7 @@ services:
     working_dir: /codigo/distribucion
     ports:
       - "8000:8000"
-    command: python manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver --insecure 0.0.0.0:8000
     #depends_on:
     #  - db
   bash:
