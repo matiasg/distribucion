@@ -6,6 +6,7 @@ app_name = 'dborrador'
 urlpatterns = [
     path('', views.index, name='index'),
     path('preparar', views.preparar, name='preparar'),
+    path('distribuir', views.distribuir, name='distribuir'),
 ]
 
 
