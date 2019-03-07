@@ -56,12 +56,12 @@ def distribuir(request):
         turnos = Mapeos.encuesta_tipo_turno(tipo)
         preferencias = Preferencia.objects.all()
 
-        sources = {d.id: d.cargas for d in docentes}
+        sources = {str(d.id): d.cargas for d in docentes}
 
         necesidad_indice = 'PJA'.index(tipo)
         targets = {t.id: int(t.necesidades.split(',')[necesidad_indice]) for t in turnos}
 
-        pesos = [{'from': p.preferencia.docente.id, 'to': p.preferencia.turno.id, 'weight': p.preferencia.peso}
+        pesos = [{'from': str(p.preferencia.docente.id), 'to': p.preferencia.turno.id, 'weight': p.preferencia.peso}
                  for p in preferencias]
         wmap = allocating.WeightedMap(pesos)
 
