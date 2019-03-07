@@ -121,3 +121,42 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+	'verbose': {
+	    'format': '[{levelname}] ({asctime} {module}) {message}',
+	    'style': '{',
+	    },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+        },
+        'materias': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'encuestas': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'dborrador': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'allocation': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    },
+}
