@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import datetime
 import logging
+import math
 import coloredlogs
 from pathlib import Path
 import re
@@ -74,6 +75,9 @@ tipo_turnos = {'Teórica': TipoTurno.T.name,
 cargo_tipoturno = {'Teórica': Cargos.Tit.name,
                    'Práctica': Cargos.JTP.name,
                    'Teórico-Práctica': Cargos.JTP.name}
+necesidades_index_tipoturno = {'Teórica': 0,
+                               'Práctica': 1,
+                               'Teórico-Práctica': 1}
 def salva_datos(html, nuevo_anno, nuevo_cuatrimestre):
     soup = BeautifulSoup(html, 'html.parser')
 
@@ -87,23 +91,27 @@ def salva_datos(html, nuevo_anno, nuevo_cuatrimestre):
         for turno_html in tabla.find_all('tr'):
             rows = turno_html.find_all('td')
             tipoynumero = rows[0].text.split()
-            tipo_turno = tipo_turnos[tipoynumero[0]]
 
+            turno_docentes = rows[2].text.split(' — ')
+            cargo = cargo_tipoturno[tipoynumero[0]]
+            for docente in turno_docentes:
+                docentes.add((docente, cargo))
+
+            tipo_turno = tipo_turnos[tipoynumero[0]]
+            if tipo_turno == TipoTurno.T.name:
+                necesidades = '1,0,0'
+            else:
+                mitad_docentes = len(turno_docentes) / 2
+                necesidades = '0,{},{}'.format(math.floor(mitad_docentes), math.ceil(mitad_docentes))
             turno, creado = Turno.objects.get_or_create(
                                             materia=materia,
                                             anno=nuevo_anno,
                                             cuatrimestre=nuevo_cuatrimestre,
                                             numero=int(tipoynumero[1]) if len(tipoynumero) > 1 else 0,
                                             tipo=tipo_turno,
-                                            defaults={'necesidades': '0,0,0'})
+                                            defaults={'necesidades': necesidades})
             if creado:
                 logger.info('nuevo turno creado: %s', turno)
-            turno_docentes = rows[2].text.split(' — ')
-            cargo = cargo_tipoturno[tipoynumero[0]]
-
-            for docente in turno_docentes:
-                docentes.add((docente, cargo))
-
             horarios = convierte_a_horarios(rows[1].text)
             for horario in horarios:
                 logger.info('horario: %s, %s, %s', horario[0], horario[1], horario[2])
