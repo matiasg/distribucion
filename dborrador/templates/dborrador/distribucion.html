@@ -1,0 +1,32 @@
+{% load static %}
+{% comment %}<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">{% endcomment %}
+
+
+{% for tipo, lista in materias %}
+
+<div class="seccion">{{ tipo }}</div>
+
+    {% for materia, turnos in lista %}
+
+    {% if turnos %}
+    <table class="contentbold" border="1" cellspacing="0" cellpadding="5" frame="hsides">
+        <thead><div class="nombremateria">{{ materia.nombre.upper }}</div></thead>
+        <tbody>
+        {% for turno in turnos %}
+            <tr>
+
+            <td class="fondo{{ turno.tipo }}">{{ turno.horarios_info.tipoynumero }}</td>
+            <td>{{ turno.horarios_info.diayhora }}</td>
+            <td>{{ turno.docentes_asignados }}</td>
+            <td>{{ turno.horarios_info.aula }}</td>
+            <td>{{ turno.horarios_info.pabellon }}</td>
+                
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% endfor %}
+
+{% endfor %}

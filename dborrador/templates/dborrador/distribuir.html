@@ -1,0 +1,27 @@
+<h1>Elegí año y cuatrimestre</h1>
+Vamos a hacer una distribución
+
+<form action="{% url 'dborrador:distribuir' %}" method="post">
+{% csrf_token %}
+
+<select name="anno">
+    {% for a in annos %}
+    <option value="{{ a }}">{{ a }}</option>
+    {% endfor %}
+</select>
+
+
+<select name="cuatrimestre">
+    {% for c in cuatrimestres %}
+    <option value="{{ c.name }}">{{ c.value }}</option>
+    {% endfor %}
+</select>
+
+
+<select name="tipo">
+    {% for t in tipos %}
+    <option value="{{ t }}">{{ t }}</option>
+    {% endfor %}
+</select>
+
+<input type="submit" value="distribuir">
