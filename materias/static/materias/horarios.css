@@ -10,8 +10,8 @@ table
   font-size: 24px;
   text-align: left;
   color: #000000;
-  #background-color: #EDD956;
-  #border: thin solid;
+  background-color: #EDD956;
+  border: thin solid;
   padding: 12px;
   margin-top: 48px;
   margin-bottom: 24px;
@@ -37,6 +37,14 @@ table
   padding: 12px;
   margin-top: 48px;
   margin-bottom: 24px;
+}
+
+.info
+{
+  font-weight: bold;
+  font-size: 16px;
+  text-align: left;
+  background-color: #b5b5ff;
 }
 
 .seccion
