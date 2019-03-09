@@ -7,10 +7,11 @@ Cosas que debo hacer
         Esto puede significar que:
           - cada docente tiene pre-fijada una cantidad
           - el docente entra la cantidad de opciones que debe contestar
-    [ ] Después de una encuesta
+    [X] Después de una encuesta
         - cambiar el texto!
         - debe decir qué se eligió
-        - mandar email?
+    [ ] mandar email después de la respuesta?
+    [ ] mandar email con password personalizado?
 
 * distribucion
     [ ] preparar -> distribuir más dinámico
