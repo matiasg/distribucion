@@ -55,14 +55,15 @@ def distribuir(request):
         anno = request.POST['anno']
         cuatrimestre = request.POST['cuatrimestre']
         tipo = request.POST['tipo']
-        intento = 1
+        intento = int(request.POST['intento'])
 
     except KeyError:
         anno_actual = timezone.now().year
         context = {
                 'annos': [anno_actual, anno_actual + 1],
                 'cuatrimestres': [c for c in Cuatrimestres],
-                'tipos': ['P', 'J', 'A']}
+                'tipos': ['P', 'J', 'A'],
+                'intento': 1}
         return render(request, 'dborrador/distribuir.html', context)
 
     else:
@@ -101,11 +102,13 @@ def distribuir(request):
             asignacion, _ = Asignacion.objects.get_or_create(
                                         intento=intento, docente=docente, turno=turno)
 
-        context = {'materias': filtra_materias(anno=anno, cuatrimestre=cuatrimestre)}
+        materias_distribuidas = filtra_materias(anno=anno, cuatrimestre=cuatrimestre, intento=intento)
+        context = {'materias': materias_distribuidas,
+                   'intento': intento}
         return render(request, 'dborrador/distribucion.html', context)
 
 
-def filtra_materias(**kwargs):
+def filtra_materias(intento, **kwargs):
     turnos = Turno.objects.filter(**kwargs)
     tipo_dict = {TipoMateria.B.name: 'Obligatorias',
                  TipoMateria.R.name: 'Optativas regulares',
@@ -120,7 +123,8 @@ def filtra_materias(**kwargs):
                 ]
         for materia, turnos in materias_turnos:
             for turno in turnos:
-                turno.docentes_asignados = ' - '.join([a.docente.nombre for a in turno.asignacion_set.all()])
+                asignaciones = [a for a in turno.asignacion_set.all() if a.intento == intento]
+                turno.docentes_asignados = ' - '.join([a.docente.nombre for a in asignaciones])
         materias.append((tipo_largo, materias_turnos))
 
     return materias
