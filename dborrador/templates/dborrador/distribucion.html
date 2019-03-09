@@ -1,5 +1,5 @@
 {% load static %}
-{% comment %}<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">{% endcomment %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 
 
 {% for tipo, lista in materias %}
@@ -18,8 +18,6 @@
             <td class="fondo{{ turno.tipo }}">{{ turno.horarios_info.tipoynumero }}</td>
             <td>{{ turno.horarios_info.diayhora }}</td>
             <td>{{ turno.docentes_asignados }}</td>
-            <td>{{ turno.horarios_info.aula }}</td>
-            <td>{{ turno.horarios_info.pabellon }}</td>
                 
             </tr>
         {% endfor %}

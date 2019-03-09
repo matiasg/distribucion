@@ -21,12 +21,17 @@ def index(request):
 
 
 def copiar_anno_y_cuatrimestre(anno, cuatrimestre):
+    '''devuelve: (prefs copiadas, prefs ya existentes) '''
     prefs_anno_cuat = PreferenciasDocente.objects.filter(
                                 turno__anno=anno, turno__cuatrimestre=cuatrimestre)
+    preferencias_copiadas = 0
     for pd in prefs_anno_cuat:
         pref, creada = Preferencia.objects.get_or_create(preferencia=pd)
         if creada:
-            logger.debug('copié %s', pd)
+            logger.debug('copié %s -- %s --> %s', pd.docente.nombre, pd.peso, pd.turno)
+            preferencias_copiadas += 1
+
+    return preferencias_copiadas, len(prefs_anno_cuat) - preferencias_copiadas
 
 
 def preparar(request):
@@ -34,8 +39,9 @@ def preparar(request):
         anno = request.POST['anno']
         cuatrimestre = request.POST['cuatrimestre']
         logger.info('copiando %s y %s', anno, cuatrimestre)
-        copiar_anno_y_cuatrimestre(anno, cuatrimestre)
-        return HttpResponseRedirect(reverse('dborrador:index'))
+        copiadas, existentes = copiar_anno_y_cuatrimestre(anno, cuatrimestre)
+        context = {'copiadas': copiadas, 'existentes': existentes}
+        return render(request, 'dborrador/despues_de_preparar.html', context)
     except KeyError:
         anno_actual = timezone.now().year
         context = {
@@ -112,7 +118,7 @@ def filtra_materias(**kwargs):
                 ]
         for materia, turnos in materias_turnos:
             for turno in turnos:
-                turno.docentes_asignados = [a.docente for a in turno.asignacion_set.all()]
+                turno.docentes_asignados = ' - '.join([a.docente.nombre for a in turno.asignacion_set.all()])
         materias.append((tipo_largo, materias_turnos))
 
     return materias
