@@ -6,9 +6,17 @@ from django.utils import timezone
 from materias.models import Turno, Docente, Cargos, TipoTurno, Cuatrimestres
 from .models import PreferenciasDocente
 
+from enum import Enum
 import logging
 import logging.config
 logger = logging.getLogger(__name__)
+
+
+class TipoDocentes(Enum):
+    P = 'Profesores'
+    J = 'JTP/Ay1'
+    A = 'Ay2'
+
 
 class Mapeos:
     '''Esta clase resuelve distintos tipos de mapeos'''
@@ -16,9 +24,9 @@ class Mapeos:
     @staticmethod
     def docentes(tipo):
         '''P: profesor, J: JTP y Ay1, A: Ay2'''
-        el_mapa = {'P': [Cargos.Tit.name, Cargos.Aso.name, Cargos.Adj.name],
-                   'J': [Cargos.JTP.name, Cargos.Ay1.name],
-                   'A': [Cargos.Ay2.name],
+        el_mapa = {TipoDocentes.P.name: [Cargos.Tit.name, Cargos.Aso.name, Cargos.Adj.name],
+                   TipoDocentes.J.name: [Cargos.JTP.name, Cargos.Ay1.name],
+                   TipoDocentes.A.name: [Cargos.Ay2.name],
                    }
         cargos = el_mapa[tipo.upper()]
         return Docente.objects.filter(cargo__in=cargos)
@@ -29,9 +37,9 @@ class Mapeos:
         Para profesores: teóricas y teórico-prácticas.
         Para auxiliares: prácticas y teórico-prácticas.
         '''
-        el_mapa = {'P': [TipoTurno.T.name, TipoTurno.A.name],
-                   'J': [TipoTurno.P.name, TipoTurno.A.name],
-                   'A': [TipoTurno.P.name, TipoTurno.A.name],
+        el_mapa = {TipoDocentes.P.name: [TipoTurno.T.name, TipoTurno.A.name],
+                   TipoDocentes.J.name: [TipoTurno.P.name, TipoTurno.A.name],
+                   TipoDocentes.A.name: [TipoTurno.P.name, TipoTurno.A.name],
                    }
         tipos = el_mapa[tipo_docente.upper()]
         return Turno.objects.filter(tipo__in=tipos)
