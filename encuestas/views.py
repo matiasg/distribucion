@@ -45,14 +45,27 @@ def checkear_y_salvar(datos):
         opcion_id_str = datos['opcion{}'.format(opcion)]
         if opcion_id_str:
             turno = Turno.objects.get(pk=opcion_id_str)
-            peso = int(datos['peso{}'.format(opcion)])
-            logger.warning('Agrego preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
-                            docente, turno, peso, fecha_encuesta)
+            peso = float(datos['peso{}'.format(opcion)])
+            logger.debug('miro preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
+                         docente, turno, peso, fecha_encuesta)
             
-            PreferenciasDocente.objects.create(docente=docente,
-                                               turno=turno, peso=peso,
-                                               fecha_encuesta=fecha_encuesta)
-            opciones.append((turno, peso))
+            pref, creada = PreferenciasDocente.objects.get_or_create(
+                                                docente=docente,
+                                                turno=turno,
+                                                defaults={'peso': peso, 'fecha_encuesta': fecha_encuesta}
+                                                )
+            if creada:
+                logger.info('Agrego preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
+                            docente, turno, peso, fecha_encuesta)
+            else:
+                if pref.peso != peso:
+                    logger.warning('Le cambio el peso a la preferencia de %s por %s. De %s a %s',
+                                   docente, turno, pref.peso, peso)
+                    pref.peso = peso
+                    pref.fecha_encuesta = fecha_encuesta
+                    pref.save()
+            opciones.append(pref)
+    return opciones
 
 
 def index(request):
@@ -74,8 +87,10 @@ def encuesta(request, anno, cuatrimestre, tipo_docente):
                    }
         return render(request, 'encuestas/encuesta.html', context)
     else:
-        checkear_y_salvar(request.POST)
-        return HttpResponseRedirect(reverse('encuestas:final_de_encuesta'))  # TODO: mandar las preferencias
+        opciones = checkear_y_salvar(request.POST)
+        return render(request,
+                      'encuestas/final.html',
+                      context={'opciones': opciones, 'docente': docente})
 
 
 def final(request):
