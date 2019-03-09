@@ -156,7 +156,7 @@ LOGGING = {
         },
         'allocation': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
     },
 }
