@@ -78,9 +78,11 @@ def distribuir(request):
         sources = {str(d.id): d.cargas for d in docentes}
 
         necesidad_indice = 'PJA'.index(tipo)
-        targets = {t.id: int(t.necesidades.split(',')[necesidad_indice]) for t in turnos}
+        targets = {str(t.id): int(t.necesidades.split(',')[necesidad_indice]) for t in turnos}
 
-        pesos = [{'from': str(p.preferencia.docente.id), 'to': p.preferencia.turno.id, 'weight': p.preferencia.peso}
+        pesos = [{'from': str(p.preferencia.docente.id),
+                  'to': str(p.preferencia.turno.id),
+                  'weight': p.preferencia.peso}
                  for p in preferencias]
         wmap = allocating.WeightedMap(pesos)
 
@@ -95,7 +97,7 @@ def distribuir(request):
                 continue
 
             docente = Docente.objects.get(pk=int(docente_id))
-            turno = Turno.objects.get(pk=turno_id)
+            turno = Turno.objects.get(pk=int(turno_id))
             asignacion, _ = Asignacion.objects.get_or_create(
                                         intento=intento, docente=docente, turno=turno)
 
