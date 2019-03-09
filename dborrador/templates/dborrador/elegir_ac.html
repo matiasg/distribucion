@@ -4,13 +4,14 @@ Vamos a copiar todas las encuestas de manera de poder ensayar distribuciones.
 <form action="{% url 'dborrador:preparar' %}" method="post">
 {% csrf_token %}
 
+Año: 
 <select name="anno">
     {% for a in annos %}
     <option value="{{ a }}">{{ a }}</option>
     {% endfor %}
 </select>
 
-
+Cuatrimestre: 
 <select name="cuatrimestre">
     {% for c in cuatrimestres %}
     <option value="{{ c.name }}">{{ c.value }}</option>
