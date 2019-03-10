@@ -80,7 +80,7 @@ def distribuir(request):
         info_cuatri = CuatrimestreDocente.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
         sources = dict()
         for d in docentes:
-            info_doc = info_cuatri.filter(docente=d)
+            info_doc = info_cuatri.get(docente=d)
             sources[str(d.id)] = info_doc.cargas
 
         necesidad_indice = 'PJA'.index(tipo)
@@ -92,6 +92,7 @@ def distribuir(request):
                  for p in preferencias]
         wmap = allocating.WeightedMap(pesos)
 
+        # llamamos al distribuidor
         allocator = allocating.Allocator(sources, wmap, targets)
         distribucion = allocator.get_best()
         logger.info('distribución obtenida (con ids): %s', distribucion)
