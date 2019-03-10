@@ -6,7 +6,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .models import Preferencia, Asignacion
-from materias.models import Turno, Docente, Materia, Cuatrimestres, TipoMateria, choice_enum
+from materias.models import (Turno, Docente, Materia, CuatrimestreDocente,
+                             Cuatrimestres, TipoMateria, choice_enum)
 from encuestas.models import PreferenciasDocente
 from encuestas.views import Mapeos
 
@@ -76,7 +77,11 @@ def distribuir(request):
 
         logger.info('%d docentes, %d turnos, %d preferencias', len(docentes), len(turnos), len(preferencias))
 
-        sources = {str(d.id): d.cargas for d in docentes}
+        info_cuatri = CuatrimestreDocente.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
+        sources = dict()
+        for d in docentes:
+            info_doc = info_cuatri.filter(docente=d)
+            sources[str(d.id)] = info_doc.cargas
 
         necesidad_indice = 'PJA'.index(tipo)
         targets = {str(t.id): int(t.necesidades.split(',')[necesidad_indice]) for t in turnos}

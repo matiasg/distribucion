@@ -110,7 +110,6 @@ class Docente(models.Model):
     telefono = models.CharField(max_length=15, validators=[int_list_validator(sep=' ')])
     email = models.EmailField()
     cargo = models.CharField(max_length=3, choices=choice_enum(Cargos))
-    cargas = models.IntegerField()
 
     def __str__(self):
         return f'{self.nombre}'
@@ -127,3 +126,15 @@ class Carga(models.Model):
 
     def __str__(self):
         return f'{self.docente} -> {self.turno}'
+
+
+class CuatrimestreDocente(models.Model):
+    '''Tiene la información de un docente que cambia cada cuatrimestre'''
+    docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
+    anno = models.IntegerField()
+    cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
+    cargas = models.IntegerField()
+
+    class Meta:
+        verbose_name = 'info cuatrimestral del docente'
+        verbose_name_plural = 'informaciones cuatrimestrales'
