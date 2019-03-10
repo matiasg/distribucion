@@ -102,8 +102,20 @@ def distribuir(request):
             asignacion, _ = Asignacion.objects.get_or_create(
                                         intento=intento, docente=docente, turno=turno)
 
+        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento))
+        return HttpResponseRedirect(distribucion_url)
+
+
+def distribucion(request, anno, cuatrimestre, intento):
+    try:
+        intento = int(request.POST['nuevo_intento'])
+    except:
+        pass
+    finally:
         materias_distribuidas = filtra_materias(anno=anno, cuatrimestre=cuatrimestre, intento=intento)
         context = {'materias': materias_distribuidas,
+                   'anno': anno,
+                   'cuatrimestre': cuatrimestre,
                    'intento': intento}
         return render(request, 'dborrador/distribucion.html', context)
 

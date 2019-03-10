@@ -1,7 +1,15 @@
 {% load static %}
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 
-<div class="info">Distribución, intento {{ intento }}</div>
+<form action="{% url 'dborrador:distribucion' anno cuatrimestre intento %}" method="post">
+{% csrf_token %}
+    Ver intento: <input type="number" name="nuevo_intento" value={{ intento }}>
+    <input type="submit" value="cambiar">
+    <input type="hidden" name="anno" value="{{ anno }}">
+    <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre }}">
+</form>
+
+<div class="info">Distribución, para {{ anno }}, cuatrimestre {{ cuatrimestre }}, intento {{ intento }}</div>
 
 {% for tipo, lista in materias %}
 
