@@ -16,7 +16,8 @@ Cosas que debo hacer
 * distribucion
     [ ] preparar -> distribuir más dinámico
     [ ] en las necesidades, descontar los docentes ya distribuidos
-    [ ] manejar el campo de "intento"
+    [X] manejar el campo de "intento"
+    [ ] borrar todas las asignaciones de un intento antes de distribuir
 
 * general
     [ ] distribucion/settings.py <-- mirar SECRET_KEY
