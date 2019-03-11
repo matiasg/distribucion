@@ -68,7 +68,12 @@ def distribuir(request):
         return render(request, 'dborrador/distribuir.html', context)
 
     else:
-        logger.warning('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s',
+        asignaciones_previas = Asignacion.objects.filter(intento=intento)
+        if asignaciones_previas:
+            logger.warning('Borro %d asignaciones previas', len(asignaciones_previas))
+            asignaciones_previas.delete()
+
+        logger.info('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s',
                     tipo, cuatrimestre, anno)
 
         docentes = Mapeos.docentes(tipo)
