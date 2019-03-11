@@ -17,7 +17,7 @@ Cosas que debo hacer
     [ ] preparar -> distribuir más dinámico
     [2] en las necesidades, descontar los docentes ya distribuidos
     [-] manejar el campo de "intento"
-    [1] borrar todas las asignaciones de un intento antes de distribuir
+    [-] borrar todas las asignaciones de un intento antes de distribuir
     [ ] normalizar los pesos
 
 * general
