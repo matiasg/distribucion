@@ -2,10 +2,12 @@ from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
+from django.forms import ValidationError
 
 from materias.models import Turno, Docente, Cargos, TipoTurno, Cuatrimestres
 from .models import PreferenciasDocente
 
+from collections import Counter
 from enum import Enum
 import logging
 import logging.config
@@ -46,6 +48,12 @@ class Mapeos:
 
 
 def checkear_y_salvar(datos):
+    cuenta = Counter(datos.get(f'opcion{o}', '') for o in range(1, 6))
+    cuenta.pop('', None)  # descarto opciones no completadas
+    if any(v > 1 for v in cuenta.values()):
+        raise ValidationError(
+                'Hay turnos repetidos', code='invalid')
+
     fecha_encuesta = timezone.now()
     docente = Docente.objects.get(pk=datos['docente'])
     opciones = []
