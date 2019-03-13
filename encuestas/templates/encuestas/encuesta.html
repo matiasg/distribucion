@@ -1,5 +1,16 @@
 <!DOCTYPE html>
 
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'encuestas/encuestas.css' %}">
+
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+    <br>{% if message.tags %} [{{ message.tags }}] {% endif %} {{ message }}</br>
+    {% endfor %}
+</div>
+{% endif %}
+
 <h1>encuesta para el cuatrimestre {{ cuatrimestre }} de {{ anno }}</h1>
 
 <form action="{% url 'encuestas:encuesta' anno cuatrimestre tipo_docente %}" method="post">

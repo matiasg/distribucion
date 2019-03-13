@@ -3,6 +3,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
 from django.forms import ValidationError
+from django.contrib import messages
 
 from materias.models import Turno, Docente, Cargos, TipoTurno, Cuatrimestres
 from .models import PreferenciasDocente
@@ -89,24 +90,25 @@ def index(request):
 
 
 def encuesta(request, anno, cuatrimestre, tipo_docente):
+    turnos = Mapeos.encuesta_tipo_turno(tipo_docente).filter(anno=anno, cuatrimestre=cuatrimestre)
+    context = {'turnos': turnos,
+               'docentes': Mapeos.docentes(tipo_docente),
+               'anno': anno,
+               'cuatrimestre': cuatrimestre,
+               'tipo_docente': tipo_docente,
+               }
     try:
         docente = Docente.objects.get(pk=request.POST['docente'])
     except (ValueError, KeyError, Turno.DoesNotExist):
-        cuatrimestre_value = Cuatrimestres[cuatrimestre].value
-        turnos = Mapeos.encuesta_tipo_turno(tipo_docente).filter(anno=anno, cuatrimestre=cuatrimestre)
-        context = {'turnos': turnos,
-                   'docentes': Mapeos.docentes(tipo_docente),
-                   'anno': anno,
-                   'cuatrimestre': cuatrimestre_value,
-                   'tipo_docente': tipo_docente,
-                   'error_message': 'Esto esta mal, muy mal',
-                   }
         return render(request, 'encuestas/encuesta.html', context)
-    else:
+    try:
         opciones = checkear_y_salvar(request.POST)
         return render(request,
                       'encuestas/final.html',
                       context={'opciones': opciones, 'docente': docente})
+    except ValidationError as e:
+        messages.error(request, e.message)
+        return render(request, 'encuestas/encuesta.html', context)
 
 
 def final(request):
