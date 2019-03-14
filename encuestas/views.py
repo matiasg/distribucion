@@ -17,8 +17,9 @@ logger = logging.getLogger(__name__)
 
 class TipoDocentes(Enum):
     P = 'Profesores'
-    J = 'JTP/Ay1'
-    A = 'Ay2'
+    J = 'JTP'
+    A1 = 'Ay1'
+    A2 = 'Ay2'
 
 
 class Mapeos:
@@ -28,8 +29,9 @@ class Mapeos:
     def docentes(tipo):
         '''P: profesor, J: JTP y Ay1, A: Ay2'''
         el_mapa = {TipoDocentes.P.name: [Cargos.Tit.name, Cargos.Aso.name, Cargos.Adj.name],
-                   TipoDocentes.J.name: [Cargos.JTP.name, Cargos.Ay1.name],
-                   TipoDocentes.A.name: [Cargos.Ay2.name],
+                   TipoDocentes.J.name: [Cargos.JTP.name],
+                   TipoDocentes.A1.name: [Cargos.Ay1.name],
+                   TipoDocentes.A2.name: [Cargos.Ay2.name],
                    }
         cargos = el_mapa[tipo.upper()]
         return Docente.objects.filter(cargo__in=cargos)
@@ -42,7 +44,8 @@ class Mapeos:
         '''
         el_mapa = {TipoDocentes.P.name: [TipoTurno.T.name, TipoTurno.A.name],
                    TipoDocentes.J.name: [TipoTurno.P.name, TipoTurno.A.name],
-                   TipoDocentes.A.name: [TipoTurno.P.name, TipoTurno.A.name],
+                   TipoDocentes.A1.name: [TipoTurno.P.name, TipoTurno.A.name],
+                   TipoDocentes.A2.name: [TipoTurno.P.name, TipoTurno.A.name],
                    }
         tipos = el_mapa[tipo_docente.upper()]
         return Turno.objects.filter(tipo__in=tipos)
@@ -65,7 +68,7 @@ def checkear_y_salvar(datos):
             peso = float(datos['peso{}'.format(opcion)])
             logger.debug('miro preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
                          docente, turno, peso, fecha_encuesta)
-            
+
             pref, creada = PreferenciasDocente.objects.get_or_create(
                                                 docente=docente,
                                                 turno=turno,
