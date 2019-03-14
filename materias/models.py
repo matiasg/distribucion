@@ -64,7 +64,10 @@ class Turno(models.Model):
     numero = models.IntegerField()
     subnumero = models.CharField(max_length=6, blank=True)
     tipo = models.CharField(max_length=1, choices=choice_enum(TipoTurno))
-    necesidades = models.CharField(max_length=5, validators=[validate_comma_separated_integer_list])
+    necesidad_prof = models.PositiveIntegerField()
+    necesidad_jtp = models.PositiveIntegerField()
+    necesidad_ay1 = models.PositiveIntegerField()
+    necesidad_ay2 = models.PositiveIntegerField()
 
     def __str__(self):
         return f'{self.materia.nombre}: {self.tipo} {self.numero}'
