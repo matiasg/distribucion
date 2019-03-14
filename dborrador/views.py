@@ -9,12 +9,26 @@ from .models import Preferencia, Asignacion
 from materias.models import (Turno, Docente, Materia, CuatrimestreDocente,
                              Cuatrimestres, TipoMateria, choice_enum)
 from encuestas.models import PreferenciasDocente
-from encuestas.views import Mapeos
+from encuestas.views import TipoDocentes, Mapeos
 
 from allocation import allocating
 
 
 logger = logging.getLogger(__name__)
+
+
+class Mapeos:
+
+    @staticmethod
+    def necesidades(turno, tipo_docente):
+        if tipo_docente == TipoDocentes.P.name:
+            return turno.necesidad_prof
+        elif tipo_docente == TipoDocentes.J.name:
+            return tipo.necesidad_jtp
+        elif tipo_docente == TipoDocentes.A1.name:
+            return tipo.necesidad_ay1
+        else:
+            return tipo.necesidad_ay2
 
 
 def index(request):
@@ -88,8 +102,7 @@ def distribuir(request):
             info_doc = info_cuatri.get(docente=d)
             sources[str(d.id)] = info_doc.cargas
 
-        necesidad_indice = 'PJA'.index(tipo)
-        targets = {str(t.id): int(t.necesidades.split(',')[necesidad_indice]) for t in turnos}
+        targets = {str(t.id): Mapeos.necesidades(t, tipo) for t in turnos}
 
         pesos = [{'from': str(p.preferencia.docente.id),
                   'to': str(p.preferencia.turno.id),
