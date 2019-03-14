@@ -7,3 +7,6 @@ class PreferenciasDocente(models.Model):
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
     peso = models.FloatField(null=True)
     fecha_encuesta = models.DateTimeField()
+
+    def __str__(self):
+        return f'{self.docente} -- {self.peso} -> {self.turno}'
