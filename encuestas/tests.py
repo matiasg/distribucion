@@ -17,7 +17,8 @@ class TestEncuesta(TestCase):
                                               telefono='1234', cargo=Cargos.JTP)
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B)
         self.turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
-                                          numero=1, tipo=TipoTurno.A.name, necesidades='1,0,0')
+                                          numero=1, tipo=TipoTurno.A.name,
+                                          necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
         self.cuatridocente = CuatrimestreDocente.objects.create(docente=self.docente, anno=self.anno,
                                                                 cuatrimestre=Cuatrimestres.P.name, cargas=1)
 
@@ -57,7 +58,8 @@ class TestEncuesta(TestCase):
         datos = {'docente': self.docente.id}
         for opcion in range(1, 6):
             turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
-                                         numero=1, tipo=TipoTurno.T.name, necesidades='1,0,0')
+                                         numero=1, tipo=TipoTurno.T.name,
+                                         necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
             datos['opcion{}'.format(opcion)] = turno.id
             datos['peso{}'.format(opcion)] = str(opcion)
         checkear_y_salvar(datos)
@@ -67,7 +69,8 @@ class TestEncuesta(TestCase):
         datos = {'docente': self.docente.id}
         for opcion in range(1, 3):
             turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
-                                         numero=1, tipo=TipoTurno.T.name, necesidades='1,0,0')
+                                         numero=1, tipo=TipoTurno.T.name,
+                                         necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
             datos['opcion{}'.format(opcion)] = turno.id
             datos['peso{}'.format(opcion)] = str(opcion)
         for opcion in range(3, 6):
@@ -97,7 +100,8 @@ class TestEncuesta(TestCase):
     def test_turnos_repetidos(self):
         datos = {'docente': self.docente.id}
         turnos = [Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
-                                          numero=t, tipo=TipoTurno.T.name, necesidades='1,0,0')
+                                          numero=t, tipo=TipoTurno.T.name,
+                                         necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
                   for t in range(1, 6)
                   ]
 
