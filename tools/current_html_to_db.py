@@ -51,7 +51,7 @@ def convierte_a_horarios(text):
     def hm(hhmm):
         ret = parse_time(hhmm) or datetime.time(int(hhmm), 0)
         return ret
-    
+
     m = dia_y_hora.search(text)
     if m:
         return [(m.group(1), hm(m.group(3)), hm(m.group(6)))]
@@ -96,10 +96,20 @@ def salva_datos(html, nuevo_anno, nuevo_cuatrimestre, anno_actual, cuatrimestre_
             # turnos
             tipo_turno = tipo_turnos[tipoynumero[0]]
             if tipo_turno == TipoTurno.T.name:
-                necesidades = '1,0,0'
+                necesidad_prof = 1
+                necesidad_jtp = necesidad_ay1 = necesidad_ay2 = 0
             else:
-                mitad_docentes = len(turno_docentes) / 2
-                necesidades = '0,{},{}'.format(math.floor(mitad_docentes), math.ceil(mitad_docentes))
+                tercio_docentes = len(turno_docentes) / 3
+                necesidad_prof = 0
+                necesidad_jtp = math.floor(tercio_docentes)
+                necesidad_ay1 = round(tercio_docentes)
+                necesidad_ay2 = math.ceil(tercio_docentes)
+            defaults = {
+                'necesidad_prof': necesidad_prof,
+                'necesidad_jtp': necesidad_jtp,
+                'necesidad_ay1': necesidad_ay1,
+                'necesidad_ay2': necesidad_ay2,
+            }
 
             numero_turno = int(tipoynumero[1]) if len(tipoynumero) > 1 else 0
 
@@ -109,10 +119,17 @@ def salva_datos(html, nuevo_anno, nuevo_cuatrimestre, anno_actual, cuatrimestre_
                                             cuatrimestre=nuevo_cuatrimestre,
                                             numero=numero_turno,
                                             tipo=tipo_turno,
-                                            defaults={'necesidades': necesidades})
+                                            defaults=defaults)
             if creado:
                 logger.info('nuevo turno creado: %s', turno)
-            
+
+            turno_actual, _ = Turno.objects.get_or_create(materia=materia,
+                                                          anno=anno_actual,
+                                                          cuatrimestre=cuatrimestre_actual,
+                                                          numero=numero_turno,
+                                                          tipo=tipo_turno,
+                                                          defaults=defaults)
+
             # docentes y cargas
             cargo = cargo_tipoturno[tipoynumero[0]]
             for docente in turno_docentes:
@@ -125,13 +142,6 @@ def salva_datos(html, nuevo_anno, nuevo_cuatrimestre, anno_actual, cuatrimestre_
                                                 anno=nuevo_anno,
                                                 cuatrimestre=nuevo_cuatrimestre,
                                                 defaults={'cargas': 1})
-
-                turno_actual, _ = Turno.objects.get_or_create(materia=materia,
-                                                              anno=anno_actual,
-                                                              cuatrimestre=cuatrimestre_actual,
-                                                              numero=numero_turno,
-                                                              tipo=tipo_turno,
-                                                              defaults={'necesidades': '0,0,0'})
 
                 carga, creada = Carga.objects.get_or_create(docente=doc,
                                                             turno=turno_actual,
@@ -151,6 +161,13 @@ def salva_datos(html, nuevo_anno, nuevo_cuatrimestre, anno_actual, cuatrimestre_
                                         defaults={'aula': '', 'pabellon': 1})
                 if creado:
                     logger.debug('Agregué un nuevo horario para %s: %s', turno, h)
+
+                h_actual, _ = Horario.objects.get_or_create(
+                                        dia=horario[0],
+                                        comienzo=horario[1],
+                                        final=horario[2],
+                                        turno=turno_actual,
+                                        defaults={'aula': '', 'pabellon': 1})
 
 
 
