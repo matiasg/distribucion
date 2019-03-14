@@ -17,7 +17,7 @@ from allocation import allocating
 logger = logging.getLogger(__name__)
 
 
-class Mapeos:
+class MapeosDistribucion:
 
     @staticmethod
     def necesidades(turno, tipo_docente):
@@ -77,7 +77,7 @@ def distribuir(request):
         context = {
                 'annos': [anno_actual, anno_actual + 1],
                 'cuatrimestres': [c for c in Cuatrimestres],
-                'tipos': ['P', 'J', 'A'],
+                'tipos': [t.name for t in TipoDocentes],
                 'intento': 1}
         return render(request, 'dborrador/distribuir.html', context)
 
@@ -102,7 +102,7 @@ def distribuir(request):
             info_doc = info_cuatri.get(docente=d)
             sources[str(d.id)] = info_doc.cargas
 
-        targets = {str(t.id): Mapeos.necesidades(t, tipo) for t in turnos}
+        targets = {str(t.id): MapeosDistribucion.necesidades(t, tipo) for t in turnos}
 
         pesos = [{'from': str(p.preferencia.docente.id),
                   'to': str(p.preferencia.turno.id),
