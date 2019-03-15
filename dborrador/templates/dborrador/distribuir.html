@@ -23,7 +23,7 @@ Cuatrimestre:
 Tipo de docente:
 <select name="tipo">
     {% for t in tipos %}
-    <option value="{{ t }}">{{ t }}</option>
+    <option value="{{ t.name }}">{{ t.value }}</option>
     {% endfor %}
 </select>
 

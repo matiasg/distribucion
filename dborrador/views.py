@@ -35,33 +35,47 @@ def index(request):
     raise Http404('Todavía no hay contenido para esta página')
 
 
-def copiar_anno_y_cuatrimestre(anno, cuatrimestre):
+def copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo):
     '''devuelve: (prefs copiadas, prefs ya existentes) '''
-    prefs_anno_cuat = PreferenciasDocente.objects.filter(
-                                turno__anno=anno, turno__cuatrimestre=cuatrimestre)
-    preferencias_copiadas = 0
-    for pd in prefs_anno_cuat:
-        pref, creada = Preferencia.objects.get_or_create(preferencia=pd)
-        if creada:
-            logger.debug('copié %s -- %s --> %s', pd.docente.nombre, pd.peso, pd.turno)
-            preferencias_copiadas += 1
+    copiadas = 0
+    existentes = 0
 
-    return preferencias_copiadas, len(prefs_anno_cuat) - preferencias_copiadas
+    for docente in Mapeos.docentes(tipo):
+        prefs = PreferenciasDocente.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre,
+                                                   docente=docente)
+        peso_total = sum(pref.peso for pref in prefs)
+        logger.debug('considerando %d prefs para %s. Peso total: %s', len(prefs), docente, peso_total)
+
+        for pref in prefs:
+            pref_copia, creada = Preferencia.objects.get_or_create(preferencia=pref)
+            pref_copia.peso_normalizado = pref.peso / peso_total if peso_total else 1 / len(prefs)
+            pref_copia.save()
+            if creada:
+                logger.debug('copié %s -- %s --> %s',
+                             pref.docente.nombre, pref_copia.peso_normalizado, pref.turno)
+                copiadas += 1
+            else:
+                existentes += 1
+
+    return copiadas, existentes
 
 
 def preparar(request):
     try:
         anno = request.POST['anno']
         cuatrimestre = request.POST['cuatrimestre']
-        logger.info('copiando %s y %s', anno, cuatrimestre)
-        copiadas, existentes = copiar_anno_y_cuatrimestre(anno, cuatrimestre)
+        tipo = request.POST['tipo']
+        logger.info('copiando %s y %s para docents tipo %s', anno, cuatrimestre, tipo)
+
+        copiadas, existentes = copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo)
         context = {'copiadas': copiadas, 'existentes': existentes}
         return render(request, 'dborrador/despues_de_preparar.html', context)
     except KeyError:
         anno_actual = timezone.now().year
         context = {
                 'annos': [anno_actual, anno_actual + 1],
-                'cuatrimestres': [c for c in Cuatrimestres]}
+                'cuatrimestres': [c for c in Cuatrimestres],
+                'tipos': [t for t in TipoDocentes]}
         return render(request, 'dborrador/elegir_ac.html', context)
 
 
@@ -77,7 +91,7 @@ def distribuir(request):
         context = {
                 'annos': [anno_actual, anno_actual + 1],
                 'cuatrimestres': [c for c in Cuatrimestres],
-                'tipos': [t.name for t in TipoDocentes],
+                'tipos': [t for t in TipoDocentes],
                 'intento': 1}
         return render(request, 'dborrador/distribuir.html', context)
 
@@ -107,11 +121,9 @@ def distribuir(request):
             necesidad -= len(asignaciones_previas.filter(turno=turno))
             targets[str(turno.id)] = necesidad
 
-        # targets = {str(t.id): MapeosDistribucion.necesidades(t, tipo) for t in turnos}
-
         pesos = [{'from': str(p.preferencia.docente.id),
                   'to': str(p.preferencia.turno.id),
-                  'weight': p.preferencia.peso}
+                  'weight': p.peso_normalizado}
                  for p in preferencias]
         wmap = allocating.WeightedMap(pesos)
 

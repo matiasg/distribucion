@@ -18,4 +18,11 @@ Cuatrimestre:
     {% endfor %}
 </select>
 
+Tipo de docentes: 
+<select name="tipo">
+    {% for t in tipos %}
+    <option value="{{ t.name }}">{{ t.value }}</option>
+    {% endfor %}
+</select>
+
 <input type="submit" value="copiar">

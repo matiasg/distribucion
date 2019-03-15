@@ -6,9 +6,10 @@ from materias.models import Docente, Turno
 
 class Preferencia(models.Model):
     preferencia = models.ForeignKey(PreferenciasDocente, on_delete=models.CASCADE)
+    peso_normalizado = models.FloatField()
 
     def __str__(self):
-        return f'{self.preferencia}'
+        return f'{self.preferencia.docente} -- {self.peso_normalizado:.4f} -> {self.preferencia.turno}'
 
 
 class Asignacion(models.Model):
