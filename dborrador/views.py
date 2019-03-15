@@ -84,8 +84,7 @@ def distribuir(request):
     else:
         asignaciones_previas = Asignacion.objects.filter(intento=intento)
         if asignaciones_previas:
-            logger.warning('Borro %d asignaciones previas', len(asignaciones_previas))
-            asignaciones_previas.delete()
+            logger.warning('Hay %d asignaciones previas', len(asignaciones_previas))
 
         logger.info('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s',
                     tipo, cuatrimestre, anno)
@@ -102,7 +101,13 @@ def distribuir(request):
             info_doc = info_cuatri.get(docente=d)
             sources[str(d.id)] = info_doc.cargas
 
-        targets = {str(t.id): MapeosDistribucion.necesidades(t, tipo) for t in turnos}
+        targets = {}
+        for turno in turnos:
+            necesidad = MapeosDistribucion.necesidades(turno, tipo)
+            necesidad -= len(asignaciones_previas.filter(turno=turno))
+            targets[str(turno.id)] = necesidad
+
+        # targets = {str(t.id): MapeosDistribucion.necesidades(t, tipo) for t in turnos}
 
         pesos = [{'from': str(p.preferencia.docente.id),
                   'to': str(p.preferencia.turno.id),
