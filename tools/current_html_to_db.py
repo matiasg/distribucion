@@ -123,13 +123,20 @@ def salva_datos(html, anno_actual, cuatrimestre, anno_nuevo):
                     'necesidad_ay2': necesidad_ay2,
                 }
 
-                numero_turno = int(tipoynumero[1]) if len(tipoynumero) > 1 else 0
+                try:
+                    numero_turno = int(tipoynumero[1]) if len(tipoynumero) > 1 else 0
+                    subnumero = tipoynumero[2] if len(tipoynumero) > 2 else ''
+                except ValueError:
+                    numero_turno = int(tipoynumero[1][0])
+                    subnumero = tipoynumero[1][1:]
+
 
                 turno, creado = Turno.objects.get_or_create(
                                                 materia=materia,
                                                 anno=anno_nuevo,
                                                 cuatrimestre=cuatrimestre,
                                                 numero=numero_turno,
+                                                subnumero=subnumero,
                                                 tipo=tipo_turno,
                                                 defaults=defaults)
                 if creado:
@@ -145,6 +152,9 @@ def salva_datos(html, anno_actual, cuatrimestre, anno_nuevo):
                 # docentes y cargas
                 cargo = cargo_tipoturno[tipoynumero[0]]
                 for docente in turno_docentes:
+                    # evitamos el docente '' que aparece en turnos sin asignaciones
+                    if not docente:
+                        continue
                     doc, creado = Docente.objects.get_or_create(nombre=docente,
                                                                 defaults={'cargo': cargo})
                     if creado:
