@@ -81,93 +81,106 @@ necesidades_index_tipoturno = {'Teórica': 0,
                                'Teórico-Práctica': 1}
 def salva_datos(html, nuevo_anno, nuevo_cuatrimestre, anno_actual, cuatrimestre_actual):
     soup = BeautifulSoup(html, 'html.parser')
+    comienzo = soup.find_all('div', attrs={'class': 'seccion'})[0]
 
-    for tabla in soup.find_all('table', attrs={'class': 'contentbold'}):
+    tipos_de_materia = {
+        'Materias Obligatorias': TipoMateria.B,
+        'Materias Optativas Regulares': TipoMateria.R,
+        'Materias Optativas No Regulares': TipoMateria.N,
+    }
 
-        nombre_materia = maymin(tabla.find('thead').text)
-        materia, _ = Materia.objects.get_or_create(nombre=nombre_materia, obligatoriedad=TipoMateria.B.name)
-        logger.info('Analizando: %s', materia)
+    tipo_de_materia = TipoMateria.B
+    for parte in comienzo.findNextSiblings():
 
-        for turno_html in tabla.find_all('tr'):
-            rows = turno_html.find_all('td')
-            tipoynumero = rows[0].text.split()
-            turno_docentes = rows[2].text.split(' — ')
+        if parte.attrs['class'][0] == 'seccion':
+            tipo_de_materia = tipos_de_materia[parte.text]
 
-            # turnos
-            tipo_turno = tipo_turnos[tipoynumero[0]]
-            if tipo_turno == TipoTurno.T.name:
-                necesidad_prof = 1
-                necesidad_jtp = necesidad_ay1 = necesidad_ay2 = 0
-            else:
-                tercio_docentes = len(turno_docentes) / 3
-                necesidad_prof = 0
-                necesidad_jtp = math.floor(tercio_docentes)
-                necesidad_ay1 = round(tercio_docentes)
-                necesidad_ay2 = math.ceil(tercio_docentes)
-            defaults = {
-                'necesidad_prof': necesidad_prof,
-                'necesidad_jtp': necesidad_jtp,
-                'necesidad_ay1': necesidad_ay1,
-                'necesidad_ay2': necesidad_ay2,
-            }
+        else:
+            nombre_materia = maymin(parte.find('thead').text)
+            materia, _ = Materia.objects.get_or_create(nombre=nombre_materia,
+                                                       obligatoriedad=tipo_de_materia.name)
+            logger.info('Analizando: %s', materia)
 
-            numero_turno = int(tipoynumero[1]) if len(tipoynumero) > 1 else 0
+            for turno_html in parte.find_all('tr'):
+                rows = turno_html.find_all('td')
+                tipoynumero = rows[0].text.split()
+                turno_docentes = rows[2].text.split(' — ')
 
-            turno, creado = Turno.objects.get_or_create(
-                                            materia=materia,
-                                            anno=nuevo_anno,
-                                            cuatrimestre=nuevo_cuatrimestre,
-                                            numero=numero_turno,
-                                            tipo=tipo_turno,
-                                            defaults=defaults)
-            if creado:
-                logger.info('nuevo turno creado: %s', turno)
+                # turnos
+                tipo_turno = tipo_turnos[tipoynumero[0]]
+                if tipo_turno == TipoTurno.T.name:
+                    necesidad_prof = 1
+                    necesidad_jtp = necesidad_ay1 = necesidad_ay2 = 0
+                else:
+                    tercio_docentes = len(turno_docentes) / 3
+                    necesidad_prof = 0
+                    necesidad_jtp = math.floor(tercio_docentes)
+                    necesidad_ay1 = round(tercio_docentes)
+                    necesidad_ay2 = math.ceil(tercio_docentes)
+                defaults = {
+                    'necesidad_prof': necesidad_prof,
+                    'necesidad_jtp': necesidad_jtp,
+                    'necesidad_ay1': necesidad_ay1,
+                    'necesidad_ay2': necesidad_ay2,
+                }
 
-            turno_actual, _ = Turno.objects.get_or_create(materia=materia,
-                                                          anno=anno_actual,
-                                                          cuatrimestre=cuatrimestre_actual,
-                                                          numero=numero_turno,
-                                                          tipo=tipo_turno,
-                                                          defaults=defaults)
+                numero_turno = int(tipoynumero[1]) if len(tipoynumero) > 1 else 0
 
-            # docentes y cargas
-            cargo = cargo_tipoturno[tipoynumero[0]]
-            for docente in turno_docentes:
-                doc, creado = Docente.objects.get_or_create(nombre=docente,
-                                                            defaults={'cargo': cargo})
-                if creado:
-                    logger.info('agregue a: %s', doc)
-                    info_cuatri, _ = CuatrimestreDocente.objects.get_or_create(
-                                                docente=doc,
+                turno, creado = Turno.objects.get_or_create(
+                                                materia=materia,
                                                 anno=nuevo_anno,
                                                 cuatrimestre=nuevo_cuatrimestre,
-                                                defaults={'cargas': 1})
-
-                carga, creada = Carga.objects.get_or_create(docente=doc,
-                                                            turno=turno_actual,
-                                                            defaults={'cargo': cargo})
-                if creada:
-                    logger.info('Carga docente: %s -> %s', doc.nombre, turno_actual)
-
-            # horarios
-            horarios = convierte_a_horarios(rows[1].text)
-            for horario in horarios:
-                logger.info('horario: %s, %s, %s', horario[0], horario[1], horario[2])
-                h, creado = Horario.objects.get_or_create(
-                                        dia=horario[0],
-                                        comienzo=horario[1],
-                                        final=horario[2],
-                                        turno=turno,
-                                        defaults={'aula': '', 'pabellon': 1})
+                                                numero=numero_turno,
+                                                tipo=tipo_turno,
+                                                defaults=defaults)
                 if creado:
-                    logger.debug('Agregué un nuevo horario para %s: %s', turno, h)
+                    logger.info('nuevo turno creado: %s', turno)
 
-                h_actual, _ = Horario.objects.get_or_create(
-                                        dia=horario[0],
-                                        comienzo=horario[1],
-                                        final=horario[2],
-                                        turno=turno_actual,
-                                        defaults={'aula': '', 'pabellon': 1})
+                turno_actual, _ = Turno.objects.get_or_create(materia=materia,
+                                                              anno=anno_actual,
+                                                              cuatrimestre=cuatrimestre_actual,
+                                                              numero=numero_turno,
+                                                              tipo=tipo_turno,
+                                                              defaults=defaults)
+
+                # docentes y cargas
+                cargo = cargo_tipoturno[tipoynumero[0]]
+                for docente in turno_docentes:
+                    doc, creado = Docente.objects.get_or_create(nombre=docente,
+                                                                defaults={'cargo': cargo})
+                    if creado:
+                        logger.info('agregue a: %s', doc)
+                        info_cuatri, _ = CuatrimestreDocente.objects.get_or_create(
+                                                    docente=doc,
+                                                    anno=nuevo_anno,
+                                                    cuatrimestre=nuevo_cuatrimestre,
+                                                    defaults={'cargas': 1})
+
+                    carga, creada = Carga.objects.get_or_create(docente=doc,
+                                                                turno=turno_actual,
+                                                                defaults={'cargo': cargo})
+                    if creada:
+                        logger.info('Carga docente: %s -> %s', doc.nombre, turno_actual)
+
+                # horarios
+                horarios = convierte_a_horarios(rows[1].text)
+                for horario in horarios:
+                    logger.info('horario: %s, %s, %s', horario[0], horario[1], horario[2])
+                    h, creado = Horario.objects.get_or_create(
+                                            dia=horario[0],
+                                            comienzo=horario[1],
+                                            final=horario[2],
+                                            turno=turno,
+                                            defaults={'aula': '', 'pabellon': 1})
+                    if creado:
+                        logger.debug('Agregué un nuevo horario para %s: %s', turno, h)
+
+                    h_actual, _ = Horario.objects.get_or_create(
+                                            dia=horario[0],
+                                            comienzo=horario[1],
+                                            final=horario[2],
+                                            turno=turno_actual,
+                                            defaults={'aula': '', 'pabellon': 1})
 
 
 
