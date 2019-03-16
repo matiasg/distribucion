@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import urllib.request as request
 from django.utils.dateparse import parse_time
+from argparse import ArgumentParser
 
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
@@ -16,7 +17,7 @@ import django
 django.setup()
 
 from materias.models import (Materia, Turno, Horario, Docente, Carga, CuatrimestreDocente,
-                             TipoMateria, TipoTurno, Cargos, Dias)
+                             Cuatrimestres, TipoMateria, TipoTurno, Cargos, Dias, get_key_enum)
 
 # logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 logger = logging.getLogger()
@@ -77,7 +78,7 @@ cargo_tipoturno = {'Teórica': Cargos.Tit.name,
                    'Práctica': Cargos.JTP.name,
                    'Teórico-Práctica': Cargos.JTP.name}
 
-def salva_datos(html, nuevo_anno, nuevo_cuatrimestre, anno_actual, cuatrimestre_actual):
+def salva_datos(html, anno_actual, cuatrimestre, anno_nuevo):
     soup = BeautifulSoup(html, 'html.parser')
     comienzo = soup.find_all('div', attrs={'class': 'seccion'})[0]
 
@@ -126,8 +127,8 @@ def salva_datos(html, nuevo_anno, nuevo_cuatrimestre, anno_actual, cuatrimestre_
 
                 turno, creado = Turno.objects.get_or_create(
                                                 materia=materia,
-                                                anno=nuevo_anno,
-                                                cuatrimestre=nuevo_cuatrimestre,
+                                                anno=anno_nuevo,
+                                                cuatrimestre=cuatrimestre,
                                                 numero=numero_turno,
                                                 tipo=tipo_turno,
                                                 defaults=defaults)
@@ -136,7 +137,7 @@ def salva_datos(html, nuevo_anno, nuevo_cuatrimestre, anno_actual, cuatrimestre_
 
                 turno_actual, _ = Turno.objects.get_or_create(materia=materia,
                                                               anno=anno_actual,
-                                                              cuatrimestre=cuatrimestre_actual,
+                                                              cuatrimestre=cuatrimestre,
                                                               numero=numero_turno,
                                                               tipo=tipo_turno,
                                                               defaults=defaults)
@@ -150,8 +151,8 @@ def salva_datos(html, nuevo_anno, nuevo_cuatrimestre, anno_actual, cuatrimestre_
                         logger.info('agregue a: %s', doc)
                         info_cuatri, _ = CuatrimestreDocente.objects.get_or_create(
                                                     docente=doc,
-                                                    anno=nuevo_anno,
-                                                    cuatrimestre=nuevo_cuatrimestre,
+                                                    anno=anno_nuevo,
+                                                    cuatrimestre=cuatrimestre,
                                                     defaults={'cargas': 1})
 
                     carga, creada = Carga.objects.get_or_create(docente=doc,
@@ -182,6 +183,20 @@ def salva_datos(html, nuevo_anno, nuevo_cuatrimestre, anno_actual, cuatrimestre_
 
 
 
+def parse():
+    anno = datetime.datetime.now().year
+    parser = ArgumentParser(description='utilitario para llenar materias en la db')
+    parser.add_argument('-a', '--año_actual', default=anno, type=int,
+                        help='Año del que se quiere tomar la información')
+    parser.add_argument('cuatrimestre',
+                        choices=[c.value for c in Cuatrimestres],
+                        help='cuatrimestre del que se quiere tomar la información')
+    parser.add_argument('año_a_copiar', default=anno+1,
+                        help='Año en el que se van a crear las materias copiadas')
+    return parser.parse_args()
+
 if __name__ == '__main__':
-    html = lee_horarios_anteriores(2019, 1)
-    salva_datos(html, 2020, 'P', 2019, 'P')
+    args = parse()
+    cuatrimestre_name = get_key_enum(Cuatrimestres)[args.cuatrimestre]
+    html = lee_horarios_anteriores(args.año_actual, args.cuatrimestre.lower())
+    salva_datos(html, args.año_actual, cuatrimestre_name, args.año_a_copiar)

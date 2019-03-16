@@ -44,6 +44,10 @@ def choice_enum(enum_cls):
     return ((e.name, e.value) for e in enum_cls)
 
 
+def get_key_enum(enum_cls):
+    return {e.value: e.name for e in enum_cls}
+
+
 TurnoInfo = namedtuple('TurnoInfo', ['tipoynumero', 'diayhora', 'aula', 'pabellon'])
 
 
