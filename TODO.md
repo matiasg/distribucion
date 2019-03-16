@@ -2,8 +2,8 @@ Cosas que debo hacer
 ====================
 
 * encuestas
-    [1] chequear que en las encuestas no hay opciones repetidas
-    [3] chequear que hay la cantidad de opciones correcta
+    [-] chequear que en las encuestas no hay opciones repetidas
+    [2] chequear que hay la cantidad de opciones correcta
         Esto puede significar que:
           - cada docente tiene pre-fijada una cantidad
           - el docente entra la cantidad de opciones que debe contestar
