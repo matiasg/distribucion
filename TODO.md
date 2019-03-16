@@ -10,6 +10,9 @@ Cosas que debo hacer
     [-] Después de una encuesta
         - cambiar el texto!
         - debe decir qué se eligió
+    [ ] ordenar
+        - a los docentes por nombre
+        - a los turnos por materia
     [ ] mandar email después de la respuesta?
     [ ] mandar email con password personalizado?
 
@@ -37,5 +40,7 @@ Cosas que debo hacer
         Puede ser encuesta con parejas de preferencias
     [ ] juntar turnos chicos para las encuestas (los que son un solo dia)
         Ej: taller de álgebra 1, Matemática 2.
+        Propuesta: turnos de docentes != turnos para alumnos.
+                    Si hacemos esto, el subnumero es para alumnos y no para docentes.
     [-] que las preferencias sean editables (no salen en el admin)
     [ ] pensar qué hacer con materias repetidas (primer y segundo cuatrimestre). Queremos que se pueda? Que no? Que se intente que no?
