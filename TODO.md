@@ -18,7 +18,7 @@ Cosas que debo hacer
     [-] en las necesidades, descontar los docentes ya distribuidos
     [-] manejar el campo de "intento"
     [-] borrar todas las asignaciones de un intento antes de distribuir
-    [1] normalizar los pesos
+    [-] normalizar los pesos
 
 * general
     [ ] distribucion/settings.py <-- mirar SECRET_KEY
