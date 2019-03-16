@@ -128,7 +128,7 @@ def distribuir(request):
         wmap = allocating.WeightedMap(pesos)
 
         # llamamos al distribuidor
-        allocator = allocating.Allocator(sources, wmap, targets)
+        allocator = allocating.Allocator(sources, wmap, targets, limit_denominator=1000)
         distribucion = allocator.get_best()
         logger.info('distribución obtenida (con ids): %s', distribucion)
 
