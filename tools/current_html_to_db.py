@@ -76,9 +76,7 @@ tipo_turnos = {'Teórica': TipoTurno.T.name,
 cargo_tipoturno = {'Teórica': Cargos.Tit.name,
                    'Práctica': Cargos.JTP.name,
                    'Teórico-Práctica': Cargos.JTP.name}
-necesidades_index_tipoturno = {'Teórica': 0,
-                               'Práctica': 1,
-                               'Teórico-Práctica': 1}
+
 def salva_datos(html, nuevo_anno, nuevo_cuatrimestre, anno_actual, cuatrimestre_actual):
     soup = BeautifulSoup(html, 'html.parser')
     comienzo = soup.find_all('div', attrs={'class': 'seccion'})[0]
