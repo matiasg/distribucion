@@ -159,11 +159,12 @@ def salva_datos(html, anno_actual, cuatrimestre, anno_nuevo):
                                                                 defaults={'cargo': cargo})
                     if creado:
                         logger.info('agregue a: %s', doc)
-                        info_cuatri, _ = CuatrimestreDocente.objects.get_or_create(
-                                                    docente=doc,
-                                                    anno=anno_nuevo,
-                                                    cuatrimestre=cuatrimestre,
-                                                    defaults={'cargas': 1})
+
+                    info_cuatri, _ = CuatrimestreDocente.objects.get_or_create(
+                                                docente=doc,
+                                                anno=anno_nuevo,
+                                                cuatrimestre=cuatrimestre,
+                                                defaults={'cargas': 1})
 
                     carga, creada = Carga.objects.get_or_create(docente=doc,
                                                                 turno=turno_actual,
