@@ -24,11 +24,11 @@ class MapeosDistribucion:
         if tipo_docente == TipoDocentes.P.name:
             return turno.necesidad_prof
         elif tipo_docente == TipoDocentes.J.name:
-            return tipo.necesidad_jtp
+            return turno.necesidad_jtp
         elif tipo_docente == TipoDocentes.A1.name:
-            return tipo.necesidad_ay1
+            return turno.necesidad_ay1
         else:
-            return tipo.necesidad_ay2
+            return turno.necesidad_ay2
 
 
 def index(request):
