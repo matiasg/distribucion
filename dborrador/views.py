@@ -47,7 +47,8 @@ def copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo):
         logger.debug('considerando %d prefs para %s. Peso total: %s', len(prefs), docente, peso_total)
 
         for pref in prefs:
-            pref_copia, creada = Preferencia.objects.get_or_create(preferencia=pref)
+            pref_copia, creada = Preferencia.objects.get_or_create(preferencia=pref,
+                                                                   defaults={'peso_normalizado': pref.peso})
             pref_copia.peso_normalizado = pref.peso / peso_total if peso_total else 1 / len(prefs)
             pref_copia.save()
             if creada:
@@ -112,8 +113,9 @@ def distribuir(request):
         info_cuatri = CuatrimestreDocente.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
         sources = dict()
         for d in docentes:
-            info_doc = info_cuatri.get(docente=d)
-            sources[str(d.id)] = info_doc.cargas
+            info_doc = info_cuatri.filter(docente=d).first()
+            if info_doc is not None:
+                sources[str(d.id)] = info_doc.cargas
 
         targets = {}
         for turno in turnos:
