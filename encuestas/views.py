@@ -99,6 +99,7 @@ def encuesta(request, anno, cuatrimestre, tipo_docente):
                'anno': anno,
                'cuatrimestre': cuatrimestre,
                'tipo_docente': tipo_docente,
+               'maximo_peso': 20,
                }
     try:
         docente = Docente.objects.get(pk=request.POST['docente'])

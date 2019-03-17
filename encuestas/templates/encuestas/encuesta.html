@@ -30,7 +30,7 @@
         <option value="{{ turno.id }}">{{ turno }} ({{ turno.horarios_info.diayhora }})</option>
         {% endfor %}
     </select>
-    Peso: <input type="number" name="peso{{ forloop.counter }}" min=0 value=1>
+    Peso: <input type="number" name="peso{{ forloop.counter }}" min=0 max={{ maximo_peso }} value=1>
 {% endfor %}
 
 
