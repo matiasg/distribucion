@@ -13,6 +13,7 @@ Cosas que debo hacer
     [ ] ordenar
         - a los docentes por nombre
         - a los turnos por materia
+    [-] - limitar los pesos a 20
     [ ] mandar email después de la respuesta?
     [ ] mandar email con password personalizado?
 
