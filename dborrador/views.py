@@ -105,7 +105,7 @@ def distribuir(request):
                     tipo, cuatrimestre, anno)
 
         docentes = Mapeos.docentes(tipo)
-        turnos = Mapeos.encuesta_tipo_turno(tipo)
+        turnos = Mapeos.encuesta_tipo_turno(tipo).filter(anno=anno, cuatrimestre=cuatrimestre)
         preferencias = Preferencia.objects.all()
 
         logger.info('%d docentes, %d turnos, %d preferencias', len(docentes), len(turnos), len(preferencias))
@@ -127,10 +127,10 @@ def distribuir(request):
                   'to': str(p.preferencia.turno.id),
                   'weight': p.peso_normalizado}
                  for p in preferencias]
-        wmap = allocating.WeightedMap(pesos)
+        wmap = allocating.ListWeightedMap(pesos)
 
         # llamamos al distribuidor
-        allocator = allocating.Allocator(sources, wmap, targets, limit_denominator=1000)
+        allocator = allocating.Allocator(sources, wmap, targets, limit_denominator=100)
         distribucion = allocator.get_best()
         logger.info('distribución obtenida (con ids): %s', distribucion)
 
