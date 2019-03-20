@@ -96,9 +96,9 @@ def salva_datos(html, anno_actual, cuatrimestre, anno_nuevo):
 
         else:
             nombre_materia = maymin(parte.find('thead').text)
+            logger.info('Analizando: %s', nombre_materia)
             materia, _ = Materia.objects.get_or_create(nombre=nombre_materia,
                                                        obligatoriedad=tipo_de_materia.name)
-            logger.info('Analizando: %s', materia)
 
             for turno_html in parte.find_all('tr'):
                 rows = turno_html.find_all('td')
