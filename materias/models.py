@@ -54,7 +54,7 @@ TurnoInfo = namedtuple('TurnoInfo', ['tipoynumero', 'diayhora', 'aula', 'pabello
 
 
 class Materia(models.Model):
-    nombre = models.CharField(max_length=80)
+    nombre = models.CharField(max_length=120)
     obligatoriedad = models.CharField(max_length=1, choices=choice_enum(TipoMateria))
 
     def __str__(self):
