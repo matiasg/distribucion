@@ -1,24 +1,31 @@
 version: '3'
 
 services:
-  #db:
-  #  image: postgres
+  db:
+    image: postgres
+    volumes:
+      - distribucion_pgdata:/var/lib/postgresql/data
   web:
     build: .
-    environment:
-      - DB_NAME=${DB_NAME:-db.sqlite}
+    #environment:
+    #  - DB_NAME=${DB_NAME:-db.sqlite}
     volumes:
-      - "${DB_PATH:-/usr/local/share}:/db"
+      - distribucion_pgdata:/var/lib/postgresql/data
     working_dir: /codigo/distribucion
     ports:
       - "8000:8000"
     command: python manage.py runserver --insecure 0.0.0.0:8000
-    #depends_on:
-    #  - db
+    depends_on:
+      - db
   bash:
     build: .
-    environment:
-      - DB_NAME=${DB_NAME:-db.sqlite}
+    #environment:
+    #  - DB_NAME=${DB_NAME:-db.sqlite}
     volumes:
-      - "${DB_PATH:-/usr/local/share}:/db"
+      - distribucion_pgdata:/var/lib/postgresql/data
     command: /bin/bash
+    depends_on:
+      - db
+
+volumes:
+  distribucion_pgdata:
