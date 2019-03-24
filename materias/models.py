@@ -74,7 +74,8 @@ class Turno(models.Model):
     necesidad_ay2 = models.PositiveIntegerField(validators=[MaxValueValidator(15)])
 
     def __str__(self):
-        return f'{self.materia.nombre}: {self.tipo} {self.numero}'
+        return (f'{self.materia.nombre} ({self.anno}, {self.cuatrimestre}) '
+                f'{self.tipo} {self.numero}')
 
     def horarios_info(self):
 
