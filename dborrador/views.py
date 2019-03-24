@@ -123,10 +123,17 @@ def distribuir(request):
             necesidad -= len(asignaciones_previas.filter(turno=turno))
             targets[str(turno.id)] = necesidad
 
-        pesos = [{'from': str(p.preferencia.docente.id),
-                  'to': str(p.preferencia.turno.id),
-                  'weight': p.peso_normalizado}
-                 for p in preferencias]
+        pesos = []
+        for preferencia in preferencias:
+            if preferencia.preferencia.docente in docentes and preferencia.preferencia.turno in turnos:
+                pesos.append({'from': str(preferencia.preferencia.docente.id),
+                              'to': str(preferencia.preferencia.turno.id),
+                              'weight': preferencia.peso_normalizado}
+                             )
+            else:
+                logger.warning('Tengo una preferencia de %s para %s pero no se está distribuyendo ese turno',
+                               preferencia.preferencia.docente, preferencia.preferencia.turno)
+
         wmap = allocating.ListWeightedMap(pesos)
 
         # llamamos al distribuidor
