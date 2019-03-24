@@ -29,3 +29,4 @@ services:
 
 volumes:
   distribucion_pgdata:
+    external: true
