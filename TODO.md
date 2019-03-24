@@ -19,15 +19,18 @@ Cosas que debo hacer
 
 * distribucion
     [ ] preparar -> distribuir más dinámico
+    [1] si hay asignaciones previas hay que descontar en los docentes (además de en los turnos)
+    [-] si hay encuestas para turnos que no se están distribuyendo, no utilizarlos (y loguear en WARNING)
     [-] en las necesidades, descontar los docentes ya distribuidos
     [-] manejar el campo de "intento"
     [-] borrar todas las asignaciones de un intento antes de distribuir
     [-] normalizar los pesos
 
 * general
-    [ ] distribucion/settings.py <-- mirar SECRET_KEY
+    [ ] distribucion/settings.py <-- mirar SECRET_KEY >
     [-] las cargas son por docente/cuatrimestre
-    [ ] separar materias según obligatorias/optativas en tools/current_html_to_db.py
+    [-] separar materias según obligatorias/optativas en tools/current_html_to_db.py
+    [-] usar postgresql
 
 * hecho
     [-] botón para hacer distribuciones
