@@ -14,8 +14,8 @@ class TestEncuesta(TestCase):
     def setUp(self):
         self.anno = 2100
         self.docente = Docente.objects.create(nombre='juan', email='mail@nada.org',
-                                              telefono='1234', cargo=Cargos.JTP)
-        self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B)
+                                              telefono='1234', cargo=Cargos.JTP.name)
+        self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
         self.turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
                                           numero=1, tipo=TipoTurno.A.name,
                                           necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
