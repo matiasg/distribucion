@@ -82,7 +82,7 @@ class TestEncuesta(TestCase):
     def test_titulo_correcto(self):
         response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.P.name, 'J')))
         self.assertEqual(response.request['PATH_INFO'], f'/encuestas/encuesta/{self.anno}/P/J')
-        self.assertContains(response, f'cuatrimestre 1 de {self.anno}')
+        self.assertContains(response, f'cuatrimestre {Cuatrimestres.P.name} de {self.anno}')
 
     def test_turnos_correctos(self):
         response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.P.name, 'J')))
