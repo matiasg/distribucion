@@ -10,7 +10,7 @@ Cosas que debo hacer
     [-] Después de una encuesta
         - cambiar el texto!
         - debe decir qué se eligió
-    [ ] ordenar
+    [-] ordenar
         - a los docentes por nombre
         - a los turnos por materia
     [-] - limitar los pesos a 20
@@ -19,7 +19,7 @@ Cosas que debo hacer
 
 * distribucion
     [ ] preparar -> distribuir más dinámico
-    [1] si hay asignaciones previas hay que descontar en los docentes (además de en los turnos)
+    [-] si hay asignaciones previas hay que descontar en los docentes (además de en los turnos)
     [-] si hay encuestas para turnos que no se están distribuyendo, no utilizarlos (y loguear en WARNING)
     [-] en las necesidades, descontar los docentes ya distribuidos
     [-] manejar el campo de "intento"
