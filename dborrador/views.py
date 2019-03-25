@@ -97,31 +97,37 @@ def distribuir(request):
         return render(request, 'dborrador/distribuir.html', context)
 
     else:
-        asignaciones_previas = Asignacion.objects.filter(intento=intento)
+        docentes = Mapeos.docentes(tipo)
+        asignaciones_previas = Asignacion.objects.filter(intento=intento, docente__in=docentes)
         if asignaciones_previas:
             logger.warning('Hay %d asignaciones previas', len(asignaciones_previas))
 
         logger.info('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s',
                     tipo, cuatrimestre, anno)
 
-        docentes = Mapeos.docentes(tipo)
         turnos = Mapeos.encuesta_tipo_turno(tipo).filter(anno=anno, cuatrimestre=cuatrimestre)
         preferencias = Preferencia.objects.all()
 
-        logger.info('%d docentes, %d turnos, %d preferencias', len(docentes), len(turnos), len(preferencias))
+        # esta información no tiene en cuenta los docentes ya distribuidos
+        # ni las necesidades de los turnos (que pueden ser 0 o mayores que 1).
+        logger.info('%d docentes, %d turnos, %d preferencias',
+                    len(docentes), len(turnos), len(preferencias))
 
         info_cuatri = CuatrimestreDocente.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
         sources = dict()
         for d in docentes:
             info_doc = info_cuatri.filter(docente=d).first()
             if info_doc is not None:
-                sources[str(d.id)] = info_doc.cargas
+                cargas = info_doc.cargas - len(asignaciones_previas.filter(docente=d))
+                if cargas > 0:
+                    sources[str(d.id)] = cargas
 
         targets = {}
         for turno in turnos:
             necesidad = MapeosDistribucion.necesidades(turno, tipo)
             necesidad -= len(asignaciones_previas.filter(turno=turno))
-            targets[str(turno.id)] = necesidad
+            if necesidad > 0:
+                targets[str(turno.id)] = necesidad
 
         pesos = []
         for preferencia in preferencias:
@@ -131,10 +137,12 @@ def distribuir(request):
                               'weight': preferencia.peso_normalizado}
                              )
             else:
-                logger.warning('Tengo una preferencia de %s para %s pero no se está distribuyendo ese turno',
+                logger.debug('Tengo una preferencia de %s para %s pero no se está distribuyendo ese turno',
                                preferencia.preferencia.docente, preferencia.preferencia.turno)
 
         wmap = allocating.ListWeightedMap(pesos)
+        logger.info('Voy a hacer una distribución con %d cargas docentes y %d lugares en turnos',
+                    sum(sources.values()), sum(targets.values()))
 
         # llamamos al distribuidor
         allocator = allocating.Allocator(sources, wmap, targets, limit_denominator=100)
