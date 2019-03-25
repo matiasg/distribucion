@@ -94,8 +94,10 @@ def index(request):
 
 def encuesta(request, anno, cuatrimestre, tipo_docente):
     turnos = Mapeos.encuesta_tipo_turno(tipo_docente).filter(anno=anno, cuatrimestre=cuatrimestre)
+    turnos = sorted(turnos, key=lambda t: t.materia.nombre)
+    docentes = sorted(Mapeos.docentes(tipo_docente), key=lambda d: d.nombre)
     context = {'turnos': turnos,
-               'docentes': Mapeos.docentes(tipo_docente),
+               'docentes': docentes,
                'anno': anno,
                'cuatrimestre': cuatrimestre,
                'tipo_docente': tipo_docente,
