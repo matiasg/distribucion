@@ -108,7 +108,7 @@ def distribuir(request):
         turnos = Mapeos.encuesta_tipo_turno(tipo).filter(anno=anno, cuatrimestre=cuatrimestre)
         preferencias = Preferencia.objects.all()
 
-        # esta información no tiene en cuenta los docentes ya distribuidos
+        # Obs: esta línea de log no tiene en cuenta los docentes ya distribuidos
         # ni las necesidades de los turnos (que pueden ser 0 o mayores que 1).
         logger.info('%d docentes, %d turnos, %d preferencias',
                     len(docentes), len(turnos), len(preferencias))
@@ -131,7 +131,9 @@ def distribuir(request):
 
         pesos = []
         for preferencia in preferencias:
-            if preferencia.preferencia.docente in docentes and preferencia.preferencia.turno in turnos:
+            doc_id = str(preferencia.preferencia.docente.id)
+            turno_id = str(preferencia.preferencia.turno.id)
+            if doc_id in sources and turno_id in targets:
                 pesos.append({'from': str(preferencia.preferencia.docente.id),
                               'to': str(preferencia.preferencia.turno.id),
                               'weight': preferencia.peso_normalizado}
