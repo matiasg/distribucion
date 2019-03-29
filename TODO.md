@@ -19,6 +19,7 @@ Cosas que debo hacer
 
 * distribucion
     [ ] preparar -> distribuir más dinámico
+    [1] página para agregar asignaciones fácil para nuevos intentos en dborrador
     [-] si hay asignaciones previas hay que descontar en los docentes (además de en los turnos)
     [-] si hay encuestas para turnos que no se están distribuyendo, no utilizarlos (y loguear en WARNING)
     [-] en las necesidades, descontar los docentes ya distribuidos
@@ -28,6 +29,8 @@ Cosas que debo hacer
 
 * general
     [ ] distribucion/settings.py <-- mirar SECRET_KEY >
+    [ ] ponerle passwd a la db. Cuando se inicia, tira
+        "Use "-e POSTGRES_PASSWORD=password" to set it in "docker run"."
     [-] las cargas son por docente/cuatrimestre
     [-] separar materias según obligatorias/optativas en tools/current_html_to_db.py
     [-] usar postgresql
