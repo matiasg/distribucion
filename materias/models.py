@@ -74,7 +74,7 @@ class Turno(models.Model):
     necesidad_ay2 = models.PositiveIntegerField(validators=[MaxValueValidator(15)])
 
     def __str__(self):
-        return (f'{self.materia.nombre} ({self.anno}, {self.cuatrimestre}) '
+        return (f'{self.materia.nombre} ({self.anno}, {Cuatrimestres[self.cuatrimestre].value}) '
                 f'{self.tipo} {self.numero}')
 
     def horarios_info(self):
@@ -146,3 +146,7 @@ class CuatrimestreDocente(models.Model):
     class Meta:
         verbose_name = 'info cuatrimestral del docente'
         verbose_name_plural = 'informaciones cuatrimestrales'
+
+    def __str__(self):
+        return (f'{self.docente} da {self.cargas} materia(s) en '
+                f'{self.anno}, cuatrimestre {Cuatrimestres[self.cuatrimestre].value}')
