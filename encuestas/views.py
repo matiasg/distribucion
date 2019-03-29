@@ -100,6 +100,7 @@ def encuesta(request, anno, cuatrimestre, tipo_docente):
                'docentes': docentes,
                'anno': anno,
                'cuatrimestre': cuatrimestre,
+               'cuatrimestre_value': Cuatrimestres[cuatrimestre].value,
                'tipo_docente': tipo_docente,
                'maximo_peso': 20,
                }
