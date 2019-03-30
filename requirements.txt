@@ -1,4 +1,5 @@
 Django==2.1.7
+django-extensions
 bs4
 coloredlogs
 psycopg2-binary
