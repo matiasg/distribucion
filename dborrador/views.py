@@ -41,10 +41,12 @@ def copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo):
     existentes, _ = Preferencia.objects.all().delete()
 
     for docente in Mapeos.docentes(tipo):
-        prefs = PreferenciasDocente.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre,
+        prefs = PreferenciasDocente.objects.filter(turno__anno=anno,
+                                                   turno__cuatrimestre=cuatrimestre,
                                                    docente=docente)
         peso_total = sum(pref.peso for pref in prefs)
-        logger.debug('considerando %d prefs para %s. Peso total: %s', len(prefs), docente, peso_total)
+        logger.debug('considerando %d prefs para %s. Peso total: %s',
+                     prefs.count(), docente, peso_total)
 
         for pref in prefs:
             peso_normalizado = pref.peso / peso_total if peso_total else 1 / len(prefs)
@@ -133,7 +135,7 @@ def distribuir(request):
                              )
             else:
                 logger.debug('Tengo una preferencia de %s para %s pero no se está distribuyendo ese turno',
-                               preferencia.preferencia.docente, preferencia.preferencia.turno)
+                             preferencia.preferencia.docente, preferencia.preferencia.turno)
 
         wmap = allocating.ListWeightedMap(pesos)
         logger.info('Voy a hacer una distribución con %d cargas docentes y %d lugares en turnos',
