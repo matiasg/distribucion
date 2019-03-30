@@ -8,7 +8,6 @@ WORKDIR /codigo
 RUN apt-get update && apt-get install -y git
 
 RUN git clone https://ecebb780114e159b713bbdb48dd3434c57b8c24a@github.com/matiasg/distribucion.git
-#RUN cd /codigo/distribucion && git pull && cd /codigo
 COPY settings.py /codigo/distribucion/distribucion/settings.py
 RUN chmod +x /codigo/distribucion/tools/create_db
 
