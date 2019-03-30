@@ -1,9 +1,13 @@
-<h1>Elegí año y cuatrimestre</h1>
-Vamos a copiar todas las encuestas de manera de poder ensayar distribuciones.
+<h1>Copiado de encuestas al borrador</h1>
 
+Para poder ensayar distribuciones, copiamos las encuestas a una zona de "borrador",
+donde las podemos cambiar sin tocar los originales.
+
+<br>¿Qué año, cuatrimestre y tipo de docente querés distribuir?
+
+<p>
 <form action="{% url 'dborrador:preparar' %}" method="post">
 {% csrf_token %}
-
 Año: 
 <select name="anno">
     {% for a in annos %}
