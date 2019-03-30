@@ -38,7 +38,7 @@ def index(request):
 def copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo):
     '''devuelve: (prefs copiadas, prefs ya existentes) '''
     copiadas = 0
-    existentes = 0
+    existentes, _ = Preferencia.objects.all().delete()
 
     for docente in Mapeos.docentes(tipo):
         prefs = PreferenciasDocente.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre,
@@ -47,17 +47,10 @@ def copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo):
         logger.debug('considerando %d prefs para %s. Peso total: %s', len(prefs), docente, peso_total)
 
         for pref in prefs:
-            pref_copia, creada = Preferencia.objects.get_or_create(preferencia=pref,
-                                                                   defaults={'peso_normalizado': pref.peso})
-            pref_copia.peso_normalizado = pref.peso / peso_total if peso_total else 1 / len(prefs)
-            pref_copia.save()
-            if creada:
-                logger.debug('copié %s -- %s --> %s',
-                             pref.docente.nombre, pref_copia.peso_normalizado, pref.turno)
-                copiadas += 1
-            else:
-                existentes += 1
-
+            peso_normalizado = pref.peso / peso_total if peso_total else 1 / len(prefs)
+            pref_copia = Preferencia.objects.create(preferencia=pref,
+                                                    peso_normalizado=peso_normalizado)
+            copiadas += 1
     return copiadas, existentes
 
 
