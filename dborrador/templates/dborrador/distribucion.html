@@ -1,16 +1,21 @@
 {% load static %}
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 
-<form action="{% url 'dborrador:distribucion' anno cuatrimestre intento %}" method="post">
+<form action="{% url 'dborrador:distribucion' anno cuatrimestre tipo intento %}" method="post">
 {% csrf_token %}
     Ver intento: <input type="number" name="nuevo_intento" value={{ intento }}>
     <input type="submit" value="cambiar">
     <input type="hidden" name="anno" value="{{ anno }}">
     <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre }}">
+    <input type="hidden" name="tipo" value="{{ tipo }}">
 </form>
 
-<div class="info">Distribución, para {{ anno }}, cuatrimestre {{ cuatrimestre }}, intento {{ intento }}</div>
+<div class="info">Distribución, para {{ anno }}, cuatrimestre {{ cuatrimestre }},
+    tipo de docentes {{ tipo }}, intento {{ intento }}</div>
 
+<p>
+    Fijar a los docentes marcados para un nuevo intento de distribución
+    <input type="submit" value="fijar_para_intento_{{ nuevo_intento }}">
 {% for tipo, lista in materias %}
 
 <div class="seccion">{{ tipo }}</div>
@@ -26,7 +31,14 @@
 
             <td class="fondo{{ turno.tipo }}">{{ turno.horarios_info.tipoynumero }}</td>
             <td>{{ turno.horarios_info.diayhora }}</td>
-            <td>{{ turno.docentes_asignados }}</td>
+                {% comment %}{{ turno.docentes_asignados }}{% endcomment %}
+            <td>{% for docente, en_distribucion in turno.docentes_asignados %}
+                {% if en_distribucion %}
+                <input type="checkbox" name="fijar" value="{{ docente.id }}">
+                {% endif %}
+                {{ docente.nombre }}
+                {% endfor %}
+            </td>
                 
             </tr>
         {% endfor %}
@@ -37,3 +49,4 @@
     {% endfor %}
 
 {% endfor %}
+</form>

@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
+from django.db.models import Max
 
 from .models import Preferencia, Asignacion
 from materias.models import (Turno, Docente, Materia, CuatrimestreDocente,
@@ -157,41 +158,47 @@ def distribuir(request):
             asignacion, _ = Asignacion.objects.get_or_create(
                                         intento=intento, docente=docente, turno=turno)
 
-        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento))
+        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo, intento))
         return HttpResponseRedirect(distribucion_url)
 
 
-def distribucion(request, anno, cuatrimestre, intento):
+def distribucion(request, anno, cuatrimestre, tipo, intento):
+    max_intento = Asignacion.objects.all().aggregate(Max('intento'))['intento__max']
     try:
         intento = int(request.POST['nuevo_intento'])
     except:
         pass
     finally:
-        materias_distribuidas = filtra_materias(anno=anno, cuatrimestre=cuatrimestre, intento=intento)
+        materias_distribuidas = filtra_materias(anno=anno, cuatrimestre=cuatrimestre, intento=intento, tipo=tipo)
         context = {'materias': materias_distribuidas,
                    'anno': anno,
                    'cuatrimestre': cuatrimestre,
-                   'intento': intento}
+                   'tipo': tipo,
+                   'intento': intento,
+                   'nuevo_intento': max_intento + 1}
         return render(request, 'dborrador/distribucion.html', context)
 
 
-def filtra_materias(intento, **kwargs):
+def filtra_materias(intento, tipo, **kwargs):
+    docentes_distribuidos = Mapeos.docentes(tipo)
     turnos = Turno.objects.filter(**kwargs)
-    tipo_dict = {TipoMateria.B.name: 'Obligatorias',
-                 TipoMateria.R.name: 'Optativas regulares',
-                 TipoMateria.N.name: 'Optativas no regulares'}
+    obligatoriedades = {TipoMateria.B.name: 'Obligatorias',
+                        TipoMateria.R.name: 'Optativas regulares',
+                        TipoMateria.N.name: 'Optativas no regulares'}
 
     materias = []
-    for tipo, tipo_largo in tipo_dict.items():
-        tmaterias = Materia.objects.filter(obligatoriedad=tipo)
+    for obligatoriedad, obligatoriedad_largo in obligatoriedades.items():
+        tmaterias = Materia.objects.filter(obligatoriedad=obligatoriedad)
         materias_turnos = [
                 (materia, Turno.objects.filter(materia=materia, **kwargs))
                 for materia in tmaterias
                 ]
         for materia, turnos in materias_turnos:
             for turno in turnos:
-                asignaciones = [a for a in turno.asignacion_set.all() if a.intento == intento]
-                turno.docentes_asignados = ' - '.join([a.docente.nombre for a in asignaciones])
-        materias.append((tipo_largo, materias_turnos))
+                asignaciones = [(a.docente, a.docente in docentes_distribuidos)
+                                for a in turno.asignacion_set.all() if a.intento == intento]
+                turno.docentes_asignados = asignaciones
+                # turno.docentes_asignados = ' - '.join([a.docente.nombre for a in asignaciones])
+        materias.append((obligatoriedad_largo, materias_turnos))
 
     return materias
