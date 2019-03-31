@@ -1,5 +1,19 @@
 <!DOCTYPE html>
 
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'dborrador/dborrador.css' %}">
+
+{% if messages %}
+<b>El intento {{ intento }} está roto. Hay que reorganizarlo manualmente</b>
+<div class="messages">
+    {% for message in messages %}
+    <br>{% if message.tags %} [{{ message.tags }}] {% endif %} {{ message }}</br>
+    {% endfor %}
+</div>
+{% endif %}
+
+
+
 <h1>Elegí año y cuatrimestre</h1>
 Vamos a hacer una distribución
 

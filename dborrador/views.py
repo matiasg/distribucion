@@ -5,6 +5,7 @@ from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
 from django.db.models import Max
+from django.contrib import messages
 
 from .models import Preferencia, Asignacion
 from materias.models import (Turno, Docente, Materia, CuatrimestreDocente,
@@ -108,6 +109,7 @@ def distribuir(request):
         # ni las necesidades de los turnos (que pueden ser 0 o mayores que 1).
         logger.info('%d docentes, %d turnos, %d preferencias',
                     docentes.count(), turnos.count(), preferencias.count())
+        hay_errores = False
 
         info_cuatri = CuatrimestreDocente.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
         sources = dict()
@@ -117,7 +119,9 @@ def distribuir(request):
                 cargas = info_doc.cargas - asignaciones_previas.filter(docente=d).count()
                 if cargas > 0:
                     sources[str(d.id)] = cargas
-                # TODO: mostrar warning si cargas < 0
+                elif cargas < 0:
+                    messages.error(request, f'Hay demasiadas asignaciones para {d}')
+                    hay_errores = True
 
         targets = {}
         for turno in turnos:
@@ -125,7 +129,18 @@ def distribuir(request):
             necesidad -= asignaciones_previas.filter(turno=turno).count()
             if necesidad > 0:
                 targets[str(turno.id)] = necesidad
-            # TODO: mostrar warning si necesidad < 0
+            elif necesidad < 0:
+                messages.error(request, f'Hay demasiados docentes asignados al turno {turno}')
+                hay_errores = True
+
+        if hay_errores:
+            context = {
+                    'annos': [anno],
+                    'cuatrimestres': [Cuatrimestres[cuatrimestre]],
+                    'tipos': [TipoDocentes[tipo]],
+                    'intento': intento}
+            return render(request, 'dborrador/distribuir.html', context)
+
 
         pesos = []
         for preferencia in preferencias:
