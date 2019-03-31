@@ -18,14 +18,16 @@ Cosas que debo hacer
     [ ] mandar email con password personalizado?
 
 * distribucion
-    [ ] preparar -> distribuir más dinámico
-    [1] página para agregar asignaciones fácil para nuevos intentos en dborrador
+    [1] logging en la página cuando hay cargas o necesidades < 0 (hay dos TODO en el código)
+    [3] página para agregar asignaciones fácil para nuevos intentos en dborrador
+        Está hecho un poco en la página de ver distribuciones.
     [-] si hay asignaciones previas hay que descontar en los docentes (además de en los turnos)
     [-] si hay encuestas para turnos que no se están distribuyendo, no utilizarlos (y loguear en WARNING)
     [-] en las necesidades, descontar los docentes ya distribuidos
     [-] manejar el campo de "intento"
     [-] borrar todas las asignaciones de un intento antes de distribuir
     [-] normalizar los pesos
+    [-] preparar -> distribuir más dinámico
 
 * general
     [ ] distribucion/settings.py <-- mirar SECRET_KEY >
