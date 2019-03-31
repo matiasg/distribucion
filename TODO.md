@@ -18,7 +18,8 @@ Cosas que debo hacer
     [ ] mandar email con password personalizado?
 
 * distribucion
-    [1] logging en la página cuando hay cargas o necesidades < 0 (hay dos TODO en el código)
+    [-] logging en la página cuando hay cargas o necesidades < 0 (hay dos TODO en el código)
+    [1] Avisar de docentes no distribuidos y turnos no cubiertos
     [3] página para agregar asignaciones fácil para nuevos intentos en dborrador
         Está hecho un poco en la página de ver distribuciones.
     [-] si hay asignaciones previas hay que descontar en los docentes (además de en los turnos)
