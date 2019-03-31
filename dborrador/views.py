@@ -96,7 +96,7 @@ def distribuir(request):
         docentes = Mapeos.docentes(tipo)
         asignaciones_previas = Asignacion.objects.filter(intento=intento, docente__in=docentes)
         if asignaciones_previas:
-            logger.warning('Hay %d asignaciones previas', asignaciones_previas.count())
+            logger.warning('Hay %d asignacion(es) previa(s)', asignaciones_previas.count())
 
         logger.info('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s',
                     tipo, cuatrimestre, anno)
@@ -117,6 +117,7 @@ def distribuir(request):
                 cargas = info_doc.cargas - asignaciones_previas.filter(docente=d).count()
                 if cargas > 0:
                     sources[str(d.id)] = cargas
+                # TODO: mostrar warning si cargas < 0
 
         targets = {}
         for turno in turnos:
@@ -124,6 +125,7 @@ def distribuir(request):
             necesidad -= asignaciones_previas.filter(turno=turno).count()
             if necesidad > 0:
                 targets[str(turno.id)] = necesidad
+            # TODO: mostrar warning si necesidad < 0
 
         pesos = []
         for preferencia in preferencias:
@@ -135,7 +137,8 @@ def distribuir(request):
                               'weight': preferencia.peso_normalizado}
                              )
             else:
-                logger.debug('Tengo una preferencia de %s para %s pero no se está distribuyendo ese turno',
+                logger.debug(('Tengo una preferencia de %s para %s pero no se está '
+                              'distribuyendo ese turno o ese docente'),
                              preferencia.preferencia.docente, preferencia.preferencia.turno)
 
         wmap = allocating.ListWeightedMap(pesos)
@@ -163,20 +166,40 @@ def distribuir(request):
 
 
 def distribucion(request, anno, cuatrimestre, tipo, intento):
-    max_intento = Asignacion.objects.all().aggregate(Max('intento'))['intento__max']
-    try:
-        intento = int(request.POST['nuevo_intento'])
-    except:
-        pass
-    finally:
+    if not 'fijar' in request.POST:
+        try:
+            proximo_intento = Asignacion.objects.all().aggregate(Max('intento'))['intento__max'] + 1
+        except TypeError:  # None + 1 => TypeError
+            logger.error('No hay docentes asignados todavía. Redirect a la página para distribuir')
+            distribuir_url = reverse('dborrador:distribuir')
+            return HttpResponseRedirect(distribuir_url)
+
+        if 'cambiar' in request.POST:
+            intento = int(request.POST['nuevo_intento'])
+            distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo, intento))
+            return HttpResponseRedirect(distribucion_url)
+
         materias_distribuidas = filtra_materias(anno=anno, cuatrimestre=cuatrimestre, intento=intento, tipo=tipo)
         context = {'materias': materias_distribuidas,
                    'anno': anno,
                    'cuatrimestre': cuatrimestre,
                    'tipo': tipo,
                    'intento': intento,
-                   'nuevo_intento': max_intento + 1}
+                   'nuevo_intento': proximo_intento}
         return render(request, 'dborrador/distribucion.html', context)
+
+    else:
+        fijados = request.POST.getlist('docente_fijado')
+        proximo_intento = int(request.POST['proximo_intento'])
+        for docente_id in fijados:
+            docente = Docente.objects.get(pk=int(docente_id))
+            turno = Asignacion.objects.filter(docente=docente, intento=intento).first().turno
+            Asignacion.objects.create(docente=docente,
+                                      turno=turno,
+                                      intento=proximo_intento)
+
+        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo, intento))
+        return HttpResponseRedirect(distribucion_url)
 
 
 def filtra_materias(intento, tipo, **kwargs):
