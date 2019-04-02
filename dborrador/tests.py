@@ -50,3 +50,17 @@ class TestPreparar(TestCase):
         self.assertTrue(re.search('Borradas:[^0-9]*0[^0-9]*\n', content),
                         'La página deberia decir que se borraron 0 preferencias')
         self.assertEqual(Preferencia.objects.all().count(), 2, 'Debería haber dos preferencias copiadas')
+
+
+class TestPaginaPrincipal(TestCase):
+
+    def test_hay_pagina_principal(self):
+        c = Client()
+        response = c.get('/dborrador/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(re.search('<a href=.preparar.>', response.content.decode()),
+                        'La página principal no contiene un link a /dborrador/preparar')
+        self.assertTrue(re.search('<a href=.distribuir.>', response.content.decode()),
+                        'La página principal no contiene un link a /dborrador/distribuir')
+        self.assertTrue(re.search('<a href=.distribucion/\d+/[PSV]/[PJA12]/\d+', response.content.decode()),
+                        'La página principal no contiene un link a /dborrador/distribucion/... completo')
