@@ -1,7 +1,7 @@
 import logging
 
 from django.shortcuts import render
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.utils import timezone
 from django.db.models import Max
@@ -33,10 +33,6 @@ class MapeosDistribucion:
             return turno.necesidad_ay2
 
 
-def index(request):
-    raise Http404('Todavía no hay contenido para esta página')
-
-
 def copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo):
     '''devuelve: (prefs copiadas, prefs ya existentes) '''
     copiadas = 0
@@ -56,6 +52,29 @@ def copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo):
                                                     peso_normalizado=peso_normalizado)
             copiadas += 1
     return copiadas, existentes
+
+def _anno_cuat_tipos_context():
+    anno_actual = timezone.now().year
+    context = {
+        'annos': [anno_actual, anno_actual + 1],
+        'cuatrimestres': [c for c in Cuatrimestres],
+        'tipos': [t for t in TipoDocentes]}
+    return context
+
+def _anno_cuat_tipo_de_request(request):
+    anno = request.POST['anno']
+    cuatrimestre = request.POST['cuatrimestre']
+    tipo = request.POST['tipo']
+    return int(anno), cuatrimestre, tipo
+
+def index(request):
+    try:
+        anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
+        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo, 1))
+        return HttpResponseRedirect(distribucion_url)
+    except:
+        anno = timezone.now().year
+        return render(request, 'dborrador/index.html', _anno_cuat_tipos_context())
 
 
 def preparar(request):
