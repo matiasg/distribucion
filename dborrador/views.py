@@ -79,9 +79,7 @@ def index(request):
 
 def preparar(request):
     try:
-        anno = request.POST['anno']
-        cuatrimestre = request.POST['cuatrimestre']
-        tipo = request.POST['tipo']
+        anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
         logger.info('copiando %s y %s para docents tipo %s', anno, cuatrimestre, tipo)
 
         copiadas, existentes = copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo)
@@ -89,27 +87,18 @@ def preparar(request):
         return render(request, 'dborrador/despues_de_preparar.html', context)
     except KeyError:
         anno_actual = timezone.now().year
-        context = {
-                'annos': [anno_actual, anno_actual + 1],
-                'cuatrimestres': [c for c in Cuatrimestres],
-                'tipos': [t for t in TipoDocentes]}
-        return render(request, 'dborrador/elegir_ac.html', context)
+        return render(request, 'dborrador/elegir_ac.html', _anno_cuat_tipos_context())
 
 
 def distribuir(request):
     try:
-        anno = request.POST['anno']
-        cuatrimestre = request.POST['cuatrimestre']
-        tipo = request.POST['tipo']
+        anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
         intento = int(request.POST['intento'])
 
     except KeyError:
         anno_actual = timezone.now().year
-        context = {
-                'annos': [anno_actual, anno_actual + 1],
-                'cuatrimestres': [c for c in Cuatrimestres],
-                'tipos': [t for t in TipoDocentes],
-                'intento': 1}
+        context = _anno_cuat_tipos_context()
+        context['intento'] = 1
         return render(request, 'dborrador/distribuir.html', context)
 
     else:
