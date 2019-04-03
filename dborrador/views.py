@@ -4,6 +4,8 @@ from django.shortcuts import render
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
+from django.db.models import Max
+from django.contrib import messages
 
 from .models import Preferencia, Asignacion
 from materias.models import (Turno, Docente, Materia, CuatrimestreDocente,
@@ -95,7 +97,7 @@ def distribuir(request):
         docentes = Mapeos.docentes(tipo)
         asignaciones_previas = Asignacion.objects.filter(intento=intento, docente__in=docentes)
         if asignaciones_previas:
-            logger.warning('Hay %d asignaciones previas', asignaciones_previas.count())
+            logger.warning('Hay %d asignacion(es) previa(s)', asignaciones_previas.count())
 
         logger.info('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s',
                     tipo, cuatrimestre, anno)
@@ -107,6 +109,7 @@ def distribuir(request):
         # ni las necesidades de los turnos (que pueden ser 0 o mayores que 1).
         logger.info('%d docentes, %d turnos, %d preferencias',
                     docentes.count(), turnos.count(), preferencias.count())
+        hay_errores = False
 
         info_cuatri = CuatrimestreDocente.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
         sources = dict()
@@ -116,6 +119,9 @@ def distribuir(request):
                 cargas = info_doc.cargas - asignaciones_previas.filter(docente=d).count()
                 if cargas > 0:
                     sources[str(d.id)] = cargas
+                elif cargas < 0:
+                    messages.error(request, f'Hay demasiadas asignaciones para {d}')
+                    hay_errores = True
 
         targets = {}
         for turno in turnos:
@@ -123,6 +129,18 @@ def distribuir(request):
             necesidad -= asignaciones_previas.filter(turno=turno).count()
             if necesidad > 0:
                 targets[str(turno.id)] = necesidad
+            elif necesidad < 0:
+                messages.error(request, f'Hay demasiados docentes asignados al turno {turno}')
+                hay_errores = True
+
+        if hay_errores:
+            context = {
+                    'annos': [anno],
+                    'cuatrimestres': [Cuatrimestres[cuatrimestre]],
+                    'tipos': [TipoDocentes[tipo]],
+                    'intento': intento}
+            return render(request, 'dborrador/distribuir.html', context)
+
 
         pesos = []
         for preferencia in preferencias:
@@ -134,7 +152,8 @@ def distribuir(request):
                               'weight': preferencia.peso_normalizado}
                              )
             else:
-                logger.debug('Tengo una preferencia de %s para %s pero no se está distribuyendo ese turno',
+                logger.debug(('Tengo una preferencia de %s para %s pero no se está '
+                              'distribuyendo ese turno o ese docente'),
                              preferencia.preferencia.docente, preferencia.preferencia.turno)
 
         wmap = allocating.ListWeightedMap(pesos)
@@ -157,41 +176,67 @@ def distribuir(request):
             asignacion, _ = Asignacion.objects.get_or_create(
                                         intento=intento, docente=docente, turno=turno)
 
-        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento))
+        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo, intento))
         return HttpResponseRedirect(distribucion_url)
 
 
-def distribucion(request, anno, cuatrimestre, intento):
-    try:
-        intento = int(request.POST['nuevo_intento'])
-    except:
-        pass
-    finally:
-        materias_distribuidas = filtra_materias(anno=anno, cuatrimestre=cuatrimestre, intento=intento)
+def distribucion(request, anno, cuatrimestre, tipo, intento):
+    if not 'fijar' in request.POST:
+        try:
+            proximo_intento = Asignacion.objects.all().aggregate(Max('intento'))['intento__max'] + 1
+        except TypeError:  # None + 1 => TypeError
+            logger.error('No hay docentes asignados todavía. Redirect a la página para distribuir')
+            distribuir_url = reverse('dborrador:distribuir')
+            return HttpResponseRedirect(distribuir_url)
+
+        if 'cambiar' in request.POST:
+            intento = int(request.POST['nuevo_intento'])
+            distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo, intento))
+            return HttpResponseRedirect(distribucion_url)
+
+        materias_distribuidas = filtra_materias(anno=anno, cuatrimestre=cuatrimestre, intento=intento, tipo=tipo)
         context = {'materias': materias_distribuidas,
                    'anno': anno,
                    'cuatrimestre': cuatrimestre,
-                   'intento': intento}
+                   'tipo': tipo,
+                   'intento': intento,
+                   'nuevo_intento': proximo_intento}
         return render(request, 'dborrador/distribucion.html', context)
 
+    else:
+        fijados = request.POST.getlist('docente_fijado')
+        proximo_intento = int(request.POST['proximo_intento'])
+        for docente_id in fijados:
+            docente = Docente.objects.get(pk=int(docente_id))
+            turno = Asignacion.objects.filter(docente=docente, intento=intento).first().turno
+            Asignacion.objects.create(docente=docente,
+                                      turno=turno,
+                                      intento=proximo_intento)
 
-def filtra_materias(intento, **kwargs):
+        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo, intento))
+        return HttpResponseRedirect(distribucion_url)
+
+
+def filtra_materias(intento, tipo, **kwargs):
+    docentes_distribuidos = Mapeos.docentes(tipo)
     turnos = Turno.objects.filter(**kwargs)
-    tipo_dict = {TipoMateria.B.name: 'Obligatorias',
-                 TipoMateria.R.name: 'Optativas regulares',
-                 TipoMateria.N.name: 'Optativas no regulares'}
+    obligatoriedades = {TipoMateria.B.name: 'Obligatorias',
+                        TipoMateria.R.name: 'Optativas regulares',
+                        TipoMateria.N.name: 'Optativas no regulares'}
 
     materias = []
-    for tipo, tipo_largo in tipo_dict.items():
-        tmaterias = Materia.objects.filter(obligatoriedad=tipo)
+    for obligatoriedad, obligatoriedad_largo in obligatoriedades.items():
+        tmaterias = Materia.objects.filter(obligatoriedad=obligatoriedad)
         materias_turnos = [
                 (materia, Turno.objects.filter(materia=materia, **kwargs))
                 for materia in tmaterias
                 ]
         for materia, turnos in materias_turnos:
             for turno in turnos:
-                asignaciones = [a for a in turno.asignacion_set.all() if a.intento == intento]
-                turno.docentes_asignados = ' - '.join([a.docente.nombre for a in asignaciones])
-        materias.append((tipo_largo, materias_turnos))
+                asignaciones = [(a.docente, a.docente in docentes_distribuidos)
+                                for a in turno.asignacion_set.all() if a.intento == intento]
+                turno.docentes_asignados = asignaciones
+                # turno.docentes_asignados = ' - '.join([a.docente.nombre for a in asignaciones])
+        materias.append((obligatoriedad_largo, materias_turnos))
 
     return materias
