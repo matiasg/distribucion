@@ -1,0 +1,15 @@
+{% load static %}
+    <title>Inicio de la zona de borrador</title>
+    <h2>Cosas que se pueden hacer acá</h2>
+
+    <ul>
+        <li> <a href="preparar">copiar encuestas</a></li>
+        <li> <a href="distribuir">hacer una distribución</a></li>
+
+
+        <form action="{% url 'dborrador:index' %}" method="post">
+        {% csrf_token %}
+        <li> Ver una distribución: {% include "dborrador/form_act.html" with texto_submit="ver" %} </li>
+        </form>
+
+    </ul>

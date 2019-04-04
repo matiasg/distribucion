@@ -1,0 +1,22 @@
+Año: 
+<select name="anno">
+    {% for a in annos %}
+    <option value="{{ a }}">{{ a }}</option>
+    {% endfor %}
+</select>
+
+Cuatrimestre: 
+<select name="cuatrimestre">
+    {% for c in cuatrimestres %}
+    <option value="{{ c.name }}">{{ c.value }}</option>
+    {% endfor %}
+</select>
+
+Tipo de docentes: 
+<select name="tipo">
+    {% for t in tipos %}
+    <option value="{{ t.name }}">{{ t.value }}</option>
+    {% endfor %}
+</select>
+
+<input type="submit" value="{{ texto_submit }}">
