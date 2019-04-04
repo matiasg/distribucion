@@ -74,8 +74,8 @@ class Turno(models.Model):
     necesidad_ay2 = models.PositiveIntegerField(validators=[MaxValueValidator(15)])
 
     def __str__(self):
-        return (f'{self.materia.nombre} ({self.anno}, {Cuatrimestres[self.cuatrimestre].value}) '
-                f'{self.tipo} {self.numero}')
+        return (f'{self.materia.nombre}, cuat {Cuatrimestres[self.cuatrimestre].value} {self.anno}, '
+                f'{TipoTurno[self.tipo].value} {self.numero}')
 
     def horarios_info(self):
 
@@ -149,4 +149,4 @@ class CuatrimestreDocente(models.Model):
 
     def __str__(self):
         return (f'{self.docente} da {self.cargas} materia(s) en '
-                f'{self.anno}, cuatrimestre {Cuatrimestres[self.cuatrimestre].value}')
+                f'el cuatrimestre {Cuatrimestres[self.cuatrimestre].value}, {self.anno}')
