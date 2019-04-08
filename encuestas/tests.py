@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.forms import ValidationError
 
 from materias.models import (Docente, Cargos, Materia, Turno, TipoTurno, TipoMateria,
-                             Cuatrimestres, CuatrimestreDocente)
+                             CargoDedicacion, Cuatrimestres, CuatrimestreDocente)
 from .models import PreferenciasDocente
 from .views import checkear_y_salvar
 
@@ -14,7 +14,8 @@ class TestEncuesta(TestCase):
     def setUp(self):
         self.anno = 2100
         self.docente = Docente.objects.create(nombre='juan', email='mail@nada.org',
-                                              telefono='1234', cargo=Cargos.JTP.name)
+                                              telefono='1234',
+                                              cargos=[CargoDedicacion.JTPSmx.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
         self.turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
                                           numero=1, tipo=TipoTurno.A.name,
@@ -82,7 +83,7 @@ class TestEncuesta(TestCase):
     def test_titulo_correcto(self):
         response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.P.name, 'J')))
         self.assertEqual(response.request['PATH_INFO'], f'/encuestas/encuesta/{self.anno}/P/J')
-        self.assertContains(response, f'cuatrimestre {Cuatrimestres.P.name} de {self.anno}')
+        self.assertContains(response, f'cuatrimestre {Cuatrimestres.P.value} de {self.anno}')
 
     def test_turnos_correctos(self):
         response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.P.name, 'J')))
