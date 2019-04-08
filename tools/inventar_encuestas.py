@@ -12,7 +12,8 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "distribucion.settings")
 import django
 django.setup()
 
-from materias.models import (Materia, Turno, Docente, Cuatrimestres, TipoTurno, Cargos, choice_enum)
+from materias.models import (Materia, Turno, Docente, Cuatrimestres, TipoTurno,
+                             CargoDedicacion, Cargos, choice_enum)
 from encuestas.views import Mapeos, TipoDocentes, PreferenciasDocente
 
 
@@ -22,15 +23,19 @@ logger = logging.getLogger(__name__)
 
 def inventar_encuestas(anno, cuatrimestre, tipo_de_docentes):
     now = timezone.now()
+    cargos = set(Mapeos.cargos_de_tipos(tipo_de_docentes))
     docentes = Mapeos.docentes(tipo_de_docentes)
     turnos = Mapeos.encuesta_tipo_turno(tipo_de_docentes).filter(anno=anno, cuatrimestre=cuatrimestre)
 
     for docente in docentes:
+        doc_cargos = cargos & set(docente.cargos)
         logger.info('inventando encuestas para %s', docente)
         for turno in set(random.choices(turnos, k=5)):
-            PreferenciasDocente.objects.create(docente=docente, turno=turno,
-                                               peso=random.randint(0, 20),
-                                               fecha_encuesta=now)
+            for cargo in doc_cargos:
+                PreferenciasDocente.objects.create(docente=docente, turno=turno,
+                                                   cargo=cargo[:3],
+                                                   peso=random.randint(0, 20),
+                                                   fecha_encuesta=now)
 
 
 def parse():

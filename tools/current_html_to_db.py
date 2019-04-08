@@ -17,7 +17,7 @@ import django
 django.setup()
 
 from materias.models import (Materia, Turno, Horario, Docente, Carga, CuatrimestreDocente,
-                             Cuatrimestres, TipoMateria, TipoTurno, Cargos, Dias, get_key_enum)
+                             Cuatrimestres, TipoMateria, TipoTurno, Cargos, CargoDedicacion, Dias, get_key_enum)
 
 # logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 logger = logging.getLogger()
@@ -74,9 +74,9 @@ def convierte_a_horarios(text):
 tipo_turnos = {'Teórica': TipoTurno.T.name,
                'Práctica': TipoTurno.P.name,
                'Teórico-Práctica': TipoTurno.A.name}
-cargo_tipoturno = {'Teórica': Cargos.Tit.name,
-                   'Práctica': Cargos.JTP.name,
-                   'Teórico-Práctica': Cargos.JTP.name}
+cargo_tipoturno = {'Teórica': CargoDedicacion.TitSim.name,
+                   'Práctica': CargoDedicacion.JTPSim.name,
+                   'Teórico-Práctica': CargoDedicacion.JTPSim.name}
 
 def salva_datos(html, anno_actual, cuatrimestre, anno_nuevo):
     soup = BeautifulSoup(html, 'html.parser')
@@ -156,7 +156,7 @@ def salva_datos(html, anno_actual, cuatrimestre, anno_nuevo):
                     if not docente:
                         continue
                     doc, creado = Docente.objects.get_or_create(nombre=docente,
-                                                                defaults={'cargo': cargo})
+                                                                defaults={'cargos': [cargo]})
                     if creado:
                         logger.info('agregue a: %s', doc)
 
