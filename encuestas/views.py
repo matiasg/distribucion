@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.forms import ValidationError
 from django.contrib import messages
 
-from materias.models import Turno, Docente, Cargos, TipoTurno, Cuatrimestres
+from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres
 from .models import PreferenciasDocente
 
 from collections import Counter
@@ -26,15 +26,22 @@ class Mapeos:
     '''Esta clase resuelve distintos tipos de mapeos'''
 
     @staticmethod
+    def cargos_de_tipos(tipo):
+        el_mapa = {TipoDocentes.P.name: [Cargos.Tit, Cargos.Aso, Cargos.Adj],
+                   TipoDocentes.J.name: [Cargos.JTP],
+                   TipoDocentes.A1.name: [Cargos.Ay1],
+                   TipoDocentes.A2.name: [Cargos.Ay2],
+                   }
+        cardeds = [cd
+                   for cargo in el_mapa[tipo.upper()]
+                   for cd in CargoDedicacion.con_cargo(cargo)]
+        return cardeds
+
+    @staticmethod
     def docentes(tipo):
         '''P: profesor, J: JTP y Ay1, A: Ay2'''
-        el_mapa = {TipoDocentes.P.name: [Cargos.Tit.name, Cargos.Aso.name, Cargos.Adj.name],
-                   TipoDocentes.J.name: [Cargos.JTP.name],
-                   TipoDocentes.A1.name: [Cargos.Ay1.name],
-                   TipoDocentes.A2.name: [Cargos.Ay2.name],
-                   }
-        cargos = el_mapa[tipo.upper()]
-        return Docente.objects.filter(cargo__in=cargos)
+        cardeds = Mapeos.cargos_de_tipos(tipo)
+        return Docente.objects.filter(cargos__overlap=cardeds)
 
     @staticmethod
     def encuesta_tipo_turno(tipo_docente):

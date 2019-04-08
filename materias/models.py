@@ -2,6 +2,7 @@ from collections import namedtuple
 
 from django.db import models
 from django.core.validators import int_list_validator, MaxValueValidator
+from django.contrib.postgres.fields import ArrayField
 from enum import Enum
 
 
@@ -20,6 +21,25 @@ class Cargos(Enum):
     JTP = 'Jefe de Trabajos Prácticos'
     Ay1 = 'Ayudante de 1ra'
     Ay2 = 'Ayudante de 2da'
+
+
+class Dedicaciones(Enum) :
+    Exc = 'Exclusiva'
+    Smx = 'Semiexclusiva'
+    Sim = 'Simple'
+
+
+class CargoDedicacion(Enum):
+    _ignore_ = 'cargo dedicacion CargoDedicacion'
+    CargoDedicacion = vars()
+    for cargo in Cargos:
+        for dedicacion in Dedicaciones:
+            CargoDedicacion[f'{cargo.name}{dedicacion.name}'] = f'{cargo.value} {dedicacion.value}'
+
+    @classmethod
+    def con_cargo(cls, cargo):
+        '''Devuelve una lista de CargoDedicacion cuyo cargo es el parámetro :cargo:'''
+        return [f'{cargo.name}{ded.name}' for ded in Dedicaciones]
 
 
 class TipoTurno(Enum):
@@ -49,8 +69,6 @@ def get_key_enum(enum_cls):
 
 
 TurnoInfo = namedtuple('TurnoInfo', ['tipoynumero', 'diayhora', 'aula', 'pabellon'])
-
-
 
 
 class Materia(models.Model):
@@ -117,15 +135,21 @@ class Docente(models.Model):
     nombre = models.CharField(max_length=60)
     telefono = models.CharField(max_length=15, validators=[int_list_validator(sep=' ')])
     email = models.EmailField()
-    cargo = models.CharField(max_length=3, choices=choice_enum(Cargos))
+    # TODO: chequear si alguien podría tener más de dos cargos
+    cargos = ArrayField(models.CharField(max_length=6, choices=choice_enum(CargoDedicacion)), size=2)
 
     def __str__(self):
         return f'{self.nombre}'
 
+    @classmethod
+    def todos_los(cls, cargo):
+        cd = CargoDedicacion.con_cargo(cargo)
+        return cls.objects.filter(cargos__overlap=cd)
+
 
 class Carga(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
-    cargo = models.CharField(max_length=3, choices=choice_enum(Cargos))
+    cargo = models.CharField(max_length=6, choices=choice_enum(CargoDedicacion))
     turno = models.ForeignKey(Turno, null=True, on_delete=models.SET_NULL)
 
     class Meta:
