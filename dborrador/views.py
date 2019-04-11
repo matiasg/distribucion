@@ -38,7 +38,7 @@ def copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo):
     copiadas = 0
     existentes, _ = Preferencia.objects.all().delete()
 
-    for docente in Mapeos.docentes(tipo):
+    for docente in Mapeos.docentes_de_tipo(tipo):
         prefs = PreferenciasDocente.objects.filter(turno__anno=anno,
                                                    turno__cuatrimestre=cuatrimestre,
                                                    docente=docente)
@@ -102,7 +102,7 @@ def distribuir(request):
         return render(request, 'dborrador/distribuir.html', context)
 
     else:
-        docentes = Mapeos.docentes(tipo)
+        docentes = Mapeos.docentes_de_tipo(tipo)
         asignaciones_previas = Asignacion.objects.filter(intento=intento, docente__in=docentes)
         if asignaciones_previas:
             logger.warning('Hay %d asignacion(es) previa(s)', asignaciones_previas.count())
@@ -226,7 +226,7 @@ def distribucion(request, anno, cuatrimestre, tipo, intento):
 
 
 def filtra_materias(intento, tipo, **kwargs):
-    docentes_distribuidos = Mapeos.docentes(tipo)
+    docentes_distribuidos = Mapeos.docentes_de_tipo(tipo)
     turnos = Turno.objects.filter(**kwargs)
     obligatoriedades = {TipoMateria.B.name: 'Obligatorias',
                         TipoMateria.R.name: 'Optativas regulares',

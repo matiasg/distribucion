@@ -1,10 +1,15 @@
 from enum import Enum
+from collections import namedtuple
 
 from materias.models import Docente, Turno, Carga, TipoTurno, Cargos, CargoDedicacion
 from dborrador.models import Preferencia, Asignacion
 
 
+AnnoCuatrimestre = namedtuple('AC', 'anno cuatrimestre')
+
 class TipoDocentes(Enum):
+    '''P: profesor, J: JTP y Ay1, A: Ay2'''
+
     P = 'Profesores'
     J = 'JTP'
     A1 = 'Ay1'
@@ -27,8 +32,8 @@ class Mapeos:
         return cardeds
 
     @staticmethod
-    def docentes(tipo):
-        '''P: profesor, J: JTP y Ay1, A: Ay2'''
+    def docentes_de_tipo(tipo):
+        '''TipoDocentes -> [docente]'''
         cardeds = Mapeos.cargos_de_tipos(tipo)
         return Docente.objects.filter(cargos__overlap=cardeds)
 
