@@ -14,7 +14,8 @@ django.setup()
 
 from materias.models import (Materia, Turno, Docente, Cuatrimestres, TipoTurno,
                              CargoDedicacion, Cargos, choice_enum)
-from encuestas.views import Mapeos, TipoDocentes, PreferenciasDocente
+from materias.misc import Mapeos, TipoDocentes
+from encuestas.models import PreferenciasDocente
 
 
 logging.basicConfig(level=logging.INFO)

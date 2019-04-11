@@ -10,8 +10,8 @@ from django.contrib import messages
 from .models import Preferencia, Asignacion
 from materias.models import (Turno, Docente, Materia, CuatrimestreDocente,
                              Cuatrimestres, TipoMateria, choice_enum)
+from materias.misc import TipoDocentes, Mapeos
 from encuestas.models import PreferenciasDocente
-from encuestas.views import TipoDocentes, Mapeos
 
 from allocation import allocating
 
