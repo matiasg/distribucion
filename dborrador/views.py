@@ -196,21 +196,23 @@ def distribucion(request, anno, cuatrimestre, tipo, intento):
         return render(request, 'dborrador/distribucion.html', context)
 
     else:
-        fijados = request.POST.getlist('docente_fijado')
+        fijadas = request.POST.getlist('asignacion_fijada')
         proximo_intento = int(request.POST['proximo_intento'])
-        for docente_id in fijados:
-            docente = Docente.objects.get(pk=int(docente_id))
-            turno = Asignacion.objects.filter(docente=docente, intento=intento).first().turno
-            Asignacion.objects.create(docente=docente,
-                                      turno=turno,
+        for asignacion_id in fijadas:
+            asignacion = Asignacion.objects.get(pk=int(asignacion_id))
+            Asignacion.objects.create(carga=asignacion.carga,
+                                      turno=asignacion.turno,
                                       intento=proximo_intento)
+            logger.info('Asignacion fijada para %s en %s (intento %d)',
+                        asignacion.carga.docente, asignacion.turno, proximo_intento)
 
         distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo, intento))
         return HttpResponseRedirect(distribucion_url)
 
 
-def filtra_materias(intento, tipo, **kwargs):
-    docentes_distribuidos = Mapeos.docentes_de_tipo(tipo)
+def filtra_materias(anno, cuatrimestre, intento, tipo, **kwargs):
+    cargas = Mapeos.cargas(tipo, AnnoCuatrimestre(anno, cuatrimestre))
+
     turnos = Turno.objects.filter(**kwargs)
     obligatoriedades = {TipoMateria.B.name: 'Obligatorias',
                         TipoMateria.R.name: 'Optativas regulares',
@@ -220,14 +222,14 @@ def filtra_materias(intento, tipo, **kwargs):
     for obligatoriedad, obligatoriedad_largo in obligatoriedades.items():
         tmaterias = Materia.objects.filter(obligatoriedad=obligatoriedad)
         materias_turnos = [
-                (materia, Turno.objects.filter(materia=materia, **kwargs))
+                (materia, Turno.objects.filter(materia=materia, anno=anno, cuatrimestre=cuatrimestre))
                 for materia in tmaterias
                 ]
         for materia, turnos in materias_turnos:
             for turno in turnos:
-                asignaciones = [(a.carga.docente, a.carga.docente in docentes_distribuidos)
+                asignaciones = [(a, a.carga in cargas)
                                 for a in turno.asignacion_set.all() if a.intento == intento]
-                turno.docentes_asignados = asignaciones
+                turno.cargas_asignadas = asignaciones
         materias.append((obligatoriedad_largo, materias_turnos))
 
     return materias

@@ -31,11 +31,11 @@
 
             <td class="fondo{{ turno.tipo }}">{{ turno.horarios_info.tipoynumero }}</td>
             <td>{{ turno.horarios_info.diayhora }}</td>
-            <td>{% for docente, en_distribucion in turno.docentes_asignados %}
+            <td>{% for asignacion, en_distribucion in turno.cargas_asignadas %}
                 {% if en_distribucion %}
-                <input type="checkbox" name="docente_fijado" value="{{ docente.id }}">
+                <input type="checkbox" name="asignacion_fijada" value="{{ asignacion.id }}">
                 {% endif %}
-                {{ docente.nombre }}
+                {{ asignacion.carga.docente.nombre }}
                 {% endfor %}
             </td>
                 
