@@ -10,27 +10,13 @@ from django.contrib import messages
 from .models import Preferencia, Asignacion
 from materias.models import (Turno, Docente, Materia, CuatrimestreDocente,
                              Cuatrimestres, TipoMateria, choice_enum)
-from materias.misc import TipoDocentes, Mapeos
+from materias.misc import TipoDocentes, Mapeos, MapeosDistribucion
 from encuestas.models import PreferenciasDocente
 
 from allocation import allocating
 
 
 logger = logging.getLogger(__name__)
-
-
-class MapeosDistribucion:
-
-    @staticmethod
-    def necesidades(turno, tipo_docente):
-        if tipo_docente == TipoDocentes.P.name:
-            return turno.necesidad_prof
-        elif tipo_docente == TipoDocentes.J.name:
-            return turno.necesidad_jtp
-        elif tipo_docente == TipoDocentes.A1.name:
-            return turno.necesidad_ay1
-        else:
-            return turno.necesidad_ay2
 
 
 def copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo):
