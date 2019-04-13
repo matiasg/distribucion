@@ -49,3 +49,12 @@
 
 {% endfor %}
 </form>
+
+{% if no_distribuidos %}
+    <h3>Docentes no distribuidos</h3>
+    <ol>
+    {% for docente in no_distribuidos %}
+    <li>{{ docente }}</li>
+    {% endfor %}
+    </ol>
+{% endif %}
