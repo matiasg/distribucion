@@ -227,10 +227,9 @@ def filtra_materias(intento, tipo, **kwargs):
                 ]
         for materia, turnos in materias_turnos:
             for turno in turnos:
-                asignaciones = [(a.docente, a.docente in docentes_distribuidos)
+                asignaciones = [(a.carga.docente, a.carga.docente in docentes_distribuidos)
                                 for a in turno.asignacion_set.all() if a.intento == intento]
                 turno.docentes_asignados = asignaciones
-                # turno.docentes_asignados = ' - '.join([a.docente.nombre for a in asignaciones])
         materias.append((obligatoriedad_largo, materias_turnos))
 
     return materias
