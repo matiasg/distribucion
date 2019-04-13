@@ -150,6 +150,8 @@ class Docente(models.Model):
 class Carga(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
     cargo = models.CharField(max_length=6, choices=choice_enum(CargoDedicacion))
+    anno = models.IntegerField()
+    cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
     turno = models.ForeignKey(Turno, null=True, on_delete=models.SET_NULL)
 
     class Meta:
