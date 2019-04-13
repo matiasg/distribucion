@@ -1,7 +1,7 @@
 from django.db import models
 
 from encuestas.models import PreferenciasDocente
-from materias.models import Docente, Turno
+from materias.models import Turno, Carga
 
 
 class Preferencia(models.Model):
@@ -14,11 +14,12 @@ class Preferencia(models.Model):
 
 class Asignacion(models.Model):
     intento = models.IntegerField()
-    docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
+    carga = models.ForeignKey(Carga, on_delete=models.CASCADE)
+    # docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'Intento {self.intento}: {self.docente} -> {self.turno} '
+        return f'Intento {self.intento}: {self.carga.docente} -> {self.turno} '
 
     class Meta:
         verbose_name = 'asignación'
