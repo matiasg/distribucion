@@ -168,9 +168,14 @@ def salva_datos(html, anno_actual, cuatrimestre, anno_nuevo):
 
                     carga, creada = Carga.objects.get_or_create(docente=doc,
                                                                 turno=turno_actual,
+                                                                anno=anno_actual, cuatrimestre=cuatrimestre,
                                                                 defaults={'cargo': cargo})
                     if creada:
                         logger.info('Carga docente: %s -> %s', doc.nombre, turno_actual)
+                    carga_prox_cuat, _ = Carga.objects.get_or_create(docente=doc,
+                                                                     turno=None,
+                                                                     anno=anno_nuevo, cuatrimestre=cuatrimestre,
+                                                                     cargo=carga.cargo)
 
                 # horarios
                 horarios = convierte_a_horarios(rows[1].text)
