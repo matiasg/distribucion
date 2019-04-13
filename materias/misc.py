@@ -55,7 +55,7 @@ class Mapeos:
     @staticmethod
     def turno_y_necesidad(tipo, ac):
         '''TipoDocentes -> AnnoCuatrimestre -> {turno: necesidad}'''
-        return {turno: MapeosDistribucion.necesidades(turno, tipo)
+        return {turno: Mapeos.necesidades(turno, tipo)
                 for turno in Mapeos.turnos_de_tipo_y_ac(tipo, ac)}
 
 
@@ -101,14 +101,6 @@ class Mapeos:
                 ret[asignacion.carga.docente].append(asignacion)
         return ret
 
-
-
-
-
-
-
-class MapeosDistribucion:
-
     @staticmethod
     def necesidades(turno, tipo_docente):
         if tipo_docente == TipoDocentes.P.name:
@@ -119,4 +111,3 @@ class MapeosDistribucion:
             return turno.necesidad_ay1
         else:
             return turno.necesidad_ay2
-

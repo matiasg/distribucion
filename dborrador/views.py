@@ -10,7 +10,7 @@ from django.contrib import messages
 from .models import Preferencia, Asignacion
 from materias.models import (Turno, Docente, Materia, CuatrimestreDocente,
                              Cuatrimestres, TipoMateria, choice_enum)
-from materias.misc import TipoDocentes, Mapeos, MapeosDistribucion
+from materias.misc import TipoDocentes, Mapeos
 from encuestas.models import PreferenciasDocente
 
 from allocation import allocating
@@ -119,7 +119,7 @@ def distribuir(request):
 
         targets = {}
         for turno in turnos:
-            necesidad = MapeosDistribucion.necesidades(turno, tipo)
+            necesidad = Mapeos.necesidades(turno, tipo)
             necesidad -= asignaciones_previas.filter(turno=turno).count()
             if necesidad > 0:
                 targets[str(turno.id)] = necesidad
