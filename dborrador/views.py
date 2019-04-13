@@ -1,4 +1,5 @@
 import logging
+from collections import Counter
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -8,9 +9,9 @@ from django.db.models import Max
 from django.contrib import messages
 
 from .models import Preferencia, Asignacion
-from materias.models import (Turno, Docente, Materia, CuatrimestreDocente,
+from materias.models import (Turno, Docente, Carga, Materia, CuatrimestreDocente,
                              Cuatrimestres, TipoMateria, choice_enum)
-from materias.misc import TipoDocentes, Mapeos
+from materias.misc import TipoDocentes, AnnoCuatrimestre, Mapeos
 from encuestas.models import PreferenciasDocente
 
 from allocation import allocating
@@ -88,8 +89,10 @@ def distribuir(request):
         return render(request, 'dborrador/distribuir.html', context)
 
     else:
+        anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
+        # buscamos asignaciones anteriores del mismo intento
+        asignaciones_previas = Mapeos.asignaciones(tipo, anno_cuat, intento)
         docentes = Mapeos.docentes_de_tipo(tipo)
-        asignaciones_previas = Asignacion.objects.filter(intento=intento, docente__in=docentes)
         if asignaciones_previas:
             logger.warning('Hay %d asignacion(es) previa(s)', asignaciones_previas.count())
 
@@ -105,22 +108,20 @@ def distribuir(request):
                     docentes.count(), turnos.count(), preferencias.count())
         hay_errores = False
 
-        info_cuatri = CuatrimestreDocente.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
-        sources = dict()
-        for d in docentes:
-            info_doc = info_cuatri.filter(docente=d).first()
-            if info_doc is not None:
-                cargas = info_doc.cargas - asignaciones_previas.filter(docente=d).count()
-                if cargas > 0:
-                    sources[str(d.id)] = cargas
-                elif cargas < 0:
-                    messages.error(request, f'Hay demasiadas asignaciones para {d}')
-                    hay_errores = True
+        docentes_cargas = Mapeos.docentes_y_cargas(tipo, anno_cuat)
 
+        cargas = {c
+                  for d_cargas in docentes_cargas.values()
+                  for c in d_cargas}
+        # TODO: chequear que no hay dos asignaciones con la misma carga
+        cargas_distribuidas = {a.carga for a in asignaciones_previas}
+        cargas_a_distribuir = cargas - cargas_distribuidas
+        sources = {str(c.id): 1 for c in cargas_a_distribuir}
+
+        asignaciones_por_turno = Counter(a.turno for a in asignaciones_previas)
         targets = {}
         for turno in turnos:
-            necesidad = Mapeos.necesidades(turno, tipo)
-            necesidad -= asignaciones_previas.filter(turno=turno).count()
+            necesidad = Mapeos.necesidades(turno, tipo) - asignaciones_por_turno.get(turno, 0)
             if necesidad > 0:
                 targets[str(turno.id)] = necesidad
             elif necesidad < 0:
@@ -135,20 +136,20 @@ def distribuir(request):
                     'intento': intento}
             return render(request, 'dborrador/distribuir.html', context)
 
-
         pesos = []
-        for preferencia in preferencias:
-            doc_id = str(preferencia.preferencia.docente.id)
-            turno_id = str(preferencia.preferencia.turno.id)
-            if doc_id in sources and turno_id in targets:
-                pesos.append({'from': str(preferencia.preferencia.docente.id),
-                              'to': str(preferencia.preferencia.turno.id),
-                              'weight': preferencia.peso_normalizado}
-                             )
-            else:
-                logger.debug(('Tengo una preferencia de %s para %s pero no se está '
-                              'distribuyendo ese turno o ese docente'),
-                             preferencia.preferencia.docente, preferencia.preferencia.turno)
+        for carga in cargas_a_distribuir:
+            doc_pref = preferencias.filter(preferencia__docente=carga.docente)
+            for preferencia in doc_pref:
+                carga_id = str(carga.id)
+                turno_id = str(preferencia.preferencia.turno.id)
+                if turno_id in targets:
+                    pesos.append({'from': carga_id,
+                                  'to': turno_id,
+                                  'weight': preferencia.peso_normalizado
+                                  })
+                else:
+                    logger.debug('Tengo una preferencia de %s para %s pero no se está distribuyendo ese turno',
+                                 preferencia.preferencia.docente, preferencia.preferencia.turno)
 
         wmap = allocating.ListWeightedMap(pesos)
         logger.info('Voy a hacer una distribución con %d cargas docentes y %d lugares en turnos',
@@ -159,16 +160,13 @@ def distribuir(request):
         distribucion = allocator.get_best()
         logger.info('distribución obtenida (con ids): %s', distribucion)
 
-        for docente_id, turno_id in distribucion:
-            if turno_id is None:
-                continue
-            if docente_id is None:
+        for carga_id, turno_id in distribucion:
+            if carga_id is None or turno_id is None:
                 continue
 
-            docente = Docente.objects.get(pk=int(docente_id))
+            carga = Carga.objects.get(pk=int(carga_id))
             turno = Turno.objects.get(pk=int(turno_id))
-            asignacion, _ = Asignacion.objects.get_or_create(
-                                        intento=intento, docente=docente, turno=turno)
+            asignacion, _ = Asignacion.objects.get_or_create(intento=intento, carga=carga, turno=turno)
 
         distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo, intento))
         return HttpResponseRedirect(distribucion_url)
