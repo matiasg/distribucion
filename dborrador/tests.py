@@ -5,7 +5,7 @@ from django.urls import reverse
 import re
 
 from dborrador.models import Preferencia, Asignacion
-from materias.models import Docente, Materia, Turno, Cuatrimestres, Cargos, CargoDedicacion, TipoTurno, TipoMateria
+from materias.models import Docente, Materia, Turno, Cuatrimestres, Cargos, Carga, CargoDedicacion, TipoTurno, TipoMateria
 from materias.misc import TipoDocentes
 from encuestas.models import PreferenciasDocente
 
@@ -83,15 +83,17 @@ class TestVerDistribucion(TestCase):
         self.turno2 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
                                            numero=2, tipo=TipoTurno.A.name,
                                            necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        self.carga1 = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitSim.name,
+                                           anno=2100, cuatrimestre=Cuatrimestres.P.name, turno=self.turno1)
         self.now = timezone.now()
 
     def test_figuran_docentes_no_distribuidos(self):
-        pref_doc = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno1, cargo=Cargos.Tit,
+        pref_doc = PreferenciasDocente.objects.create(docente=self.docente1, carga=self.turno1, cargo=Cargos.Tit,
                                                       peso=1, fecha_encuesta=self.now)
         Preferencia.objects.create(preferencia=pref_doc, peso_normalizado=1)
 
     def test_figuran_docentes_no_distribuidos(self):
-        Asignacion.objects.create(intento=1, docente=self.docente1, turno=self.turno1)
+        Asignacion.objects.create(intento=1, carga=self.carga1, turno=self.turno1)
         response = self.client.get(reverse('dborrador:distribucion',
                                            args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
         content = response.content.decode()
