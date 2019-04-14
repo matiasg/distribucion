@@ -16,6 +16,28 @@
     Fijar a los docentes marcados para un nuevo intento de distribución
     Intento al que fijarlos: <input type="number" name="proximo_intento" value={{ nuevo_intento }}>
     <input type="submit" name="fijar" value="fijar docentes">
+
+<p>
+    Problemas encontrados:
+    <div id="problemas">
+        {% if problemas.cargas_no_distribuidas %}
+        Cargas docentes sin distribución
+        <ul>
+            {% for carga in problemas.cargas_no_distribuidas %}
+            <li>{{ carga.docente }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% if problemas.necesidades_no_cubiertas %}
+        Turnos con necesidades insatisfechas
+        <ul>
+            {% for turno, necesidad in problemas.necesidades_no_cubiertas %}
+            <li>{{ turno }} necesita {{ necesidad }} docentes</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+
 {% for tipo, lista in materias %}
 
 <div class="seccion">{{ tipo }}</div>
