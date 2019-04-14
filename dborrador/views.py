@@ -1,5 +1,4 @@
 import logging
-from collections import Counter
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -9,6 +8,7 @@ from django.db.models import Max
 from django.contrib import messages
 
 from .models import Preferencia, Asignacion
+from .misc import MapeosDistribucion
 from materias.models import (Turno, Docente, Carga, Materia, CuatrimestreDocente,
                              Cuatrimestres, TipoMateria, choice_enum)
 from materias.misc import TipoDocentes, AnnoCuatrimestre, Mapeos
@@ -89,39 +89,17 @@ def distribuir(request):
         return render(request, 'dborrador/distribuir.html', context)
 
     else:
-        anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
-        # buscamos asignaciones anteriores del mismo intento
-        asignaciones_previas = Mapeos.asignaciones(tipo, anno_cuat, intento)
-        docentes = Mapeos.docentes_de_tipo(tipo)
-        if asignaciones_previas:
-            logger.warning('Hay %d asignacion(es) previa(s)', asignaciones_previas.count())
-
         logger.info('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s',
                     tipo, cuatrimestre, anno)
 
-        turnos = Mapeos.encuesta_tipo_turno(tipo).filter(anno=anno, cuatrimestre=cuatrimestre)
-        preferencias = Preferencia.objects.all()
-
-        # Obs: esta línea de log no tiene en cuenta los docentes ya distribuidos
-        # ni las necesidades de los turnos (que pueden ser 0 o mayores que 1).
-        logger.info('%d docentes, %d turnos, %d preferencias',
-                    docentes.count(), turnos.count(), preferencias.count())
-        hay_errores = False
-
-        docentes_cargas = Mapeos.docentes_y_cargas(tipo, anno_cuat)
-
-        cargas = {c
-                  for d_cargas in docentes_cargas.values()
-                  for c in d_cargas}
-        # TODO: chequear que no hay dos asignaciones con la misma carga
-        cargas_distribuidas = {a.carga for a in asignaciones_previas}
-        cargas_a_distribuir = cargas - cargas_distribuidas
+        anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
+        cargas_a_distribuir = MapeosDistribucion.cargas_a_distribuir(tipo, anno_cuat, intento)
         sources = {str(c.id): 1 for c in cargas_a_distribuir}
 
-        asignaciones_por_turno = Counter(a.turno for a in asignaciones_previas)
+        necesidades_no_cubiertas = MapeosDistribucion.necesidades_no_cubiertas(tipo, anno_cuat, intento)
         targets = {}
-        for turno in turnos:
-            necesidad = Mapeos.necesidades(turno, tipo) - asignaciones_por_turno.get(turno, 0)
+        hay_errores = False
+        for turno, necesidad in necesidades_no_cubiertas.items():
             if necesidad > 0:
                 targets[str(turno.id)] = necesidad
             elif necesidad < 0:
@@ -136,6 +114,10 @@ def distribuir(request):
                     'intento': intento}
             return render(request, 'dborrador/distribuir.html', context)
 
+        logger.info('Hay que distribuir %d cargas docentes y hay %d necesidades.',
+                    len(cargas_a_distribuir), sum(necesidades_no_cubiertas.values()))
+
+        preferencias = Preferencia.objects.all()
         pesos = []
         for carga in cargas_a_distribuir:
             doc_pref = preferencias.filter(preferencia__docente=carga.docente)
