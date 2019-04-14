@@ -1,5 +1,6 @@
 {% load static %}
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'dborrador/dborrador.css' %}">
 
 <form action="{% url 'dborrador:distribucion' anno cuatrimestre tipo intento %}" method="post">
 {% csrf_token %}
@@ -13,15 +14,15 @@
     tipo de docentes {{ tipo }}, intento {{ intento }}</div>
 
 <p>
-    Fijar a los docentes marcados para un nuevo intento de distribución
-    Intento al que fijarlos: <input type="number" name="proximo_intento" value={{ nuevo_intento }}>
-    <input type="submit" name="fijar" value="fijar docentes">
+    <div class="subseccion"><div id="titulo">Fijar docentes para un nuevo intento</div>
+        Intento al que fijarlos: <input type="number" name="proximo_intento" value={{ nuevo_intento }}>
+        <input type="submit" name="fijar" value="fijar docentes">
+    </div>
 
 <p>
-    Problemas encontrados:
-    <div id="problemas">
+    <div class="subseccion"><div id="titulo">Problemas encontrados</div>
         {% if problemas.cargas_no_distribuidas %}
-        Cargas docentes sin distribución
+        <div id="problema">Cargas docentes sin distribución</div>
         <ul>
             {% for carga in problemas.cargas_no_distribuidas %}
             <li>{{ carga.docente }}</li>
@@ -29,15 +30,14 @@
         </ul>
         {% endif %}
         {% if problemas.necesidades_no_cubiertas %}
-        Turnos con necesidades insatisfechas
+        <div id="problema">Turnos con necesidades insatisfechas</div>
         <ul>
             {% for turno, necesidad in problemas.necesidades_no_cubiertas %}
-            <li>{{ turno }} necesita {{ necesidad }} docentes</li>
+            <li>{{ turno }} necesita <b>{{ necesidad }}</b> docente(s)</li>
             {% endfor %}
         </ul>
         {% endif %}
     </div>
-
 {% for tipo, lista in materias %}
 
 <div class="seccion">{{ tipo }}</div>
