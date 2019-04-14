@@ -2,16 +2,19 @@
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dborrador/dborrador.css' %}">
 
-<form action="{% url 'dborrador:distribucion' anno cuatrimestre tipo intento %}" method="post">
-{% csrf_token %}
-    Ver intento: <input type="number" name="nuevo_intento" value={{ intento }}>
-    <input type="submit" name="cambiar" value="ver nuevo intento">
-    <input type="hidden" name="anno" value="{{ anno }}">
-    <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre }}">
-    <input type="hidden" name="tipo" value="{{ tipo }}">
-
-<div class="info">Distribución, para {{ anno }}, cuatrimestre {{ cuatrimestre }},
+<div class="info">Distribución para {{ anno }}, cuatrimestre {{ cuatrimestre }},
     tipo de docentes {{ tipo }}, intento {{ intento }}</div>
+
+<p>
+    <div class="subseccion"><div id="titulo">Ver otra distribución</div>
+        <form action="{% url 'dborrador:distribucion' anno cuatrimestre tipo intento %}" method="post">
+            {% csrf_token %}
+            Ver intento: <input type="number" name="nuevo_intento" value={{ intento }}>
+            <input type="submit" name="cambiar" value="ver nuevo intento">
+            <input type="hidden" name="anno" value="{{ anno }}">
+            <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre }}">
+            <input type="hidden" name="tipo" value="{{ tipo }}">
+    </div>
 
 <p>
     <div class="subseccion"><div id="titulo">Fijar docentes para un nuevo intento</div>
