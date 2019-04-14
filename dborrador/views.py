@@ -168,13 +168,15 @@ def distribucion(request, anno, cuatrimestre, tipo, intento):
             distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo, intento))
             return HttpResponseRedirect(distribucion_url)
 
+        problemas = MapeosDistribucion.chequeo(tipo, AnnoCuatrimestre(anno, cuatrimestre), intento)
         materias_distribuidas = filtra_materias(anno=anno, cuatrimestre=cuatrimestre, intento=intento, tipo=tipo)
         context = {'materias': materias_distribuidas,
                    'anno': anno,
                    'cuatrimestre': cuatrimestre,
                    'tipo': tipo,
                    'intento': intento,
-                   'nuevo_intento': proximo_intento}
+                   'nuevo_intento': proximo_intento,
+                   'problemas': problemas}
         return render(request, 'dborrador/distribucion.html', context)
 
     else:
