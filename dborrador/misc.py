@@ -1,6 +1,9 @@
-from collections import Counter
+from collections import Counter, namedtuple
 
 from materias.misc import Mapeos
+
+
+Problemas = namedtuple('Problemas', ['cargas_no_distribuidas', 'necesidades_no_cubiertas'])
 
 class MapeosDistribucion:
 
@@ -27,3 +30,11 @@ class MapeosDistribucion:
         for turno in turnos:
             necesidades[turno] = Mapeos.necesidades(turno, tipo) - asignaciones_por_turno.get(turno, 0)
         return necesidades
+
+    @staticmethod
+    def chequeo(tipo, ac, intento):
+        '''TipoDocentes -> AnnoCuatrimestre -> intento -> ([Carga], [Turno, necesidad])'''
+        cargas = MapeosDistribucion.cargas_a_distribuir(tipo, ac, intento)
+        necesidades = MapeosDistribucion.necesidades_no_cubiertas(tipo, ac, intento)
+        no_cubiertas = [(turno, necesidad) for turno, necesidad in necesidades.items() if necesidad > 0]
+        return Problemas(cargas, no_cubiertas)
