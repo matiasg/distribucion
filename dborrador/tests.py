@@ -85,6 +85,8 @@ class TestVerDistribucion(TestCase):
                                            necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
         self.carga1 = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitSim.name,
                                            anno=2100, cuatrimestre=Cuatrimestres.P.name, turno=self.turno1)
+        self.carga2 = Carga.objects.create(docente=self.docente2, cargo=CargoDedicacion.TitSim.name,
+                                           anno=2100, cuatrimestre=Cuatrimestres.P.name)
         self.now = timezone.now()
 
     def test_figuran_docentes_no_distribuidos(self):
@@ -98,7 +100,14 @@ class TestVerDistribucion(TestCase):
                                            args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
         content = response.content.decode()
 
-        self.assertTrue(re.search('Docentes no distribuidos.*jose', content),
+        self.assertTrue(re.search('Cargas docentes sin distribución.*jose', content, flags=re.DOTALL),
                         'No figura un docente no distribuido')
-        self.assertTrue(re.search('Turno no cubierto.*epistemologia.*P 2', content),
+        self.assertTrue(re.search('Turnos con necesidades insatisfechas.*epistemologia.*Teórico-Práctica 2',
+                                  content, flags=re.DOTALL),
                         'No figura un turno no cubierto')
+
+class TestMisc(TestCase):
+
+    def setUp(self):
+        pass
+
