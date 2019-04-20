@@ -17,6 +17,8 @@ class Grupo(Group):
 def crear_grupos_fijos():
     permisos_dborrador = Permission.objects.filter(content_type__app_label='dborrador')
     permisos_materias = Permission.objects.filter(content_type__app_label='materias')
+    permisos_ver_materias = Permission.objects.filter(content_type__app_label='materias',
+                                                      codename__startswith='view')
     permiso_ver_encuestas = Permission.objects.filter(content_type__app_label='encuestas',
                                                       codename__startswith='view')
 
@@ -24,4 +26,4 @@ def crear_grupos_fijos():
     secretaries.permissions.add(*permisos_materias)
 
     distribuidores, _ = Grupo.objects.get_or_create(name='Distribuidores')
-    distribuidores.permissions.add(*permisos_dborrador, *permiso_ver_encuestas)
+    distribuidores.permissions.add(*permisos_dborrador, *permiso_ver_encuestas, *permisos_ver_materias)
