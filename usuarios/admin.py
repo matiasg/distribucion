@@ -1,3 +1,5 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Usuario, Grupo
+
+admin.site.register([Usuario, Grupo])
