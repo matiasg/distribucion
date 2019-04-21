@@ -1,0 +1,24 @@
+.partido {
+  height: 100%;
+  width: 100%;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  overflow-x: hidden;
+  padding-top: 20px;
+}
+
+.izquierda {
+  left: 0;
+  float: left;
+  width: 20%;
+  background-color: #c0c0c0;
+}
+
+.derecha {
+  right: 0;
+  padding-left: 10px;
+  float: right;
+  width: 80%;
+  background-color: white;
+}

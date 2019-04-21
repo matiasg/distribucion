@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 {% load static %}
 <link rel="stylesheet" type="text/css" href="{% static 'dborrador/dborrador.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'dborrador/indice.css' %}">
 <head>
     <title>Zona de borrador de distribución</title>
 </head>
 
+<div class="partido izquierda">
 {% block indice %}
     <h2>Qué se puede hacer desde acá:</h2>
     <ul>
@@ -19,7 +21,10 @@
 
     </ul>
 {% endblock indice %}
+</div>
 
 
+<div class="partido derecha">
 <h3>{% block subtitulo %}{% endblock subtitulo %}</h3>
 {% block cuerpo %}{% endblock cuerpo %}
+</div>
