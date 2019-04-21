@@ -1,13 +1,27 @@
+import logging
+
 from django.db import models
-from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.contrib import admin
+from django.contrib.auth.models import User, BaseUserManager, AbstractUser, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 
 from dborrador.models import Preferencia, Asignacion
 
 
+class UsuarioManager(BaseUserManager):
+
+    def create_user(self, username, password=None, **kwargs):
+        usuario = self.model(**kwargs)
+        usuario.set_password(password)
+        usuario.save()
+        return usuario
+
+
 class Usuario(AbstractUser):
 
-    pass
+    is_staff = models.BooleanField(default=True)
+    objects = UsuarioManager()
+
 
 class Grupo(Group):
 
