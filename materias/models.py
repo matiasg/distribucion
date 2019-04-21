@@ -75,6 +75,7 @@ TurnoInfo = namedtuple('TurnoInfo', ['tipoynumero', 'diayhora', 'aula', 'pabello
 class Materia(models.Model):
     nombre = models.CharField(max_length=120)
     obligatoriedad = models.CharField(max_length=1, choices=choice_enum(TipoMateria))
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.nombre
@@ -128,6 +129,7 @@ class Horario(models.Model):
     aula = models.CharField(max_length=5, blank=True, null=True)
     pabellon = models.IntegerField(blank=True, null=True)
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
+    history = HistoricalRecords()
 
     def __str__(self):
         return f'{self.turno}: {self.dia}  {self.comienzo}--{self.final}'
@@ -139,6 +141,7 @@ class Docente(models.Model):
     email = models.EmailField()
     # TODO: chequear si alguien podría tener más de dos cargos
     cargos = ArrayField(models.CharField(max_length=6, choices=choice_enum(CargoDedicacion)), size=2)
+    history = HistoricalRecords()
 
     def __str__(self):
         return f'{self.nombre}'
