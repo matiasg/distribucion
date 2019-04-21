@@ -134,7 +134,6 @@ class Docente(models.Model):
     nombre = models.CharField(max_length=60)
     telefono = models.CharField(max_length=15, validators=[int_list_validator(sep=' ')])
     email = models.EmailField()
-    # TODO: chequear si alguien podría tener más de dos cargos
     cargos = ArrayField(models.CharField(max_length=6, choices=choice_enum(CargoDedicacion)), size=2)
 
     def __str__(self):
