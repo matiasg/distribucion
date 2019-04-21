@@ -3,6 +3,7 @@ from collections import namedtuple
 from django.db import models
 from django.core.validators import int_list_validator, MaxValueValidator
 from django.contrib.postgres.fields import ArrayField
+from simple_history.models import HistoricalRecords
 from enum import Enum
 
 
@@ -90,6 +91,7 @@ class Turno(models.Model):
     necesidad_jtp = models.PositiveIntegerField(validators=[MaxValueValidator(15)])
     necesidad_ay1 = models.PositiveIntegerField(validators=[MaxValueValidator(15)])
     necesidad_ay2 = models.PositiveIntegerField(validators=[MaxValueValidator(15)])
+    history = HistoricalRecords()
 
     def __str__(self):
         return (f'{self.materia.nombre}, cuat {Cuatrimestres[self.cuatrimestre].value} {self.anno}, '
@@ -153,6 +155,7 @@ class Carga(models.Model):
     anno = models.IntegerField()
     cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
     turno = models.ForeignKey(Turno, null=True, on_delete=models.SET_NULL)
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = 'carga docente'
