@@ -29,11 +29,13 @@ ALLOWED_HOSTS = ['localhost']
 
 
 # Application definition
+AUTH_USER_MODEL = 'usuarios.Usuario'
 
 INSTALLED_APPS = [
     'materias.apps.MateriasConfig',
     'encuestas.apps.EncuestasConfig',
     'dborrador.apps.DborradorConfig',
+    'usuarios.apps.UsuariosConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

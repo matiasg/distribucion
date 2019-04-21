@@ -1,0 +1,31 @@
+{% block title %}
+    Crear usuario
+{% endblock %}
+ 
+{% block content %}
+ 
+     <div class="login">
+ 
+         {% if messages %}
+            <ul>
+                {% for message in messages %}
+                <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+ 
+        <h1>Crear una cuenta de distribución docente</h1>
+ 
+         <form method="post" >
+             {% csrf_token %}
+             <table>
+                {{ form.as_table }}
+                 <tr>
+                    <td></td>
+                    <td><input type="submit" name="submit" value="Register" /></td>
+                </tr>
+             </table>
+         </form>
+     </div>
+ 
+{% endblock %}
