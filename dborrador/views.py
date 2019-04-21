@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.db.models import Max
 from django.contrib import messages
+from django.contrib.auth.decorators import permission_required, login_required
 
 from .models import Preferencia, Asignacion
 from .misc import MapeosDistribucion
@@ -77,6 +78,8 @@ def preparar(request):
         return render(request, 'dborrador/elegir_ac.html', _anno_cuat_tipos_context())
 
 
+@login_required
+@permission_required('dborrador.add_asignacion')
 def distribuir(request):
     try:
         anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
