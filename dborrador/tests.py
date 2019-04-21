@@ -61,11 +61,11 @@ class TestPaginaPrincipal(TestCase):
         c = Client()
         response = c.get('/dborrador/')
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(re.search('<a href=.preparar.>', response.content.decode()),
+        self.assertTrue(re.search('<a href="/dborrador/preparar">', response.content.decode()),
                         'La página principal no contiene un link a /dborrador/preparar')
-        self.assertTrue(re.search('<a href=.distribuir.>', response.content.decode()),
+        self.assertTrue(re.search('<a href="/dborrador/distribuir">', response.content.decode()),
                         'La página principal no contiene un link a /dborrador/distribuir')
-        self.assertTrue(re.search(r'<form action="/dborrador/" method="post">', response.content.decode()),
+        self.assertTrue(re.search(r'<a href="/dborrador/">', response.content.decode()),
                         'La página principal no contiene un botón de post a /dborrador/')
 
 
