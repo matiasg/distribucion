@@ -12,13 +12,7 @@
     <ul>
         <li> <a href="preparar">copiar encuestas</a></li>
         <li> <a href="distribuir">hacer una distribución</a></li>
-
-
-        <form action="{% url 'dborrador:index' %}" method="post">
-        {% csrf_token %}
-        <li> Ver una distribución: {% include "dborrador/form_act.html" with texto_submit="ver" %} </li>
-        </form>
-
+        <li> <a href="{% url 'dborrador:index' %}">Ver una distribución</a></li>
     </ul>
 {% endblock indice %}
 </div>
