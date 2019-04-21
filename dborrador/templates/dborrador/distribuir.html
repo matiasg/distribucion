@@ -1,23 +1,25 @@
-<!DOCTYPE html>
+{% extends "dborrador/base.html" %}
 
 {% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'dborrador/dborrador.css' %}">
-
-{% if messages %}
-<b>El intento {{ intento }} está roto. Hay que reorganizarlo manualmente</b>
-<div class="messages">
-    {% for message in messages %}
-    <br>{% if message.tags %} [{{ message.tags }}] {% endif %} {{ message }}</br>
-    {% endfor %}
-</div>
-{% endif %}
 
 
+{% block subtitulo %}
+    Hacer una distribución
+{% endblock subtitulo %}
 
-<h1> Vamos a hacer una distribución </h1>
+{% block cuerpo %}
+    {% if messages %}
+    <b>El intento {{ intento }} está roto. Hay que reorganizarlo manualmente</b>
+    <div class="messages">
+        {% for message in messages %}
+        <br>{% if message.tags %} [{{ message.tags }}] {% endif %} {{ message }}</br>
+        {% endfor %}
+    </div>
+    {% endif %}
 
-<form action="{% url 'dborrador:distribuir' %}" method="post">
-{% csrf_token %}
+    <form action="{% url 'dborrador:distribuir' %}" method="post">
+    {% csrf_token %}
 
-<br>Intento: <input type="number" name="intento" min=1 value=1>
-<br>{% include "dborrador/form_act.html" with texto_submit="distribuir" %}
+    <br>Intento: <input type="number" name="intento" min=1 value=1>
+    <br>{% include "dborrador/form_act.html" with texto_submit="distribuir" %}
+{% endblock cuerpo %}

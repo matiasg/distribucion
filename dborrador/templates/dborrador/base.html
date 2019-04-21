@@ -11,7 +11,7 @@
     <h2>Qué se puede hacer desde acá:</h2>
     <ul>
         <li> <a href="preparar">copiar encuestas</a></li>
-        <li> <a href="distribuir">hacer una distribución</a></li>
+        <li> <a href="{% url 'dborrador:distribuir' %}">hacer una distribución</a></li>
         <li> <a href="{% url 'dborrador:index' %}">Ver una distribución</a></li>
     </ul>
 {% endblock indice %}
