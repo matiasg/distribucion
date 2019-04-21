@@ -15,9 +15,11 @@ class FormularioCreacionUsuario(UserCreationForm):
         fields = ('username', 'groups', 'password1', 'password2')
 
     def save(self):
-        usuario = super().save()
-        for grupo in self.cleaned_data['groups']:
-            usuario.groups.add(grupo)
+        usuario = Usuario.objects.create_user(
+            username=self.cleaned_data['username'],
+            password=self.cleaned_data['password1']
+        )
+        usuario.groups.add(*self.cleaned_data['groups'])
         usuario.save()
         return usuario
 
