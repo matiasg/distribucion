@@ -29,11 +29,13 @@ ALLOWED_HOSTS = ['localhost']
 
 
 # Application definition
+AUTH_USER_MODEL = 'usuarios.Usuario'
 
 INSTALLED_APPS = [
     'materias.apps.MateriasConfig',
     'encuestas.apps.EncuestasConfig',
     'dborrador.apps.DborradorConfig',
+    'usuarios.apps.UsuariosConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -41,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_extensions',
+    'simple_history',  # para poder hacer rollback. https://django-simple-history.readthedocs.io/en/2.7.2/index.html
 ]
 
 MIDDLEWARE = [

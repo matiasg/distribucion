@@ -6,6 +6,9 @@ os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '@fb7dxhx7p^+(9b$em=38s$=$$-$9frcrj3wxi2%el&l#_d)j2'
 DEBUG = False
 ALLOWED_HOSTS = ['*']
+
+AUTH_USER_MODEL = 'materias.Usuario'
+
 INSTALLED_APPS = [
     'materias.apps.MateriasConfig',
     'encuestas.apps.EncuestasConfig',
@@ -16,6 +19,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'simple_history',  # para poder hacer rollback. https://django-simple-history.readthedocs.io/en/2.7.2/index.html
 ]
 
 MIDDLEWARE = [

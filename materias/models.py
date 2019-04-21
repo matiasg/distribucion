@@ -3,6 +3,7 @@ from collections import namedtuple
 from django.db import models
 from django.core.validators import int_list_validator, MaxValueValidator
 from django.contrib.postgres.fields import ArrayField
+from simple_history.models import HistoricalRecords
 from enum import Enum
 
 
@@ -74,6 +75,7 @@ TurnoInfo = namedtuple('TurnoInfo', ['tipoynumero', 'diayhora', 'aula'])
 class Materia(models.Model):
     nombre = models.CharField(max_length=120)
     obligatoriedad = models.CharField(max_length=1, choices=choice_enum(TipoMateria))
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.nombre
@@ -90,6 +92,7 @@ class Turno(models.Model):
     necesidad_jtp = models.PositiveIntegerField(validators=[MaxValueValidator(15)])
     necesidad_ay1 = models.PositiveIntegerField(validators=[MaxValueValidator(15)])
     necesidad_ay2 = models.PositiveIntegerField(validators=[MaxValueValidator(15)])
+    history = HistoricalRecords()
 
     def __str__(self):
         return (f'{self.materia.nombre}, cuat {Cuatrimestres[self.cuatrimestre].value} {self.anno}, '
@@ -125,6 +128,7 @@ class Horario(models.Model):
     aula = models.CharField(max_length=5, blank=True, null=True)
     pabellon = models.IntegerField(blank=True, null=True)
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
+    history = HistoricalRecords()
 
     def __str__(self):
         return f'{self.turno}: {self.dia}  {self.comienzo}--{self.final}'
@@ -135,6 +139,7 @@ class Docente(models.Model):
     telefono = models.CharField(max_length=15, validators=[int_list_validator(sep=' ')])
     email = models.EmailField()
     cargos = ArrayField(models.CharField(max_length=6, choices=choice_enum(CargoDedicacion)), size=2)
+    history = HistoricalRecords()
 
     def __str__(self):
         return f'{self.nombre}'
@@ -151,6 +156,7 @@ class Carga(models.Model):
     anno = models.IntegerField()
     cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
     turno = models.ForeignKey(Turno, null=True, on_delete=models.SET_NULL)
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = 'carga docente'
