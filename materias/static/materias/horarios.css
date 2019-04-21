@@ -1,9 +1,3 @@
-table
-{
-  border: 2px gray solid;
-  border-collapse: collapse;
-}
-
 .cuatrim
 {
   font-weight: bold;
@@ -69,27 +63,53 @@ table
   margin-bottom: 4px;
 }
 
-.fondoT
+table
+{
+  border: 2px gray solid;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+td.fondoT
 {
   background-color: #2C60BA;
   color: #FFFFFF;
+  width: 120px;
 }
 
-.fondoP
+td.fondoP
 {
   background-color: #2D9FCC;
   color: #FFFFFF;
+  width: 120px;
 }
 
-.fondoA
+td.fondoA
 {
   background-color: #5F793B;
   color: #FFFFFF;
+  width: 120px;
 }
 
-.datosdoc
+td.diayhora
+{
+  width: 150px;
+}
+
+td.datosdoc
 {
   text-align: center;
+  width: 400px;
+}
+
+td.aula
+{
+  width: 160px;
+}
+
+td.pabellon
+{
+  width: 130px;
 }
 
 .link
