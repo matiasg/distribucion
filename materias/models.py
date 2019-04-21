@@ -69,7 +69,7 @@ def get_key_enum(enum_cls):
     return {e.value: e.name for e in enum_cls}
 
 
-TurnoInfo = namedtuple('TurnoInfo', ['tipoynumero', 'diayhora', 'aula', 'pabellon'])
+TurnoInfo = namedtuple('TurnoInfo', ['tipoynumero', 'diayhora', 'aula'])
 
 
 class Materia(models.Model):
@@ -114,9 +114,8 @@ class Turno(models.Model):
         horarios = self.horario_set.all()
         dias = join([h.dia for h in horarios])
         horas = join([f'{time_str(h.comienzo)} a {time_str(h.final)}' for h in horarios])
-        aulas = join([f'{h.aula}' for h in horarios])
-        pabellones = join([f'{h.pabellon}' for h in horarios])
-        return TurnoInfo(tipoynumero, f'{dias}: {horas}', aulas, pabellones)
+        aulas = join([f'{h.aula} (P.{h.pabellon})' for h in horarios])
+        return TurnoInfo(tipoynumero, f'{dias}: {horas}', aulas)
 
     def docentes(self):
         return ' - '.join([f'{carga.docente.nombre}' for carga in self.carga_set.all()])
@@ -139,7 +138,6 @@ class Docente(models.Model):
     nombre = models.CharField(max_length=60)
     telefono = models.CharField(max_length=15, validators=[int_list_validator(sep=' ')])
     email = models.EmailField()
-    # TODO: chequear si alguien podría tener más de dos cargos
     cargos = ArrayField(models.CharField(max_length=6, choices=choice_enum(CargoDedicacion)), size=2)
     history = HistoricalRecords()
 

@@ -1,8 +1,14 @@
-<h1>Preferencias copiadas</h1>
+{% extends "dborrador/base.html" %}
 
-<table>
-    <tr><td>Copiadas:</td><td>{{ copiadas }}</td></tr>
-    <tr><td>Borradas:</td><td>{{ existentes }}</td></tr>
-</table>
+{% load static %}
 
-<a href="{% url 'dborrador:distribuir' %}">ir a la página para distribuir</a>
+{% block subtitulo %}
+    Preferencias copiadas
+{% endblock subtitulo %}
+
+{% block cuerpo %}
+    <table>
+        <tr><td>Copiadas:</td><td>{{ copiadas }}</td></tr>
+        <tr><td>Borradas:</td><td>{{ existentes }}</td></tr>
+    </table>
+{% endblock cuerpo %}

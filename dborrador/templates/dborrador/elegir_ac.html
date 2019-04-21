@@ -1,34 +1,43 @@
-<h1>Copiado de encuestas al borrador</h1>
+{% extends "dborrador/base.html" %}
 
-Para poder ensayar distribuciones, copiamos las encuestas a una zona de "borrador",
-donde las podemos cambiar sin tocar los originales.
+{% load static %}
 
-<b>Observación</b>: se van a borrar todas las encuestas ya copiadas a la zona de borrador.
+{% block subtitulo %}
+    Copiado de encuestas al borrador
+{% endblock subtitulo %}
 
-<br>¿Qué año, cuatrimestre y tipo de docente querés distribuir?
+{% block cuerpo %}
+    Para poder ensayar distribuciones, copiamos las encuestas a una zona de "borrador",
+    donde las podemos cambiar sin tocar los originales.
 
-<p>
-<form action="{% url 'dborrador:preparar' %}" method="post">
-{% csrf_token %}
-Año: 
-<select name="anno">
-    {% for a in annos %}
-    <option value="{{ a }}">{{ a }}</option>
-    {% endfor %}
-</select>
+    <b>Observación</b>: se van a borrar todas las encuestas ya copiadas a la zona de borrador.
 
-Cuatrimestre: 
-<select name="cuatrimestre">
-    {% for c in cuatrimestres %}
-    <option value="{{ c.name }}">{{ c.value }}</option>
-    {% endfor %}
-</select>
+    <br>¿Qué año, cuatrimestre y tipo de docente querés distribuir?
 
-Tipo de docentes: 
-<select name="tipo">
-    {% for t in tipos %}
-    <option value="{{ t.name }}">{{ t.value }}</option>
-    {% endfor %}
-</select>
+    <p>
+        <form action="{% url 'dborrador:preparar' %}" method="post">
+            {% csrf_token %}
+            Año: 
+            <select name="anno">
+                {% for a in annos %}
+                <option value="{{ a }}">{{ a }}</option>
+                {% endfor %}
+            </select>
 
-<input type="submit" value="copiar">
+            Cuatrimestre: 
+            <select name="cuatrimestre">
+                {% for c in cuatrimestres %}
+                <option value="{{ c.name }}">{{ c.value }}</option>
+                {% endfor %}
+            </select>
+
+            Tipo de docentes: 
+            <select name="tipo">
+                {% for t in tipos %}
+                <option value="{{ t.name }}">{{ t.value }}</option>
+                {% endfor %}
+            </select>
+
+            <input type="submit" value="copiar">
+    </p>
+{% endblock cuerpo %}
