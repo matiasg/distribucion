@@ -12,7 +12,6 @@ class Usuarios(TestCase):
         permiso = Permission.objects.get(codename='add_asignacion')
         self.autorizado.user_permissions.add(permiso)
 
-
     def test_puede_distribuir_deslogueado(self):
         client = Client()
         response = client.get(reverse('dborrador:distribuir'))

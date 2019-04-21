@@ -11,7 +11,7 @@ from dborrador.models import Preferencia, Asignacion
 class UsuarioManager(BaseUserManager):
 
     def create_user(self, username, password=None, **kwargs):
-        usuario = self.model(**kwargs)
+        usuario = self.model(username=username, **kwargs)
         usuario.set_password(password)
         usuario.save()
         return usuario
