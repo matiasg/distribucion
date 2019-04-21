@@ -1,9 +1,15 @@
-{% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
-<link rel="stylesheet" type="text/css" href="{% static 'dborrador/dborrador.css' %}">
+{% extends "dborrador/base.html" %}
 
-<div class="info">Distribución para {{ anno }}, cuatrimestre {{ cuatrimestre }},
-    tipo de docentes {{ tipo }}, intento {{ intento }}</div>
+{% load static %}
+
+{% block subtitulo %}
+    Distribución para {{ anno }}, cuatrimestre {{ cuatrimestre }},
+    tipo de docentes {{ tipo }}, intento {{ intento }}
+{% endblock subtitulo %}
+
+{% block cuerpo %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+
 
 <p>
     <div class="subseccion"><div id="titulo">Ver otra distribución</div>
@@ -83,3 +89,4 @@
     {% endfor %}
     </ol>
 {% endif %}
+{% endblock cuerpo %}

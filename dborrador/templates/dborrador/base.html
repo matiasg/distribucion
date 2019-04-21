@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'dborrador/dborrador.css' %}">
+<head>
+    <title>Zona de borrador de distribución</title>
+</head>
+
+{% block indice %}
+    <h2>Qué se puede hacer desde acá:</h2>
+    <ul>
+        <li> <a href="preparar">copiar encuestas</a></li>
+        <li> <a href="distribuir">hacer una distribución</a></li>
+
+
+        <form action="{% url 'dborrador:index' %}" method="post">
+        {% csrf_token %}
+        <li> Ver una distribución: {% include "dborrador/form_act.html" with texto_submit="ver" %} </li>
+        </form>
+
+    </ul>
+{% endblock indice %}
+
+
+<h3>{% block subtitulo %}{% endblock subtitulo %}</h3>
+{% block cuerpo %}{% endblock cuerpo %}
