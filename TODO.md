@@ -23,14 +23,15 @@ Cosas que debo hacer
         - Un cuatrimestre puede ser muy distinto de otro para un mismo docente.
           Por ej., dos cargas de JTP un cuat y dos cargas de Ay1 otro.
         - Que sea fácil pasar de dborrador a distribución definitiva.
-    [5] agregar alumnos a los turnos. Agregar una función #alumnos -> necesidades
-    [6] página para corregir fácil necesidades
+    [5] agregar alumnos a los turnos. Agregar una función #alumnos -> necesidades (#11)
+    [6] página para corregir fácil necesidades (#12)
+    [7] borrar CuatrimestreDocente (chequear que realmente no lo usamos) (#13)
 
 * distribucion
-    [4] Página de donde hereden otras como guía
+    [-] Página de donde hereden otras como guía (#6)
     [-] Avisar de docentes no distribuidos y turnos no cubiertos
     [ ] Historial de un docente
-    [4] página para agregar asignaciones fácil para nuevos intentos en dborrador
+    [4] página para agregar asignaciones fácil para nuevos intentos en dborrador (#7)
         Está hecho un poco en la página de ver distribuciones.
     [-] logging en la página cuando hay cargas o necesidades < 0 (hay dos TODO en el código)
     [-] si hay asignaciones previas hay que descontar en los docentes (además de en los turnos)
@@ -42,9 +43,9 @@ Cosas que debo hacer
     [-] preparar -> distribuir más dinámico
 
 * general
-    [3] distintos roles para editar distintas partes
-    [3] logs de cambios o forma de hacer restore de estado o medida de seguridad.
-    [ ] rol que pueda editar número de alumnos, aula y pab. de un turno.
+    [-] distintos roles para editar distintas partes (#4)
+    [-] logs de cambios o forma de hacer restore de estado o medida de seguridad. (#5)
+    [-] rol que pueda editar número de alumnos, aula y pab. de un turno.
     [ ] distribucion/settings.py <-- mirar SECRET_KEY >
     [ ] ponerle passwd a la db. Cuando se inicia, tira
         "Use "-e POSTGRES_PASSWORD=password" to set it in "docker run"."
@@ -64,7 +65,8 @@ Cosas que debo hacer
         Ej: taller de álgebra 1, Matemática 2.
         Propuesta: turnos de docentes != turnos para alumnos.
                     Si hacemos esto, el subnumero es para alumnos y no para docentes.
-    [ ] pensar qué hacer con materias repetidas (primer y segundo cuatrimestre). Queremos que se pueda? Que no? Que se intente que no?
+    [ ] pensar qué hacer con materias repetidas (primer y segundo cuatrimestre).
+        Queremos que se pueda? Que no? Que se intente que no?
     [-] que las preferencias sean editables (no salen en el admin)
     [-] distinguir JTP y ay 1ra
     [-] pre-asignar docentes a materias
