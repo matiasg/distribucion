@@ -76,30 +76,9 @@ class Mapeos:
     @staticmethod
     def cargas(tipo, ac):
         '''TipoDocentes -> AnnoCuatrimestre -> {Carga}'''
+        # TODO: agregar aqui a los docentes no distribuidos con cargo mayor
         doc_y_cargas = Mapeos.docentes_y_cargas(tipo, ac)
         return {c for d_cargas in doc_y_cargas.values() for c in d_cargas}
-
-    @staticmethod
-    def asignaciones(tipo, ac, intento):
-        '''TipoDocentes -> AnnoCuatrimestre -> intento -> [Asignacion]'''
-        cargas = Mapeos.cargas(tipo, ac)
-        asignaciones = Asignacion.objects.filter(turno__anno=ac.anno,
-                                                 turno__cuatrimestre=ac.cuatrimestre,
-                                                 intento=intento)
-        return [a for a in asignaciones if a.carga in cargas]
-
-    @staticmethod
-    def docentes_y_asignaciones(tipo, ac, intento):
-        '''TipoDocentes -> AnnoCuatrimestre -> intento -> {Docente: [Asignacion]}'''
-        cargas = Mapeos.cargas(tipo, ac)
-        asignaciones = Asignacion.objects.filter(turno__anno=ac.anno,
-                                                 turno__cuatrimestre=ac.cuatrimestre,
-                                                 intento=intento)
-        ret = defaultdict(list)
-        for asignacion in asignaciones:
-            if asignacion.carga in cargas:
-                ret[asignacion.carga.docente].append(asignacion)
-        return ret
 
     @staticmethod
     def necesidades(turno, tipo_docente):

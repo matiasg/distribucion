@@ -4,6 +4,7 @@ from materias.models import (Materia, Turno, TipoTurno, Cargos, Carga, Dedicacio
                              Docente, TipoMateria, Cuatrimestres)
 from materias.misc import Mapeos, TipoDocentes, AnnoCuatrimestre
 from dborrador.models import Asignacion
+from dborrador.misc import MapeosDistribucion
 
 
 class TestMapeos(TestCase):
@@ -82,19 +83,19 @@ class TestMapeos(TestCase):
         self.assertEqual(set(turnos_jtp), {self.turno3})
 
     def test_asignaciones(self):
-        asignaciones_p_1 = Mapeos.asignaciones(TipoDocentes.P.name, self.ac, 1)
-        asignaciones_p_3 = Mapeos.asignaciones(TipoDocentes.P.name, self.ac, 3)
-        asignaciones_j_3 = Mapeos.asignaciones(TipoDocentes.J.name, self.ac, 3)
-        asignaciones_a_3 = Mapeos.asignaciones(TipoDocentes.A1.name, self.ac, 3)
+        asignaciones_p_1 = MapeosDistribucion.asignaciones(TipoDocentes.P.name, self.ac, 1)
+        asignaciones_p_3 = MapeosDistribucion.asignaciones(TipoDocentes.P.name, self.ac, 3)
+        asignaciones_j_3 = MapeosDistribucion.asignaciones(TipoDocentes.J.name, self.ac, 3)
+        asignaciones_a_3 = MapeosDistribucion.asignaciones(TipoDocentes.A1.name, self.ac, 3)
         self.assertEqual(asignaciones_p_1, [])
         self.assertEqual(set(asignaciones_p_3), {self.asignacion1, self.asignacion3})
         self.assertEqual(asignaciones_j_3, [])
         self.assertEqual(set(asignaciones_a_3), {self.asignacion2})
 
     def test_docentes_y_asignaciones(self):
-        asignaciones_p_3 = Mapeos.docentes_y_asignaciones(TipoDocentes.P.name, self.ac, 3)
-        asignaciones_j_3 = Mapeos.docentes_y_asignaciones(TipoDocentes.J.name, self.ac, 3)
-        asignaciones_a_3 = Mapeos.docentes_y_asignaciones(TipoDocentes.A1.name, self.ac, 3)
+        asignaciones_p_3 = MapeosDistribucion.docentes_y_asignaciones(TipoDocentes.P.name, self.ac, 3)
+        asignaciones_j_3 = MapeosDistribucion.docentes_y_asignaciones(TipoDocentes.J.name, self.ac, 3)
+        asignaciones_a_3 = MapeosDistribucion.docentes_y_asignaciones(TipoDocentes.A1.name, self.ac, 3)
         self.assertEqual(asignaciones_p_3, {self.n: [self.asignacion1], self.m: [self.asignacion3]})
         self.assertEqual(asignaciones_j_3, {})
         self.assertEqual(asignaciones_a_3, {self.n: [self.asignacion2]})
