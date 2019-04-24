@@ -105,3 +105,42 @@ class TestMapeos(TestCase):
         self.assertEqual(necesidades_turno1, {TipoDocentes.P: 1, TipoDocentes.J: 0, TipoDocentes.A1: 0, TipoDocentes.A2: 0})
         necesidades_turno3 = {t: Mapeos.necesidades(self.turno3, t.name) for t in TipoDocentes}
         self.assertEqual(necesidades_turno3, {TipoDocentes.P: 0, TipoDocentes.J: 1, TipoDocentes.A1: 1, TipoDocentes.A2: 0})
+
+
+class TestMasMapeos(TestCase):
+
+    def setUp(self):
+        anno = 2100
+        cuatrimestre = Cuatrimestres.P.name
+        self.ac = AnnoCuatrimestre(anno, cuatrimestre)
+        self.n = Docente.objects.create(nombre='nemo',
+                                   telefono='00 0000',
+                                   email='nemo@nautilus.org',
+                                   cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
+        self.m = Docente.objects.create(nombre='mario', telefono='11 1111', email='mario@nautilus.org',
+                                   cargos=[CargoDedicacion.AsoSim.name])
+        self.materia = Materia.objects.create(nombre='navegacion', obligatoriedad=TipoMateria.B.name)
+        self.turno1 = Turno.objects.create(materia=self.materia, anno=anno, cuatrimestre=cuatrimestre,
+                                           numero=1, tipo=TipoTurno.T.name,
+                                           necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        self.turno2 = Turno.objects.create(materia=self.materia, anno=anno, cuatrimestre=cuatrimestre,
+                                           numero=2, tipo=TipoTurno.T.name,
+                                           necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        self.turno3 = Turno.objects.create(materia=self.materia, anno=anno, cuatrimestre=cuatrimestre,
+                                           numero=1, tipo=TipoTurno.P.name,
+                                           necesidad_prof=0, necesidad_jtp=1, necesidad_ay1=1, necesidad_ay2=0)
+        self.carga1 = Carga.objects.create(docente=self.n, cargo=CargoDedicacion.TitExc.name,
+                                           anno=anno, cuatrimestre=cuatrimestre,
+                                           turno=self.turno1)
+        self.carga2 = Carga.objects.create(docente=self.n, cargo=CargoDedicacion.Ay1Smx.name,
+                                           anno=anno, cuatrimestre=cuatrimestre)
+        self.carga3 = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.AsoSim.name,
+                                           anno=anno, cuatrimestre=cuatrimestre)
+
+    def test_cargas_no_asignadas_en(self):
+        cargas = Mapeos.cargas_no_asignadas_en(self.ac)
+        self.assertEqual(set(cargas), {self.carga2, self.carga3})
+
+    def test_cargas_asignadas_en(self):
+        turno_cargas = Mapeos.cargas_asignadas_en(self.ac)
+        self.assertEqual(turno_cargas, {self.turno1: [self.carga1]})

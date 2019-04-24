@@ -7,6 +7,7 @@ from dborrador.models import Preferencia, Asignacion
 
 AnnoCuatrimestre = namedtuple('AC', 'anno cuatrimestre')
 
+
 class TipoDocentes(Enum):
     '''P: profesor, J: JTP y Ay1, A: Ay2'''
 
@@ -31,6 +32,18 @@ class Mapeos:
                    for cargo in el_mapa[tipo.upper()]
                    for cd in CargoDedicacion.con_cargo(cargo)]
         return cardeds
+
+    @staticmethod
+    def tipos_de_cargo(cargodedicacion):
+        '''CargoDedicacion -> TipoDocentes'''
+        el_mapa = {Cargos.Tit.name: TipoDocentes.P,
+                   Cargos.Aso.name: TipoDocentes.P,
+                   Cargos.Adj.name: TipoDocentes.P,
+                   Cargos.JTP.name: TipoDocentes.J,
+                   Cargos.Ay1.name: TipoDocentes.A1,
+                   Cargos.Ay2.name: TipoDocentes.A2
+                   }
+        return el_mapa[cargodedicacion[:3]]
 
     @staticmethod
     def docentes_de_tipo(tipo):
@@ -58,7 +71,6 @@ class Mapeos:
         return {turno: Mapeos.necesidades(turno, tipo)
                 for turno in Mapeos.turnos_de_tipo_y_ac(tipo, ac)}
 
-
     @staticmethod
     def encuesta_tipo_turno(tipo_docente):
         '''
@@ -76,9 +88,23 @@ class Mapeos:
     @staticmethod
     def cargas(tipo, ac):
         '''TipoDocentes -> AnnoCuatrimestre -> {Carga}'''
-        # TODO: agregar aqui a los docentes no distribuidos con cargo mayor
         doc_y_cargas = Mapeos.docentes_y_cargas(tipo, ac)
         return {c for d_cargas in doc_y_cargas.values() for c in d_cargas}
+
+    @staticmethod
+    def cargas_no_asignadas_en(ac):
+        return [carga
+                for carga in Carga.objects.filter(anno=ac.anno, cuatrimestre=ac.cuatrimestre)
+                if carga.turno is None]
+
+    @staticmethod
+    def cargas_asignadas_en(ac):
+        ret = defaultdict(list)
+        for carga in Carga.objects.filter(anno=ac.anno, cuatrimestre=ac.cuatrimestre):
+            turno = carga.turno
+            if turno is not None:
+                ret[turno].append(carga)
+        return ret
 
     @staticmethod
     def necesidades(turno, tipo_docente):
