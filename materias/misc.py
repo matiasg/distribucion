@@ -16,6 +16,10 @@ class TipoDocentes(Enum):
     A1 = 'Ay1'
     A2 = 'Ay2'
 
+    def __ge__(self, otro):
+        ordenados = [TipoDocentes.A2, TipoDocentes.A1, TipoDocentes.J, TipoDocentes.P]
+        return ordenados.index(self) >= ordenados.index(otro)
+
 
 class Mapeos:
     '''Esta clase resuelve distintos tipos de mapeos'''
@@ -93,12 +97,14 @@ class Mapeos:
 
     @staticmethod
     def cargas_no_asignadas_en(ac):
+        '''AnnoCuatrimestre -> [Carga]'''
         return [carga
                 for carga in Carga.objects.filter(anno=ac.anno, cuatrimestre=ac.cuatrimestre)
                 if carga.turno is None]
 
     @staticmethod
     def cargas_asignadas_en(ac):
+        '''AnnoCuatrimestre -> {Turno: [Carga]}'''
         ret = defaultdict(list)
         for carga in Carga.objects.filter(anno=ac.anno, cuatrimestre=ac.cuatrimestre):
             turno = carga.turno
@@ -116,3 +122,11 @@ class Mapeos:
             return turno.necesidad_ay1
         else:
             return turno.necesidad_ay2
+
+    @staticmethod
+    def filtrar_cargas_de_tipo_ge(tipo_docente, cargas):
+        '''TipoDocentes -> [Carga] -> [Carga]'''
+        return [carga
+                for carga in cargas
+                if Mapeos.tipos_de_cargo(carga.cargo) >= tipo_docente
+                ]
