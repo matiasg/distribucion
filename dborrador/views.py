@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict, namedtuple
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -52,7 +53,8 @@ def _anno_cuat_tipos_context():
 def _anno_cuat_tipo_de_request(request):
     anno = request.POST['anno']
     cuatrimestre = request.POST['cuatrimestre']
-    tipo = request.POST['tipo']
+    tipo_name = request.POST['tipo']
+    tipo = TipoDocentes[tipo_name]
     return int(anno), cuatrimestre, tipo
 
 def index(request):
@@ -158,6 +160,7 @@ def distribuir(request):
 
 
 def distribucion(request, anno, cuatrimestre, tipo, intento):
+    tipo = TipoDocentes[tipo.upper()]  # TODO: cambiar argumento a tipo_name
     if not 'fijar' in request.POST:
         try:
             proximo_intento = Asignacion.objects.all().aggregate(Max('intento'))['intento__max'] + 1
@@ -172,14 +175,9 @@ def distribucion(request, anno, cuatrimestre, tipo, intento):
             return HttpResponseRedirect(distribucion_url)
 
         problemas = MapeosDistribucion.chequeo(tipo, AnnoCuatrimestre(anno, cuatrimestre), intento)
-        materias_distribuidas = filtra_materias(anno=anno, cuatrimestre=cuatrimestre, intento=intento, tipo=tipo)
-        context = {'materias': materias_distribuidas,
-                   'anno': anno,
-                   'cuatrimestre': cuatrimestre,
-                   'tipo': tipo,
-                   'intento': intento,
-                   'nuevo_intento': proximo_intento,
-                   'problemas': problemas}
+        context = materias_distribuidas_dict(anno=anno, cuatrimestre=cuatrimestre, intento=intento, tipo=tipo)
+        context['nuevo_intento'] = proximo_intento
+        context['problemas'] = problemas
         return render(request, 'dborrador/distribucion.html', context)
 
     else:
@@ -197,6 +195,13 @@ def distribucion(request, anno, cuatrimestre, tipo, intento):
         return HttpResponseRedirect(distribucion_url)
 
 
+def materias_distribuidas_dict(anno, cuatrimestre, intento, tipo):
+    return {'materias': filtra_materias(anno=anno, cuatrimestre=cuatrimestre, intento=intento, tipo=tipo),
+            'anno': anno,
+            'cuatrimestre': cuatrimestre,
+            'tipo': tipo,
+            'intento': intento}
+
 def filtra_materias(anno, cuatrimestre, intento, tipo, **kwargs):
     cargas = Mapeos.cargas(tipo, AnnoCuatrimestre(anno, cuatrimestre))
 
@@ -212,11 +217,56 @@ def filtra_materias(anno, cuatrimestre, intento, tipo, **kwargs):
                 (materia, Turno.objects.filter(materia=materia, anno=anno, cuatrimestre=cuatrimestre))
                 for materia in tmaterias
                 ]
+        #  TODO: esto se usa para ver distribucion pero no para fijar distribucion
         for materia, turnos in materias_turnos:
             for turno in turnos:
                 asignaciones = [(a, a.carga in cargas)
                                 for a in turno.asignacion_set.all() if a.intento == intento]
                 turno.cargas_asignadas = asignaciones
+
         materias.append((obligatoriedad_largo, materias_turnos))
 
     return materias
+
+
+def fijar(request):
+    try:
+        anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
+        intento = int(request.POST['intento'])
+    except:
+        # XXX: arreglar esto
+        anno = timezone.now().year + 1
+        cuatrimestre = 'P'
+        intento = 1
+        tipo = TipoDocentes.P
+
+    def _append_dicts(*dicts):
+        ret = defaultdict(list)
+        for d in dicts:
+            for k, l in d.items():
+                ret[k].append(l)
+        return ret
+
+    context = materias_distribuidas_dict(anno, cuatrimestre, intento, tipo)
+    ac = AnnoCuatrimestre(anno, cuatrimestre)
+
+    otro_tipo = _append_dicts(Mapeos.cargas_asignadas_en(ac), MapeosDistribucion.asignaciones_otro_tipo(ac))
+    este_tipo_fijo = MapeosDistribucion.asignaciones_fijas(ac)
+    este_tipo = MapeosDistribucion.asignaciones_para_intento(ac, intento)
+    necesidades_no_cubiertas = MapeosDistribucion.necesidades_tipo_no_cubiertas_en(tipo, ac, intento)
+
+    ### XXX: este masajeo hay que refactorizarlo unificando bien con filtra_materias()
+    DatosDeTurno = namedtuple('DDT', ['asignaciones_otro_tipo', 'asignaciones_este_tipo_fijo', 'asignaciones_este_tipo',
+                                      'necesidades_no_cubiertas'])
+    for obligatoriedad, materias_turnos in context['materias']:
+        for materia, turnos in materias_turnos:
+            for turno in turnos:
+                datos = DatosDeTurno(otro_tipo[turno], este_tipo_fijo[turno], este_tipo[turno],
+                                     necesidades_no_cubiertas[turno])
+                turno.datos = datos
+                print(f'\nturno: {turno}\n    datos: {datos}')  # sac
+
+    cargas_a_distribuir = MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(tipo, ac, intento)
+    print(f'\n\ncad: {cargas_a_distribuir}')
+    context.update({'cargas_a_distribuir': cargas_a_distribuir})
+    return render(request, 'dborrador/fijar.html', context)

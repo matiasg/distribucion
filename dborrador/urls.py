@@ -14,6 +14,7 @@ urlpatterns = [
     path('distribuir', views.distribuir, name='distribuir'),
     path('distribucion/<int:anno>/<str:cuatrimestre>/<str:tipo>/<int:intento>',
                     views.distribucion, name='distribucion'),
+    path('fijar', views.fijar, name='fijar'),
 ]
 
 # if settings.DEBUG:
