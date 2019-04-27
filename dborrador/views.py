@@ -229,16 +229,34 @@ def filtra_materias(anno, cuatrimestre, intento, tipo, **kwargs):
     return materias
 
 
+
 def fijar(request):
-    try:
-        anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
+    if 'intento' in request.POST:
         intento = int(request.POST['intento'])
-    except:
-        # XXX: arreglar esto
-        anno = timezone.now().year + 1
-        cuatrimestre = 'P'
-        intento = 1
-        tipo = TipoDocentes.P
+    elif 'nuevo_intento' in request.POST:
+        intento = int(request.POST['nuevo_intento'])
+    else:
+        intento = 0
+
+    if 'fijar' in request.POST:
+        anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
+        for k, val in request.POST.items():
+            if k.startswith('fijoen'):
+                carga_id = int(val)
+                if carga_id >= 0:
+                    _, turno_id, _ = k.split('_')
+                    turno = Turno.objects.get(pk=int(turno_id))
+                    carga = Carga.objects.get(pk=carga_id)
+                    asignacion = Asignacion.objects.create(turno=turno, carga=carga, intento=intento)
+
+    else:
+        try:
+            anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
+        except:
+            # XXX: arreglar esto
+            anno = timezone.now().year + 1
+            cuatrimestre = 'P'
+            tipo = TipoDocentes.P
 
     def _append_dicts(*dicts):
         ret = defaultdict(list)
@@ -251,9 +269,10 @@ def fijar(request):
     ac = AnnoCuatrimestre(anno, cuatrimestre)
 
     otro_tipo = _append_dicts(Mapeos.cargas_asignadas_en(ac), MapeosDistribucion.asignaciones_otro_tipo(ac))
-    este_tipo_fijo = MapeosDistribucion.asignaciones_fijas(ac)
     este_tipo = MapeosDistribucion.asignaciones_para_intento(ac, intento)
     necesidades_no_cubiertas = MapeosDistribucion.necesidades_tipo_no_cubiertas_en(tipo, ac, intento)
+    # si queremos fijar docentes al intento 0, tienen que aparecer en este_tipo, no en este_tipo_fijo
+    este_tipo_fijo = MapeosDistribucion.asignaciones_fijas(ac) if intento > 0 else defaultdict(list)
 
     ### XXX: este masajeo hay que refactorizarlo unificando bien con filtra_materias()
     DatosDeTurno = namedtuple('DDT', ['asignaciones_otro_tipo', 'asignaciones_este_tipo_fijo', 'asignaciones_este_tipo',
@@ -267,4 +286,8 @@ def fijar(request):
 
     cargas_a_distribuir = MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(tipo, ac, intento)
     context.update({'cargas_a_distribuir': cargas_a_distribuir})
+
+    # TODO: si hay docentes distribuidos más que sus cargas o turnos cubiertos de más hay que tirar excepción
+    context['problemas'] = MapeosDistribucion.chequeo(tipo, AnnoCuatrimestre(anno, cuatrimestre), intento)
+
     return render(request, 'dborrador/fijar.html', context)
