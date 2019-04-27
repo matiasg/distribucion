@@ -27,13 +27,13 @@ class Mapeos:
     @staticmethod
     def cargos_de_tipos(tipo):
         '''TipoDocentes -> [CargoDedicacion]'''
-        el_mapa = {TipoDocentes.P.name: [Cargos.Tit, Cargos.Aso, Cargos.Adj],
-                   TipoDocentes.J.name: [Cargos.JTP],
-                   TipoDocentes.A1.name: [Cargos.Ay1],
-                   TipoDocentes.A2.name: [Cargos.Ay2],
+        el_mapa = {TipoDocentes.P: [Cargos.Tit, Cargos.Aso, Cargos.Adj],
+                   TipoDocentes.J: [Cargos.JTP],
+                   TipoDocentes.A1: [Cargos.Ay1],
+                   TipoDocentes.A2: [Cargos.Ay2],
                    }
         cardeds = [cd
-                   for cargo in el_mapa[tipo.upper()]
+                   for cargo in el_mapa[tipo]
                    for cd in CargoDedicacion.con_cargo(cargo)]
         return cardeds
 
@@ -81,12 +81,12 @@ class Mapeos:
         Para profesores: teóricas y teórico-prácticas.
         Para auxiliares: prácticas y teórico-prácticas.
         '''
-        el_mapa = {TipoDocentes.P.name: [TipoTurno.T.name, TipoTurno.A.name],
-                   TipoDocentes.J.name: [TipoTurno.P.name, TipoTurno.A.name],
-                   TipoDocentes.A1.name: [TipoTurno.P.name, TipoTurno.A.name],
-                   TipoDocentes.A2.name: [TipoTurno.P.name, TipoTurno.A.name],
+        el_mapa = {TipoDocentes.P: [TipoTurno.T.name, TipoTurno.A.name],
+                   TipoDocentes.J: [TipoTurno.P.name, TipoTurno.A.name],
+                   TipoDocentes.A1: [TipoTurno.P.name, TipoTurno.A.name],
+                   TipoDocentes.A2: [TipoTurno.P.name, TipoTurno.A.name],
                    }
-        tipos = el_mapa[tipo_docente.upper()]
+        tipos = el_mapa[tipo_docente]
         return Turno.objects.filter(tipo__in=tipos)
 
     @staticmethod
@@ -114,11 +114,11 @@ class Mapeos:
 
     @staticmethod
     def necesidades(turno, tipo_docente):
-        if tipo_docente == TipoDocentes.P.name:
+        if tipo_docente == TipoDocentes.P:
             return turno.necesidad_prof
-        elif tipo_docente == TipoDocentes.J.name:
+        elif tipo_docente == TipoDocentes.J:
             return turno.necesidad_jtp
-        elif tipo_docente == TipoDocentes.A1.name:
+        elif tipo_docente == TipoDocentes.A1:
             return turno.necesidad_ay1
         else:
             return turno.necesidad_ay2
