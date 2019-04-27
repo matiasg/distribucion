@@ -264,9 +264,7 @@ def fijar(request):
                 datos = DatosDeTurno(otro_tipo[turno], este_tipo_fijo[turno], este_tipo[turno],
                                      necesidades_no_cubiertas[turno])
                 turno.datos = datos
-                print(f'\nturno: {turno}\n    datos: {datos}')  # sac
 
     cargas_a_distribuir = MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(tipo, ac, intento)
-    print(f'\n\ncad: {cargas_a_distribuir}')
     context.update({'cargas_a_distribuir': cargas_a_distribuir})
     return render(request, 'dborrador/fijar.html', context)
