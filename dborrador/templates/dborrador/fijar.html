@@ -65,9 +65,9 @@ Fijar docentes a intento {{ intento }}
                         <div id="este_tipo_fijo">{% for carga in turno.datos.asignaciones_este_tipo_fijo %}{{ carga.docente.nombre }}{% endfor %}</div>
 
                         <div id="este_tipo">{% for carga in turno.datos.asignaciones_este_tipo %}
-                            <select name="cambioen_{{ turno.id }}_{{ carga.id }}">
+                            <select name="cambioen_{{ carga.id }}">
                                 <option value=-1>  </option>
-                                <option value={{ carga.docente.id }} selected>{{ carga.docente.nombre }}</option>
+                                <option value={{ carga.id }} selected>{{ carga.docente.nombre }}</option>
                             </select>
                             {% endfor %}</div>
 

@@ -98,7 +98,7 @@ def distribuir(request):
                     tipo, cuatrimestre, anno)
 
         anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
-        cargas_a_distribuir = MapeosDistribucion.cargas_a_distribuir(tipo, anno_cuat, intento)
+        cargas_a_distribuir = MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(tipo, anno_cuat, intento)
         sources = {str(c.id): 1 for c in cargas_a_distribuir}
 
         necesidades_no_cubiertas = MapeosDistribucion.necesidades_no_cubiertas(tipo, anno_cuat, intento)
@@ -248,7 +248,13 @@ def fijar(request):
                     turno = Turno.objects.get(pk=int(turno_id))
                     carga = Carga.objects.get(pk=carga_id)
                     asignacion = Asignacion.objects.create(turno=turno, carga=carga, intento=intento)
-
+            if k.startswith('cambioen'):
+                _, carga_id = k.split('_')
+                carga = Carga.objects.get(pk=int(carga_id))
+                nueva_carga_id = int(val)
+                if nueva_carga_id < 0:  # hay que borrar la asignación
+                    asignacion = Asignacion.objects.get(carga=carga, intento=intento)
+                    asignacion.delete()
     else:
         try:
             anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
