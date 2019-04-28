@@ -1,6 +1,7 @@
 from django.test import TestCase, Client
 
-from materias.models import Cargos, Dedicaciones, CargoDedicacion, Docente
+from materias.models import (Cargos, Dedicaciones, CargoDedicacion, Docente,
+                             Materia, Turno, TipoMateria, TipoTurno,)
 
 class TestModels(TestCase):
 
@@ -40,3 +41,27 @@ class TestModels(TestCase):
         ayds2 = Docente.todos_los(Cargos.Ay2)
         self.assertEquals(len(ayds2), 2)
         self.assertEquals(set(ayds2), set([m, o]))
+
+    def test_cantidad_de_alumnos(self):
+        m = Materia.objects.create(nombre='lacan 1', obligatoriedad=TipoMateria.B.name)
+        tdict = {'materia': m, 'anno': 2100, 'cuatrimestre': 'V',
+                 'necesidad_prof': 0, 'necesidad_jtp': 0, 'necesidad_ay1': 0, 'necesidad_ay2': 0}
+        t1 = Turno.objects.create(numero=1, tipo=TipoTurno.T.name, alumnos=89, **tdict)
+
+        t1.poner_necesidades_segun_alumnos()
+        self.assertEquals(t1.necesidad_prof, 1)
+        self.assertEquals(t1.necesidad_jtp, 0)
+
+        t2 = Turno.objects.create(numero=1, tipo=TipoTurno.A.name, alumnos=89, **tdict)
+        t2.poner_necesidades_segun_alumnos()
+        self.assertEquals(t2.necesidad_prof, 1)
+        self.assertEquals(t2.necesidad_jtp, 1)
+        self.assertEquals(t2.necesidad_ay1, 1)
+        self.assertEquals(t2.necesidad_ay2, 1)
+
+        t3 = Turno.objects.create(numero=1, tipo=TipoTurno.P.name, alumnos=89, **tdict)
+        t3.poner_necesidades_segun_alumnos()
+        self.assertEquals(t3.necesidad_prof, 0)
+        self.assertEquals(t3.necesidad_jtp, 1)
+        self.assertEquals(t3.necesidad_ay1, 1)
+        self.assertEquals(t3.necesidad_ay2, 2)
