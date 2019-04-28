@@ -57,16 +57,24 @@ class TestPreparar(TestCase):
 
 class TestPaginaPrincipal(TestCase):
 
-    def test_hay_pagina_principal(self):
+    def test_hay_pagina_principal_sin_datos(self):
         c = Client()
         response = c.get('/dborrador/')
+        self.assertContains(response, '<select name="anno">')
+        self.assertContains(response, '<select name="cuatrimestre">')
+        self.assertContains(response, '<select name="tipo">')
+
+    def test_hay_pagina_principal_con_datos(self):
+        c = Client()
+        response = c.post('/dborrador/', {'anno': 2100, 'cuatrimestre': 'P', 'tipo': 'P', 'intento': 0},
+                          follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(re.search('<a href="/dborrador/preparar">', response.content.decode()),
-                        'La página principal no contiene un link a /dborrador/preparar')
-        self.assertTrue(re.search('<a href="/dborrador/distribuir">', response.content.decode()),
-                        'La página principal no contiene un link a /dborrador/distribuir')
-        self.assertTrue(re.search(r'<a href="/dborrador/">', response.content.decode()),
-                        'La página principal no contiene un botón de post a /dborrador/')
+                        'La página redirigida no contiene un link a /dborrador/preparar')
+        self.assertTrue(re.search('<a href="/dborrador/distribuir/2100/P/P/0">', response.content.decode()),
+                        'La página redirigida no contiene un link a /dborrador/distribuir')
+        self.assertTrue(re.search(r'<a href="/dborrador/fijar/2100/P/P/0">', response.content.decode()),
+                        'La página redirigida no contiene un botón de post a /dborrador/')
 
 
 class TestVerDistribucion(TestCase):
@@ -96,7 +104,7 @@ class TestVerDistribucion(TestCase):
 
     def test_figuran_docentes_no_distribuidos(self):
         Asignacion.objects.create(intento=1, carga=self.carga1, turno=self.turno1)
-        response = self.client.get(reverse('dborrador:distribucion',
+        response = self.client.get(reverse('dborrador:fijar',
                                            args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
         content = response.content.decode()
 
