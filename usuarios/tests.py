@@ -7,24 +7,26 @@ from .models import Usuario
 class Usuarios(TestCase):
 
     def setUp(self):
-        self.desautorizado = Usuario.objects.create_user(username='desau', password='1234', )
-        self.autorizado = Usuario.objects.create_user(username='auto', password='1234')
+        self.desautorizado = Usuario.objects.create_user(username='desautorizado', password='1234', )
+        self.autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
         permiso = Permission.objects.get(codename='add_asignacion')
         self.autorizado.user_permissions.add(permiso)
+        self.context = (2100, 'P', 'P', 1)
 
     def test_puede_distribuir_deslogueado(self):
         client = Client()
-        response = client.get(reverse('dborrador:distribuir'))
-        self.assertEqual(response.status_code, 302)
+        response = client.get(reverse('dborrador:distribuir', args=self.context), follow=True)
+        self.assertEqual(response.status_code, 404)
 
     def test_puede_distribuir_logueado_autorizado(self):
         client = Client()
-        client.login(username='auto', password='1234')
-        response = client.get(reverse('dborrador:distribuir'))
+        client.login(username='autorizado', password='1234')
+        response = client.get(reverse('dborrador:distribuir', args=self.context), follow=True)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[0][0], '/dborrador/fijar/2100/P/P/1')
 
     def test_puede_distribuir_logueado_desautorizado(self):
         client = Client()
-        client.login(username='desau', password='1234')
-        response = client.get(reverse('dborrador:distribuir'))
-        self.assertEqual(response.status_code, 302)
+        client.login(username='desautorizado', password='1234')
+        response = client.get(reverse('dborrador:distribuir', args=self.context), follow=True)
+        self.assertEqual(response.status_code, 404)
