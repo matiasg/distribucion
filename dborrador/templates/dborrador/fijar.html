@@ -79,8 +79,8 @@ Fijar docentes a intento {{ intento }}
                         <div id="este_tipo_fijo">{% for carga in turno.datos.asignaciones_este_tipo_fijo %}{{ carga.docente.nombre }}{% endfor %}</div>
 
                         <div id="este_tipo">{% for carga in turno.datos.asignaciones_este_tipo %}
-                            <select name="cambioen_{{ carga.id }}">
-                                <option value=-1>  </option>
+                            <select name="cambioen_{{ turno.id }}_{{ carga.id }}">
+                                <option value=-1>------</option>
                                 <option value={{ carga.id }} selected>{{ carga.docente.nombre }}</option>
                             </select>
                             {% endfor %}</div>
@@ -89,7 +89,7 @@ Fijar docentes a intento {{ intento }}
                         {% for i in 0|rjust:turno.datos.necesidades_no_cubiertas %}
                         <div id="no_cubiertas">
                             <select name="fijoen_{{ turno.id }}_{{ forloop.counter }}">
-                                <option value=-1 selected>  </option>
+                                <option value=-1 selected>------</option>
                                 {% for nueva_carga in cargas_a_distribuir %}
                                 <option value={{ nueva_carga.id }}>{{ nueva_carga.docente.nombre }}</option>
                                 {% endfor %}

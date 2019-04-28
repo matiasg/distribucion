@@ -228,7 +228,7 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
         for k, val in request.POST.items():
             if k.startswith('fijoen'):
                 carga_id = int(val)
-                if carga_id >= 0:
+                if carga_id >= 0:  # hay que crear una asignación nueva
                     _, turno_id, _ = k.split('_')
                     turno = Turno.objects.get(pk=int(turno_id))
                     carga = Carga.objects.get(pk=carga_id)
@@ -238,13 +238,13 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
                         logger.info('Fijé a %s al turno %s en el intento %d',
                                     carga.docente, turno, intento)
             if k.startswith('cambioen'):
-                _, carga_id = k.split('_')
+                _, turno_id, carga_id = k.split('_')
+                turno = Turno.objects.get(pk=int(turno_id))
                 carga = Carga.objects.get(pk=int(carga_id))
                 nueva_carga_id = int(val)
                 if nueva_carga_id < 0:  # hay que borrar la asignación
-                    asignacion = Asignacion.objects.get(carga=carga, intento=intento)
-                    asignacion.delete()
-                    logger.info('Borré asignación %s', asignacion)
+                    asignaciones, _ = Asignacion.objects.filter(carga=carga, turno=turno, intento=intento).delete()
+                    logger.info('Borré %d asignación(es) para %s en %s', asignaciones, carga.docente, turno)
 
     def _append_dicts(*dicts):
         ret = defaultdict(list)
