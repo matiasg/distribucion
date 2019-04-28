@@ -32,7 +32,7 @@ Fijar docentes a intento {{ intento }}
             <div id="problema">Cargas docentes repetidas</div>
             <ul>
                 {% for carga, asignaciones in problemas.recargas.items %}
-                <li>{{ carga.docente }} está asignado en la misma carga para
+                <li>{{ carga.docente }} está asignada/o en la misma carga para
                     <ol>
                         {% for asignacion in asignaciones %}
                         <li>{{ asignacion.turno }} en el intento {{ asignacion.intento }}</li>
