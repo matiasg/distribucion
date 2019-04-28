@@ -130,7 +130,7 @@ class MapeosDistribucion:
     def chequeo(tipo, ac, intento, este_tipo_fijo, este_tipo):
         '''TipoDocentes -> AnnoCuatrimestre -> intento -> ([Carga], [Turno, necesidad])'''
         cargas = MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(tipo, ac, intento)
-        necesidades = MapeosDistribucion.necesidades_no_cubiertas(tipo, ac, intento)
+        necesidades = MapeosDistribucion.necesidades_tipo_no_cubiertas_en(tipo, ac, intento)
         no_cubiertas = [(turno, necesidad) for turno, necesidad in necesidades.items() if necesidad > 0]
         recargas = MapeosDistribucion.docentes_recargados(este_tipo_fijo, este_tipo, intento)
         return Problemas(cargas, no_cubiertas, recargas)

@@ -60,12 +60,11 @@ def _anno_cuat_tipo_de_request(request):
 def index(request):
     try:
         anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
-        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo.name, 1))
-        return HttpResponseRedirect(distribucion_url)
+        intento = request.POST['intento']
+        fijar_url = reverse('dborrador:fijar', args=(anno, cuatrimestre, tipo.name, 1))
+        return HttpResponseRedirect(fijar_url)
     except:
-        anno = timezone.now().year
-        return render(request, 'dborrador/index.html', _anno_cuat_tipos_context())
-
+        return render(request, 'dborrador/base.html', _anno_cuat_tipos_context())
 
 def preparar(request):
     try:
@@ -82,81 +81,71 @@ def preparar(request):
 
 @login_required
 @permission_required('dborrador.add_asignacion')
-def distribuir(request):
-    try:
-        anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
-        intento = int(request.POST['intento'])
+def distribuir(request, anno, cuatrimestre, tipo, intento):
+    logger.info('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s',
+                tipo, cuatrimestre, anno)
 
-    except KeyError:
-        anno_actual = timezone.now().year
-        context = _anno_cuat_tipos_context()
-        context['intento'] = 1
+    tipo = TipoDocentes[tipo]
+    anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
+    cargas_a_distribuir = MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(tipo, anno_cuat, intento)
+    sources = {str(c.id): 1 for c in cargas_a_distribuir}
+
+    necesidades_no_cubiertas = MapeosDistribucion.necesidades_no_cubiertas(tipo, anno_cuat, intento)
+    targets = {}
+    hay_errores = False
+    for turno, necesidad in necesidades_no_cubiertas.items():
+        if necesidad > 0:
+            targets[str(turno.id)] = necesidad
+        elif necesidad < 0:
+            messages.error(request, f'Hay demasiados docentes asignados al turno {turno}')
+            hay_errores = True
+
+    if hay_errores:
+        context = {
+                'annos': [anno],
+                'cuatrimestres': [Cuatrimestres[cuatrimestre]],
+                'tipos': tipo,
+                'intento': intento}
         return render(request, 'dborrador/distribuir.html', context)
 
-    else:
-        logger.info('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s',
-                    tipo, cuatrimestre, anno)
+    logger.info('Hay que distribuir %d cargas docentes y hay %d necesidades.',
+                len(cargas_a_distribuir), sum(necesidades_no_cubiertas.values()))
 
-        anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
-        cargas_a_distribuir = MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(tipo, anno_cuat, intento)
-        sources = {str(c.id): 1 for c in cargas_a_distribuir}
+    preferencias = Preferencia.objects.all()
+    pesos = []
+    for carga in cargas_a_distribuir:
+        doc_pref = preferencias.filter(preferencia__docente=carga.docente)
+        for preferencia in doc_pref:
+            carga_id = str(carga.id)
+            turno_id = str(preferencia.preferencia.turno.id)
+            if turno_id in targets:
+                pesos.append({'from': carga_id,
+                              'to': turno_id,
+                              'weight': preferencia.peso_normalizado
+                              })
+            else:
+                logger.debug('Tengo una preferencia de %s para %s pero no se está distribuyendo ese turno',
+                             preferencia.preferencia.docente, preferencia.preferencia.turno)
 
-        necesidades_no_cubiertas = MapeosDistribucion.necesidades_no_cubiertas(tipo, anno_cuat, intento)
-        targets = {}
-        hay_errores = False
-        for turno, necesidad in necesidades_no_cubiertas.items():
-            if necesidad > 0:
-                targets[str(turno.id)] = necesidad
-            elif necesidad < 0:
-                messages.error(request, f'Hay demasiados docentes asignados al turno {turno}')
-                hay_errores = True
+    wmap = allocating.ListWeightedMap(pesos)
+    logger.info('Voy a hacer una distribución con %d cargas docentes y %d lugares en turnos',
+                sum(sources.values()), sum(targets.values()))
 
-        if hay_errores:
-            context = {
-                    'annos': [anno],
-                    'cuatrimestres': [Cuatrimestres[cuatrimestre]],
-                    'tipos': tipo,
-                    'intento': intento}
-            return render(request, 'dborrador/distribuir.html', context)
+    # llamamos al distribuidor
+    allocator = allocating.Allocator(sources, wmap, targets, limit_denominator=100)
+    distribucion = allocator.get_best()
+    logger.info('distribución obtenida (con ids): %s', distribucion)
 
-        logger.info('Hay que distribuir %d cargas docentes y hay %d necesidades.',
-                    len(cargas_a_distribuir), sum(necesidades_no_cubiertas.values()))
+    for carga_id, turno_id in distribucion:
+        if carga_id is None or turno_id is None:
+            continue
 
-        preferencias = Preferencia.objects.all()
-        pesos = []
-        for carga in cargas_a_distribuir:
-            doc_pref = preferencias.filter(preferencia__docente=carga.docente)
-            for preferencia in doc_pref:
-                carga_id = str(carga.id)
-                turno_id = str(preferencia.preferencia.turno.id)
-                if turno_id in targets:
-                    pesos.append({'from': carga_id,
-                                  'to': turno_id,
-                                  'weight': preferencia.peso_normalizado
-                                  })
-                else:
-                    logger.debug('Tengo una preferencia de %s para %s pero no se está distribuyendo ese turno',
-                                 preferencia.preferencia.docente, preferencia.preferencia.turno)
+        carga = Carga.objects.get(pk=int(carga_id))
+        turno = Turno.objects.get(pk=int(turno_id))
+        asignacion, _ = Asignacion.objects.get_or_create(intento=intento, carga=carga, turno=turno)
 
-        wmap = allocating.ListWeightedMap(pesos)
-        logger.info('Voy a hacer una distribución con %d cargas docentes y %d lugares en turnos',
-                    sum(sources.values()), sum(targets.values()))
-
-        # llamamos al distribuidor
-        allocator = allocating.Allocator(sources, wmap, targets, limit_denominator=100)
-        distribucion = allocator.get_best()
-        logger.info('distribución obtenida (con ids): %s', distribucion)
-
-        for carga_id, turno_id in distribucion:
-            if carga_id is None or turno_id is None:
-                continue
-
-            carga = Carga.objects.get(pk=int(carga_id))
-            turno = Turno.objects.get(pk=int(turno_id))
-            asignacion, _ = Asignacion.objects.get_or_create(intento=intento, carga=carga, turno=turno)
-
-        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo.name, intento))
-        return HttpResponseRedirect(distribucion_url)
+    distribucion_url = reverse('dborrador:fijar', args=(anno, cuatrimestre, tipo.name, intento))
+    return HttpResponseRedirect(distribucion_url)
 
 
 def distribucion(request, anno, cuatrimestre, tipo, intento):
@@ -229,17 +218,13 @@ def filtra_materias(anno, cuatrimestre, intento, tipo, **kwargs):
     return materias
 
 
-
-def fijar(request):
-    if 'intento' in request.POST:
-        intento = int(request.POST['intento'])
-    elif 'nuevo_intento' in request.POST:
+def fijar(request, anno, cuatrimestre, tipo, intento):
+    if 'nuevo_intento' in request.POST:
         intento = int(request.POST['nuevo_intento'])
-    else:
-        intento = 0
+
+    tipo = TipoDocentes[tipo]
 
     if 'fijar' in request.POST:
-        anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
         for k, val in request.POST.items():
             if k.startswith('fijoen'):
                 carga_id = int(val)
@@ -247,7 +232,11 @@ def fijar(request):
                     _, turno_id, _ = k.split('_')
                     turno = Turno.objects.get(pk=int(turno_id))
                     carga = Carga.objects.get(pk=carga_id)
-                    asignacion = Asignacion.objects.create(turno=turno, carga=carga, intento=intento)
+                    asignacion, creada = Asignacion.objects.get_or_create(
+                        turno=turno, carga=carga, intento=intento)
+                    if creada:
+                        logger.info('Fijé a %s al turno %s en el intento %d',
+                                    carga.docente, turno, intento)
             if k.startswith('cambioen'):
                 _, carga_id = k.split('_')
                 carga = Carga.objects.get(pk=int(carga_id))
@@ -255,14 +244,7 @@ def fijar(request):
                 if nueva_carga_id < 0:  # hay que borrar la asignación
                     asignacion = Asignacion.objects.get(carga=carga, intento=intento)
                     asignacion.delete()
-    else:
-        try:
-            anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
-        except:
-            # XXX: arreglar esto
-            anno = timezone.now().year + 1
-            cuatrimestre = 'P'
-            tipo = TipoDocentes.P
+                    logger.info('Borré asignación %s', asignacion)
 
     def _append_dicts(*dicts):
         ret = defaultdict(list)
@@ -279,9 +261,6 @@ def fijar(request):
     necesidades_no_cubiertas = MapeosDistribucion.necesidades_tipo_no_cubiertas_en(tipo, ac, intento)
     # si queremos fijar docentes al intento 0, tienen que aparecer en este_tipo, no en este_tipo_fijo
     este_tipo_fijo = MapeosDistribucion.asignaciones_fijas(ac) if intento > 0 else defaultdict(list)
-
-    recargas = MapeosDistribucion.docentes_recargados(este_tipo_fijo, este_tipo, intento)
-    print(recargas)
 
     ### XXX: este masajeo hay que refactorizarlo unificando bien con filtra_materias()
     DatosDeTurno = namedtuple('DDT', ['asignaciones_otro_tipo', 'asignaciones_este_tipo_fijo', 'asignaciones_este_tipo',

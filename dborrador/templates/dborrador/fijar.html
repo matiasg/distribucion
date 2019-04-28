@@ -9,7 +9,7 @@ Fijar docentes a intento {{ intento }}
 {% block cuerpo %}
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 
-<form action="{% url 'dborrador:fijar' %}" method="post">
+<form action="{% url 'dborrador:fijar' anno cuatrimestre tipo intento %}" method="post">
     <p>
         <div class="subseccion"><div id="titulo">Ver otra distribución</div>
             {% csrf_token %}
