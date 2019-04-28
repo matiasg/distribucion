@@ -28,6 +28,20 @@ Fijar docentes a intento {{ intento }}
 
     <p>
         <div class="subseccion"><div id="titulo">Problemas encontrados</div>
+            {% if problemas.recargas %}
+            <div id="problema">Cargas docentes repetidas</div>
+            <ul>
+                {% for carga, asignaciones in problemas.recargas.items %}
+                <li>{{ carga.docente }} está asignado en la misma carga para
+                    <ol>
+                        {% for asignacion in asignaciones %}
+                        <li>{{ asignacion.turno }} en el intento {{ asignacion.intento }}</li>
+                        {% endfor %}
+                    </ol>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
             {% if problemas.cargas_no_distribuidas %}
             <div id="problema">Cargas docentes sin distribución</div>
             <ul>

@@ -280,6 +280,9 @@ def fijar(request):
     # si queremos fijar docentes al intento 0, tienen que aparecer en este_tipo, no en este_tipo_fijo
     este_tipo_fijo = MapeosDistribucion.asignaciones_fijas(ac) if intento > 0 else defaultdict(list)
 
+    recargas = MapeosDistribucion.docentes_recargados(este_tipo_fijo, este_tipo, intento)
+    print(recargas)
+
     ### XXX: este masajeo hay que refactorizarlo unificando bien con filtra_materias()
     DatosDeTurno = namedtuple('DDT', ['asignaciones_otro_tipo', 'asignaciones_este_tipo_fijo', 'asignaciones_este_tipo',
                                       'necesidades_no_cubiertas'])
@@ -294,6 +297,6 @@ def fijar(request):
     context.update({'cargas_a_distribuir': cargas_a_distribuir})
 
     # TODO: si hay docentes distribuidos más que sus cargas o turnos cubiertos de más hay que tirar excepción
-    context['problemas'] = MapeosDistribucion.chequeo(tipo, AnnoCuatrimestre(anno, cuatrimestre), intento)
+    context['problemas'] = MapeosDistribucion.chequeo(tipo, ac, intento, este_tipo_fijo, este_tipo)
 
     return render(request, 'dborrador/fijar.html', context)

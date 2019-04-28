@@ -4,7 +4,7 @@ from .models import Asignacion
 from materias.misc import Mapeos
 
 
-Problemas = namedtuple('Problemas', ['cargas_no_distribuidas', 'necesidades_no_cubiertas'])
+Problemas = namedtuple('Problemas', ['cargas_no_distribuidas', 'necesidades_no_cubiertas', 'recargas'])
 
 class MapeosDistribucion:
 
@@ -160,9 +160,27 @@ class MapeosDistribucion:
         return ret
 
     @staticmethod
-    def chequeo(tipo, ac, intento):
+    def chequeo(tipo, ac, intento, este_tipo_fijo, este_tipo):
         '''TipoDocentes -> AnnoCuatrimestre -> intento -> ([Carga], [Turno, necesidad])'''
         cargas = MapeosDistribucion.cargas_a_distribuir(tipo, ac, intento)
         necesidades = MapeosDistribucion.necesidades_no_cubiertas(tipo, ac, intento)
         no_cubiertas = [(turno, necesidad) for turno, necesidad in necesidades.items() if necesidad > 0]
-        return Problemas(cargas, no_cubiertas)
+        recargas = MapeosDistribucion.docentes_recargados(este_tipo_fijo, este_tipo, intento)
+        return Problemas(cargas, no_cubiertas, recargas)
+
+    @staticmethod
+    def docentes_recargados(fijas, para_intento, intento):
+        '''{Turno: [Carga]} -> {Turno: [Carga]} -> intento -> {Carga: [Asignacion]}'''
+        cantidades_fijas = Counter([carga for lista_cargas in fijas.values()
+                                          for carga in lista_cargas])
+        cantidades_para_intento = Counter([carga for lista_cargas in para_intento.values()
+                                                 for carga in lista_cargas])
+        totales = cantidades_fijas + cantidades_para_intento
+        recargas = [carga for carga, cantidad in totales.items() if cantidad > 1]
+
+        ret = dict()
+        for carga in recargas:
+            ret[carga] = list(Asignacion.objects.filter(carga=carga, intento=0)) \
+                         + list(Asignacion.objects.filter(carga=carga, intento=intento))
+
+        return ret
