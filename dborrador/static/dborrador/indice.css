@@ -4,13 +4,13 @@
   position: fixed;
   top: 0;
   overflow-x: auto;
-  padding-top: 20px;
 }
 
 .izquierda {
   left: 0;
   float: left;
   width: 20%;
+  padding-top: 20px;
   background-color: #b0b0b0;
 }
 

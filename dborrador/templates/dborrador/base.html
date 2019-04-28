@@ -9,11 +9,51 @@
 <div class="partido izquierda">
 {% block indice %}
     <h2>Qué hacer</h2>
+    {% if anno %}
     <ul>
         <li> <a href="{% url 'dborrador:preparar' %}">copiar encuestas</a></li>
-        <li> <a href="{% url 'dborrador:distribuir' %}">hacer una distribución</a></li>
-        <li> <a href="{% url 'dborrador:index' %}">Ver una distribución</a></li>
+        <li> <a href="{% url 'dborrador:distribuir' anno cuatrimestre tipo intento %}">hacer una distribución</a></li>
+        <li> <a href="{% url 'dborrador:fijar' anno cuatrimestre tipo intento %}">Fijar docentes en una distribución</a></li>
     </ul>
+
+    <p> Año: {{ anno }} <input type="hidden" name="anno" value="{{ anno }}"> </p>
+    <p> Cuatrimestre: {{ cuatrimestre }}
+        <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre }}"> </p>
+    <p> Tipo: {{ tipo }}
+        <input type="hidden" name="tipo" value="{{ tipo }}"> </p>
+
+    {% else %}
+
+    <form action="{% url 'dborrador:index' %}" method="post">
+        {% csrf_token %}
+        <p> Año: 
+        <select name="anno">
+            {% for a in annos %}
+            <option value="{{ a }}">{{ a }}</option>
+            {% endfor %}
+        </select></p>
+
+        <p> Cuatrimestre: 
+        <select name="cuatrimestre">
+            {% for c in cuatrimestres %}
+            <option value="{{ c.name }}">{{ c.value }}</option>
+            {% endfor %}
+        </select></p>
+
+        <p> Tipo de docentes: 
+        <select name="tipo">
+            {% for t in tipos %}
+            <option value="{{ t.name }}">{{ t.value }}</option>
+            {% endfor %}
+        </select></p>
+
+        <p> Intento:
+        <input type="number" name="intento" value=0>
+        </p>
+        <input type="submit" name="distribuir" value="Distribuir">
+
+    {% endif %}
+
 {% endblock indice %}
 </div>
 

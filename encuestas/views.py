@@ -6,7 +6,7 @@ from django.forms import ValidationError
 from django.contrib import messages
 
 from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres
-from materias.misc import Mapeos
+from materias.misc import Mapeos, TipoDocentes
 from encuestas.models import PreferenciasDocente
 
 from collections import Counter
@@ -58,9 +58,10 @@ def index(request):
 
 
 def encuesta(request, anno, cuatrimestre, tipo_docente):
-    turnos = Mapeos.encuesta_tipo_turno(tipo_docente).filter(anno=anno, cuatrimestre=cuatrimestre)
+    tipo = TipoDocentes[tipo_docente]
+    turnos = Mapeos.encuesta_tipo_turno(tipo).filter(anno=anno, cuatrimestre=cuatrimestre)
     turnos = sorted(turnos, key=lambda t: t.materia.nombre)
-    docentes = sorted(Mapeos.docentes_de_tipo(tipo_docente), key=lambda d: d.nombre)
+    docentes = sorted(Mapeos.docentes_de_tipo(tipo), key=lambda d: d.nombre)
     context = {'turnos': turnos,
                'docentes': docentes,
                'anno': anno,
