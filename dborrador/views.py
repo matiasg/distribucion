@@ -61,9 +61,9 @@ def index(request):
     try:
         anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
         intento = request.POST['intento']
-        fijar_url = reverse('dborrador:fijar', args=(anno, cuatrimestre, tipo.name, 1))
+        fijar_url = reverse('dborrador:fijar', args=(anno, cuatrimestre, tipo.name, intento))
         return HttpResponseRedirect(fijar_url)
-    except:
+    except KeyError:
         return render(request, 'dborrador/base.html', _anno_cuat_tipos_context())
 
 def preparar(request):
