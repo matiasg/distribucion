@@ -122,12 +122,12 @@ class Turno(models.Model):
         return ' - '.join([f'{carga.docente.nombre}' for carga in self.carga_set.all()])
 
     def poner_necesidades_segun_alumnos(self):
-        if self.tipo == TipoTurno.T:
+        if self.tipo == TipoTurno.T.name:
             necesidades = (1, 0, 0, 0)
-        elif self.tipo == TipoTurno.A:
-            necesidades = (1, 1, 1, max(0, int(alumnos / 20 - 3)))
-        elif self.tipo == TipoTurno.P:
-            necesidades = (0, 1, 1, max(0, int(alumnos / 20 - 2)))
+        elif self.tipo == TipoTurno.A.name:
+            necesidades = (1, 1, 1, max(0, int(self.alumnos / 20 - 3)))
+        elif self.tipo == TipoTurno.P.name:
+            necesidades = (0, 1, 1, max(0, int(self.alumnos / 20 - 2)))
         self.necesidad_prof = necesidades[0]
         self.necesidad_jtp = necesidades[1]
         self.necesidad_ay1 = necesidades[2]
