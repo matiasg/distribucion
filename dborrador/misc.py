@@ -50,39 +50,6 @@ class MapeosDistribucion:
         faltan_de_tipo_pedido = Mapeos.filtrar_cargas_de_tipo_ge(tipo, faltan)
         return faltan_de_tipo_pedido
 
-    # TODO:
-    ## 1. cargas con turno asignado  // Mapeos.cargas_asignadas_en : AnnoCuatrimestre -> {Turno -> [Carga]}
-
-    ## 2. cargas sin turno asignado // Mapeos.cargas_no_asignadas_en : AnnoCuatrimestre -> [Carga]
-
-    ## 3. asignaciones con intento < 0 (en Asignacion)
-    #           // MapeosDistribucion.asignaciones_otro_tipo : AnnoCuatrimestre -> {Turno -> [Carga]}
-    ## 4. asignaciones con intento = 0
-    #           // MapeosDistribucion.asignaciones_fijas : AnnoCuatrimestre -> {Turno -> [Carga]}
-    ## 5. asignaciones con intento = intento
-    #           // MapeosDistribucion.asignaciones_para_intento : AnnoCuatrimestre -> intento -> {Turno -> [Carga]}
-
-    ## 6. filtrar cargas por cargo >= tipo
-    #           // Mapeos.filtrar_cargas_de_tipo_ge(tipo, [Carga]) : [Carga]
-
-    ## 7. necesidades
-    #           // Mapeos.turno_y_necesidad : Tipo -> AnnoCuatrimestre -> {Turno -> Int}
-    ## 8. necesidades no cubiertas = 7. - (4. + 5.)
-    #           // MapeosDistribucion.necesidades_tipo_no_cubiertas_en : Tipo -> AnnoCuatrimestre -> intento -> {Turno -> Int}
-    ## 9. cargas a distribuir = 6.2. - 6.(3. + 4. + 5.)
-    #           // MapeosDistribucion.cargas_tipo_ge_a_distribuir_en : Tipo -> AnnoCuatrimestre -> intento -> [Carga]
-
-    # ver distribucion
-    #   { otro_tipo: cargas y asignaciones otro tipo (1. + 3.)
-    #     este_tipo_fijo: cargas con intento = 0 (4.)
-    #     este_tipo: cargas con intento = intento (5.)
-    #   }
-    #
-    # fijar:
-    #   { mismo dict que para distribución }
-    #   necesidades no cubiertas
-    #   cargas a distribuir (9.) (para armar las listas)
-
     @staticmethod
     def asignaciones_otro_tipo(ac):
         '''Devuelve las asignaciones con intento < 0'''
@@ -162,7 +129,7 @@ class MapeosDistribucion:
     @staticmethod
     def chequeo(tipo, ac, intento, este_tipo_fijo, este_tipo):
         '''TipoDocentes -> AnnoCuatrimestre -> intento -> ([Carga], [Turno, necesidad])'''
-        cargas = MapeosDistribucion.cargas_a_distribuir(tipo, ac, intento)
+        cargas = MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(tipo, ac, intento)
         necesidades = MapeosDistribucion.necesidades_no_cubiertas(tipo, ac, intento)
         no_cubiertas = [(turno, necesidad) for turno, necesidad in necesidades.items() if necesidad > 0]
         recargas = MapeosDistribucion.docentes_recargados(este_tipo_fijo, este_tipo, intento)
