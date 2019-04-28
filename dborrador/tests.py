@@ -105,9 +105,3 @@ class TestVerDistribucion(TestCase):
         self.assertTrue(re.search('Turnos con necesidades insatisfechas.*epistemologia.*Teórico-Práctica 2',
                                   content, flags=re.DOTALL),
                         'No figura un turno no cubierto')
-
-class TestMisc(TestCase):
-
-    def setUp(self):
-        pass
-
