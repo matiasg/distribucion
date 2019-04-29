@@ -147,42 +147,6 @@ def distribuir(request, anno, cuatrimestre, tipo, intento):
     return HttpResponseRedirect(distribucion_url)
 
 
-def distribucion(request, anno, cuatrimestre, tipo, intento):
-    tipo = TipoDocentes[tipo.upper()]  # TODO: cambiar argumento a tipo_name
-    if not 'fijar' in request.POST:
-        try:
-            proximo_intento = Asignacion.objects.all().aggregate(Max('intento'))['intento__max'] + 1
-        except TypeError:  # None + 1 => TypeError
-            logger.error('No hay docentes asignados todavía. Redirect a la página para distribuir')
-            distribuir_url = reverse('dborrador:distribuir')
-            return HttpResponseRedirect(distribuir_url)
-
-        if 'cambiar' in request.POST:
-            intento = int(request.POST['nuevo_intento'])
-            distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo.name, intento))
-            return HttpResponseRedirect(distribucion_url)
-
-        problemas = MapeosDistribucion.chequeo(tipo, AnnoCuatrimestre(anno, cuatrimestre), intento)
-        context = materias_distribuidas_dict(anno=anno, cuatrimestre=cuatrimestre, intento=intento, tipo=tipo)
-        context['nuevo_intento'] = proximo_intento
-        context['problemas'] = problemas
-        return render(request, 'dborrador/distribucion.html', context)
-
-    else:
-        fijadas = request.POST.getlist('asignacion_fijada')
-        proximo_intento = int(request.POST['proximo_intento'])
-        for asignacion_id in fijadas:
-            asignacion = Asignacion.objects.get(pk=int(asignacion_id))
-            Asignacion.objects.create(carga=asignacion.carga,
-                                      turno=asignacion.turno,
-                                      intento=proximo_intento)
-            logger.info('Asignacion fijada para %s en %s (intento %d)',
-                        asignacion.carga.docente, asignacion.turno, proximo_intento)
-
-        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo.name, intento))
-        return HttpResponseRedirect(distribucion_url)
-
-
 def materias_distribuidas_dict(anno, cuatrimestre, intento, tipo):
     return {'materias': filtra_materias(anno=anno, cuatrimestre=cuatrimestre, intento=intento, tipo=tipo),
             'anno': anno,
