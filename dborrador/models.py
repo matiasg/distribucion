@@ -15,7 +15,6 @@ class Preferencia(models.Model):
 class Asignacion(models.Model):
     intento = models.IntegerField()
     carga = models.ForeignKey(Carga, on_delete=models.CASCADE)
-    # docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -24,3 +23,9 @@ class Asignacion(models.Model):
     class Meta:
         verbose_name = 'asignación'
         verbose_name_plural = 'asignaciones'
+
+
+class Comentario(models.Model):
+    texto = models.TextField()
+    intento = models.IntegerField()
+    turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
