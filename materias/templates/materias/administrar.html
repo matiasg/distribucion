@@ -1,11 +1,30 @@
 <!DOCTYPE html>
 {% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+
 <head>
     Página para administrar algunos recursos
 </head>
 <body>
+
+<form action="{% url 'materias:administrar' %}" method="post">
+{% csrf_token %}
+
     <ul>
-        <li> <a href="{% url 'materias:administrar' %}">ver materias</a></li>
-        <li> <a href="{% url 'materias:administrar_turnos' 2020 "P" %}">administrar turnos</a></li>
+        <li>
+            <div class="subtitulo">Administrar turnos (alumnos y necesidades)</div> Año: 
+            <select name="anno">
+                {% for a in annos %}
+                <option value="{{ a }}">{{ a }}</option>
+                {% endfor %}
+            </select>
+            Cuatrimestre: 
+            <select name="cuatrimestre">
+                {% for c in cuatrimestres %}
+                <option value="{{ c.name }}">{{ c.value }}</option>
+                {% endfor %}
+            </select>
+            <input type="submit" name="turnos" value="administrar turnos">
+        </li>
     </ul>
 </body>

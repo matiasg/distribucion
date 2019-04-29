@@ -1,6 +1,8 @@
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
+from django.urls import reverse
 from django.shortcuts import render
 from django.db import transaction
+from django.utils import timezone
 from django.contrib.auth.decorators import permission_required, login_required
 
 from .models import Materia, Turno, Horario, Cuatrimestres, TipoMateria
@@ -59,7 +61,17 @@ def filtra_materias(**kwargs):
 @login_required
 @permission_required('dborrador.add_turno')
 def administrar(request):
-    return render(request, 'materias/administrar.html')
+    if 'turnos' in request.POST:
+        anno = int(request.POST['anno'])
+        cuatrimestre = request.POST['cuatrimestre']
+        return HttpResponseRedirect(reverse('materias:administrar_turnos', args=(anno, cuatrimestre)))
+    else:
+        anno_actual = timezone.now().year
+        context = {
+            'annos': [anno_actual, anno_actual + 1],
+            'cuatrimestres': [c for c in Cuatrimestres],
+        }
+        return render(request, 'materias/administrar.html', context=context)
 
 
 @login_required
@@ -79,7 +91,7 @@ def administrar_turnos(request, anno, cuatrimestre):
                     turno = Turno.objects.get(pk=int(turno_id))
                     setattr(turno, key_to_field[k_field], int(v))
                     turno.save()
-        return render(request, 'materias/administrar.html')
+        return HttpResponseRedirect(reverse('materias:administrar'))
 
     else:
         materias = filtra_materias(anno=anno, cuatrimestre=cuatrimestre)

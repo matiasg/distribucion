@@ -122,3 +122,8 @@ td.pabellon
   text-decoration: underline;
   background-color: #a0a0a0;
 }
+
+.subtitulo
+{
+  font-weight: bold;
+}
