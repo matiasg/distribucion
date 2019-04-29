@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.forms import ValidationError
 
 from materias.models import (Docente, Cargos, Materia, Turno, TipoTurno, TipoMateria,
-                             CargoDedicacion, Cuatrimestres, CuatrimestreDocente)
+                             CargoDedicacion, Cuatrimestres)
 from .models import PreferenciasDocente
 from .views import checkear_y_salvar
 
@@ -20,8 +20,6 @@ class TestEncuesta(TestCase):
         self.turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
                                           numero=1, tipo=TipoTurno.A.name,
                                           necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        self.cuatridocente = CuatrimestreDocente.objects.create(docente=self.docente, anno=self.anno,
-                                                                cuatrimestre=Cuatrimestres.P.name, cargas=1)
 
     def test_sin_docente(self):
         datos = {}
