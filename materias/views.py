@@ -1,5 +1,9 @@
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
+from django.urls import reverse
 from django.shortcuts import render
+from django.db import transaction
+from django.utils import timezone
+from django.contrib.auth.decorators import permission_required, login_required
 
 from .models import Materia, Turno, Horario, Cuatrimestres, TipoMateria
 
@@ -52,3 +56,44 @@ def filtra_materias(**kwargs):
         materias.append((tipo_largo, materias_turnos))
 
     return materias
+
+
+@login_required
+@permission_required('dborrador.add_turno')
+def administrar(request):
+    if 'turnos' in request.POST:
+        anno = int(request.POST['anno'])
+        cuatrimestre = request.POST['cuatrimestre']
+        return HttpResponseRedirect(reverse('materias:administrar_turnos', args=(anno, cuatrimestre)))
+    else:
+        anno_actual = timezone.now().year
+        context = {
+            'annos': [anno_actual, anno_actual + 1],
+            'cuatrimestres': [c for c in Cuatrimestres],
+        }
+        return render(request, 'materias/administrar.html', context=context)
+
+
+@login_required
+@permission_required('dborrador.add_turno')
+def administrar_turnos(request, anno, cuatrimestre):
+    if 'cambiar' in request.POST:
+        key_to_field = {'alumnos': 'alumnos',
+                        'necesidadprof': 'necesidad_prof',
+                        'necesidadjtp': 'necesidad_jtp',
+                        'necesidaday1': 'necesidad_ay1',
+                        'necesidaday2': 'necesidad_ay2',
+                        }
+        with transaction.atomic():
+            for k, v in request.POST.items():
+                if k.startswith('alumnos') or k.startswith('necesidad'):
+                    k_field, turno_id = k.split('_')
+                    turno = Turno.objects.get(pk=int(turno_id))
+                    setattr(turno, key_to_field[k_field], int(v))
+                    turno.save()
+        return HttpResponseRedirect(reverse('materias:administrar'))
+
+    else:
+        materias = filtra_materias(anno=anno, cuatrimestre=cuatrimestre)
+        context = {'anno': anno, 'cuatrimestre': cuatrimestre, 'materias': materias}
+        return render(request, 'materias/administrar_turnos.html', context)
