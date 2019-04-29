@@ -178,19 +178,3 @@ class Carga(models.Model):
 
     def __str__(self):
         return f'{self.docente} -> {self.turno}'
-
-
-class CuatrimestreDocente(models.Model):
-    '''Tiene la información de un docente que cambia cada cuatrimestre'''
-    docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
-    anno = models.IntegerField()
-    cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
-    cargas = models.IntegerField()
-
-    class Meta:
-        verbose_name = 'info cuatrimestral del docente'
-        verbose_name_plural = 'informaciones cuatrimestrales'
-
-    def __str__(self):
-        return (f'{self.docente} da {self.cargas} materia(s) en '
-                f'el cuatrimestre {Cuatrimestres[self.cuatrimestre].value}, {self.anno}')

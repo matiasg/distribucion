@@ -16,7 +16,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "distribucion.settings")
 import django
 django.setup()
 
-from materias.models import (Materia, Turno, Horario, Docente, Carga, CuatrimestreDocente,
+from materias.models import (Materia, Turno, Horario, Docente, Carga,
                              Cuatrimestres, TipoMateria, TipoTurno, Cargos, CargoDedicacion, Dias, get_key_enum)
 
 # logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
@@ -159,12 +159,6 @@ def salva_datos(html, anno_actual, cuatrimestre, anno_nuevo):
                                                                 defaults={'cargos': [cargo]})
                     if creado:
                         logger.info('agregue a: %s', doc)
-
-                    info_cuatri, _ = CuatrimestreDocente.objects.get_or_create(
-                                                docente=doc,
-                                                anno=anno_nuevo,
-                                                cuatrimestre=cuatrimestre,
-                                                defaults={'cargas': 1})
 
                     carga, creada = Carga.objects.get_or_create(docente=doc,
                                                                 turno=turno_actual,
