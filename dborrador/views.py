@@ -9,7 +9,7 @@ from django.db.models import Max
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required, login_required
 
-from .models import Preferencia, Asignacion
+from .models import Preferencia, Asignacion, Comentario
 from .misc import MapeosDistribucion
 from materias.models import Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria, choice_enum
 from materias.misc import TipoDocentes, AnnoCuatrimestre, Mapeos
@@ -169,7 +169,7 @@ def filtra_materias(anno, cuatrimestre, intento, tipo, **kwargs):
                 (materia, Turno.objects.filter(materia=materia, anno=anno, cuatrimestre=cuatrimestre))
                 for materia in tmaterias
                 ]
-        #  TODO: esto se usa para ver distribucion pero no para fijar distribucion
+        #  TODO: mejorar esto como está en fijar()
         for materia, turnos in materias_turnos:
             for turno in turnos:
                 asignaciones = [(a, a.carga in cargas)
@@ -227,12 +227,14 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
 
     ### XXX: este masajeo hay que refactorizarlo unificando bien con filtra_materias()
     DatosDeTurno = namedtuple('DDT', ['asignaciones_otro_tipo', 'asignaciones_este_tipo_fijo', 'asignaciones_este_tipo',
-                                      'necesidades_no_cubiertas'])
+                                      'necesidades_no_cubiertas', 'comentarios'])
     for obligatoriedad, materias_turnos in context['materias']:
         for materia, turnos in materias_turnos:
             for turno in turnos:
+                comentarios = Comentario.objects.filter(intento=intento, turno=turno)
+                comentarios = comentarios.first().texto if comentarios else ''
                 datos = DatosDeTurno(otro_tipo[turno], este_tipo_fijo[turno], este_tipo[turno],
-                                     necesidades_no_cubiertas[turno])
+                                     necesidades_no_cubiertas[turno], comentarios)
                 turno.datos = datos
 
     cargas_a_distribuir = MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(tipo, ac, intento)

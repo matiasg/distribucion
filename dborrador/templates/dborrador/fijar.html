@@ -99,8 +99,10 @@ Fijar docentes a intento {{ intento }}
                         {% endif %}
 
                         <div id="otro_tipo">{% for carga in turno.datos.asignaciones_otro_tipo %}{{ carga.docente.nombre }}{% endfor %}</div>
-
                     </td>
+
+                    <td id="comentarios"><input name="comentarios_{{ turno.id }}" type="text" value={{ turno.comentarios }}></td>
+
 
                 </tr>
                 {% endfor %}
