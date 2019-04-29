@@ -1,6 +1,7 @@
 from django.http import Http404
 from django.shortcuts import render
 from django.db import transaction
+from django.contrib.auth.decorators import permission_required, login_required
 
 from .models import Materia, Turno, Horario, Cuatrimestres, TipoMateria
 
@@ -55,10 +56,14 @@ def filtra_materias(**kwargs):
     return materias
 
 
+@login_required
+@permission_required('dborrador.add_turno')
 def administrar(request):
     return render(request, 'materias/administrar.html')
 
 
+@login_required
+@permission_required('dborrador.add_turno')
 def administrar_turnos(request, anno, cuatrimestre):
     if 'cambiar' in request.POST:
         key_to_field = {'alumnos': 'alumnos',
