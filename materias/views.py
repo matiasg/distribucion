@@ -1,5 +1,6 @@
 from django.http import Http404
 from django.shortcuts import render
+from django.db import transaction
 
 from .models import Materia, Turno, Horario, Cuatrimestres, TipoMateria
 
@@ -52,3 +53,30 @@ def filtra_materias(**kwargs):
         materias.append((tipo_largo, materias_turnos))
 
     return materias
+
+
+def administrar(request):
+    return render(request, 'materias/administrar.html')
+
+
+def administrar_turnos(request, anno, cuatrimestre):
+    if 'cambiar' in request.POST:
+        key_to_field = {'alumnos': 'alumnos',
+                        'necesidadprof': 'necesidad_prof',
+                        'necesidadjtp': 'necesidad_jtp',
+                        'necesidaday1': 'necesidad_ay1',
+                        'necesidaday2': 'necesidad_ay2',
+                        }
+        with transaction.atomic():
+            for k, v in request.POST.items():
+                if k.startswith('alumnos') or k.startswith('necesidad'):
+                    k_field, turno_id = k.split('_')
+                    turno = Turno.objects.get(pk=int(turno_id))
+                    setattr(turno, key_to_field[k_field], int(v))
+                    turno.save()
+        return render(request, 'materias/administrar.html')
+
+    else:
+        materias = filtra_materias(anno=anno, cuatrimestre=cuatrimestre)
+        context = {'anno': anno, 'cuatrimestre': cuatrimestre, 'materias': materias}
+        return render(request, 'materias/administrar_turnos.html', context)

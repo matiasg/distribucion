@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+{% load static %}
+<head>
+    Página para administrar algunos recursos
+</head>
+<body>
+    <ul>
+        <li> <a href="{% url 'materias:administrar' %}">ver materias</a></li>
+        <li> <a href="{% url 'materias:administrar_turnos' 2020 "P" %}">administrar turnos</a></li>
+    </ul>
+</body>
