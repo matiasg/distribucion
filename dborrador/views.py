@@ -5,11 +5,12 @@ from django.shortcuts import render
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.utils import timezone
+from django.db import transaction
 from django.db.models import Max
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required, login_required
 
-from .models import Preferencia, Asignacion
+from .models import Preferencia, Asignacion, Comentario
 from .misc import MapeosDistribucion
 from materias.models import Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria, choice_enum
 from materias.misc import TipoDocentes, AnnoCuatrimestre, Mapeos
@@ -147,42 +148,6 @@ def distribuir(request, anno, cuatrimestre, tipo, intento):
     return HttpResponseRedirect(distribucion_url)
 
 
-def distribucion(request, anno, cuatrimestre, tipo, intento):
-    tipo = TipoDocentes[tipo.upper()]  # TODO: cambiar argumento a tipo_name
-    if not 'fijar' in request.POST:
-        try:
-            proximo_intento = Asignacion.objects.all().aggregate(Max('intento'))['intento__max'] + 1
-        except TypeError:  # None + 1 => TypeError
-            logger.error('No hay docentes asignados todavía. Redirect a la página para distribuir')
-            distribuir_url = reverse('dborrador:distribuir')
-            return HttpResponseRedirect(distribuir_url)
-
-        if 'cambiar' in request.POST:
-            intento = int(request.POST['nuevo_intento'])
-            distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo.name, intento))
-            return HttpResponseRedirect(distribucion_url)
-
-        problemas = MapeosDistribucion.chequeo(tipo, AnnoCuatrimestre(anno, cuatrimestre), intento)
-        context = materias_distribuidas_dict(anno=anno, cuatrimestre=cuatrimestre, intento=intento, tipo=tipo)
-        context['nuevo_intento'] = proximo_intento
-        context['problemas'] = problemas
-        return render(request, 'dborrador/distribucion.html', context)
-
-    else:
-        fijadas = request.POST.getlist('asignacion_fijada')
-        proximo_intento = int(request.POST['proximo_intento'])
-        for asignacion_id in fijadas:
-            asignacion = Asignacion.objects.get(pk=int(asignacion_id))
-            Asignacion.objects.create(carga=asignacion.carga,
-                                      turno=asignacion.turno,
-                                      intento=proximo_intento)
-            logger.info('Asignacion fijada para %s en %s (intento %d)',
-                        asignacion.carga.docente, asignacion.turno, proximo_intento)
-
-        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo.name, intento))
-        return HttpResponseRedirect(distribucion_url)
-
-
 def materias_distribuidas_dict(anno, cuatrimestre, intento, tipo):
     return {'materias': filtra_materias(anno=anno, cuatrimestre=cuatrimestre, intento=intento, tipo=tipo),
             'anno': anno,
@@ -205,7 +170,7 @@ def filtra_materias(anno, cuatrimestre, intento, tipo, **kwargs):
                 (materia, Turno.objects.filter(materia=materia, anno=anno, cuatrimestre=cuatrimestre))
                 for materia in tmaterias
                 ]
-        #  TODO: esto se usa para ver distribucion pero no para fijar distribucion
+        #  TODO: mejorar esto como está en fijar()
         for materia, turnos in materias_turnos:
             for turno in turnos:
                 asignaciones = [(a, a.carga in cargas)
@@ -224,26 +189,44 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
     tipo = TipoDocentes[tipo]
 
     if 'fijar' in request.POST:
-        for k, val in request.POST.items():
-            if k.startswith('fijoen'):
-                carga_id = int(val)
-                if carga_id >= 0:  # hay que crear una asignación nueva
-                    _, turno_id, _ = k.split('_')
+        with transaction.atomic():
+            for k, val in request.POST.items():
+                if k.startswith('fijoen'):
+                    carga_id = int(val)
+                    if carga_id >= 0:  # hay que crear una asignación nueva
+                        _, turno_id, _ = k.split('_')
+                        turno = Turno.objects.get(pk=int(turno_id))
+                        carga = Carga.objects.get(pk=carga_id)
+                        asignacion, creada = Asignacion.objects.get_or_create(
+                            turno=turno, carga=carga, intento=intento)
+                        if creada:
+                            logger.info('Fijé a %s al turno %s en el intento %d',
+                                        carga.docente, turno, intento)
+
+                elif k.startswith('cambioen'):
+                    _, turno_id, carga_id = k.split('_')
                     turno = Turno.objects.get(pk=int(turno_id))
-                    carga = Carga.objects.get(pk=carga_id)
-                    asignacion, creada = Asignacion.objects.get_or_create(
-                        turno=turno, carga=carga, intento=intento)
-                    if creada:
-                        logger.info('Fijé a %s al turno %s en el intento %d',
-                                    carga.docente, turno, intento)
-            if k.startswith('cambioen'):
-                _, turno_id, carga_id = k.split('_')
-                turno = Turno.objects.get(pk=int(turno_id))
-                carga = Carga.objects.get(pk=int(carga_id))
-                nueva_carga_id = int(val)
-                if nueva_carga_id < 0:  # hay que borrar la asignación
-                    asignaciones, _ = Asignacion.objects.filter(carga=carga, turno=turno, intento=intento).delete()
-                    logger.info('Borré %d asignación(es) para %s en %s', asignaciones, carga.docente, turno)
+                    carga = Carga.objects.get(pk=int(carga_id))
+                    nueva_carga_id = int(val)
+                    if nueva_carga_id < 0:  # hay que borrar la asignación
+                        asignaciones, _ = Asignacion.objects.filter(carga=carga, turno=turno, intento=intento).delete()
+                        logger.info('Borré %d asignación(es) para %s en %s', asignaciones, carga.docente, turno)
+
+                elif k.startswith('comentarios'):
+                    _, turno_id = k.split('_')
+                    turno = Turno.objects.get(pk=int(turno_id))
+
+                    if val:
+                        comentario, creado = Comentario.objects.get_or_create(turno=turno, intento=intento)
+                        comentario.texto = val
+                        comentario.save()
+                        if creado:
+                            logger.info('Guardé un comentario para turno %s en intento %d: "%s"', turno, intento, val)
+                    else:
+                        previos = Comentario.objects.filter(turno=turno, intento=intento)
+                        if previos:
+                            logger.info('Borro comentario para turno %s en intento %d', turno, intento)
+                            previos.delete()
 
     def _append_dicts(*dicts):
         ret = defaultdict(list)
@@ -263,12 +246,15 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
 
     ### XXX: este masajeo hay que refactorizarlo unificando bien con filtra_materias()
     DatosDeTurno = namedtuple('DDT', ['asignaciones_otro_tipo', 'asignaciones_este_tipo_fijo', 'asignaciones_este_tipo',
-                                      'necesidades_no_cubiertas'])
+                                      'necesidades_no_cubiertas', 'comentarios'])
     for obligatoriedad, materias_turnos in context['materias']:
         for materia, turnos in materias_turnos:
             for turno in turnos:
+                comentarios = Comentario.objects.filter(intento=intento, turno=turno)
+                if comentarios.count(): logger.info('comentarios: %s', comentarios.first().texto)  # sac
+                comentarios = comentarios.first().texto if comentarios else ''
                 datos = DatosDeTurno(otro_tipo[turno], este_tipo_fijo[turno], este_tipo[turno],
-                                     necesidades_no_cubiertas[turno])
+                                     necesidades_no_cubiertas[turno], comentarios)
                 turno.datos = datos
 
     cargas_a_distribuir = MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(tipo, ac, intento)

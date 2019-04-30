@@ -13,8 +13,6 @@ urlpatterns = [
     path('preparar', views.preparar, name='preparar'),
     path('distribuir/<int:anno>/<str:cuatrimestre>/<str:tipo>/<int:intento>',
          views.distribuir, name='distribuir'),
-    path('distribucion/<int:anno>/<str:cuatrimestre>/<str:tipo>/<int:intento>',
-         views.distribucion, name='distribucion'),
     path('fijar/<int:anno>/<str:cuatrimestre>/<str:tipo>/<int:intento>',
          views.fijar, name='fijar'),
 ]
