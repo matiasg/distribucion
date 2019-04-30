@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.utils import timezone
+from django.db import transaction
 from django.db.models import Max
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required, login_required
@@ -188,43 +189,44 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
     tipo = TipoDocentes[tipo]
 
     if 'fijar' in request.POST:
-        for k, val in request.POST.items():
-            if k.startswith('fijoen'):
-                carga_id = int(val)
-                if carga_id >= 0:  # hay que crear una asignación nueva
-                    _, turno_id, _ = k.split('_')
+        with transaction.atomic():
+            for k, val in request.POST.items():
+                if k.startswith('fijoen'):
+                    carga_id = int(val)
+                    if carga_id >= 0:  # hay que crear una asignación nueva
+                        _, turno_id, _ = k.split('_')
+                        turno = Turno.objects.get(pk=int(turno_id))
+                        carga = Carga.objects.get(pk=carga_id)
+                        asignacion, creada = Asignacion.objects.get_or_create(
+                            turno=turno, carga=carga, intento=intento)
+                        if creada:
+                            logger.info('Fijé a %s al turno %s en el intento %d',
+                                        carga.docente, turno, intento)
+
+                elif k.startswith('cambioen'):
+                    _, turno_id, carga_id = k.split('_')
                     turno = Turno.objects.get(pk=int(turno_id))
-                    carga = Carga.objects.get(pk=carga_id)
-                    asignacion, creada = Asignacion.objects.get_or_create(
-                        turno=turno, carga=carga, intento=intento)
-                    if creada:
-                        logger.info('Fijé a %s al turno %s en el intento %d',
-                                    carga.docente, turno, intento)
+                    carga = Carga.objects.get(pk=int(carga_id))
+                    nueva_carga_id = int(val)
+                    if nueva_carga_id < 0:  # hay que borrar la asignación
+                        asignaciones, _ = Asignacion.objects.filter(carga=carga, turno=turno, intento=intento).delete()
+                        logger.info('Borré %d asignación(es) para %s en %s', asignaciones, carga.docente, turno)
 
-            elif k.startswith('cambioen'):
-                _, turno_id, carga_id = k.split('_')
-                turno = Turno.objects.get(pk=int(turno_id))
-                carga = Carga.objects.get(pk=int(carga_id))
-                nueva_carga_id = int(val)
-                if nueva_carga_id < 0:  # hay que borrar la asignación
-                    asignaciones, _ = Asignacion.objects.filter(carga=carga, turno=turno, intento=intento).delete()
-                    logger.info('Borré %d asignación(es) para %s en %s', asignaciones, carga.docente, turno)
+                elif k.startswith('comentarios'):
+                    _, turno_id = k.split('_')
+                    turno = Turno.objects.get(pk=int(turno_id))
 
-            elif k.startswith('comentarios'):
-                _, turno_id = k.split('_')
-                turno = Turno.objects.get(pk=int(turno_id))
-
-                if val:
-                    comentario, creado = Comentario.objects.get_or_create(turno=turno, intento=intento)
-                    comentario.texto = val
-                    comentario.save()
-                    if creado:
-                        logger.info('Guardé un comentario para turno %s en intento %d: "%s"', turno, intento, val)
-                else:
-                    previos = Comentario.objects.filter(turno=turno, intento=intento)
-                    if previos:
-                        logger.info('Borro comentario para turno %s en intento %d', turno, intento)
-                        previos.delete()
+                    if val:
+                        comentario, creado = Comentario.objects.get_or_create(turno=turno, intento=intento)
+                        comentario.texto = val
+                        comentario.save()
+                        if creado:
+                            logger.info('Guardé un comentario para turno %s en intento %d: "%s"', turno, intento, val)
+                    else:
+                        previos = Comentario.objects.filter(turno=turno, intento=intento)
+                        if previos:
+                            logger.info('Borro comentario para turno %s en intento %d', turno, intento)
+                            previos.delete()
 
     def _append_dicts(*dicts):
         ret = defaultdict(list)
