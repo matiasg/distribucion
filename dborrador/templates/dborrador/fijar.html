@@ -22,9 +22,23 @@ Fijar docentes a intento {{ intento }}
     </p>
     <p>
         <div class="subseccion"><div id="titulo">Fijar docentes a este intento</div>
-            <input type="submit" name="fijar" value="fijar docentes">
+            <input type="submit" name="fijar" value="fijar docentes y comentarios">
         </div>
     </p>
+
+    <p>
+        <div class="subseccion"><div id="titulo">Pasar docentes fijos a intento 0</div>
+            <input type="submit" name="pasar_a_0" value="pasar docentes">
+        </div>
+    </p>
+
+    {% if intento == 0 %}
+    <p>
+        <div class="subseccion"><div id="titulo">Publicar esta distribución</div>
+            <input type="submit" name="publicar" value="publicar">
+        </div>
+    </p>
+    {% endif %}
 
     <p>
         <div class="subseccion"><div id="titulo">Problemas encontrados</div>
