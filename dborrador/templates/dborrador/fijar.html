@@ -76,9 +76,9 @@ Fijar docentes a intento {{ intento }}
                     <td class="diayhora">{{ turno.horarios_info.diayhora }}</td>
                     <td class="datosdoc">
 
-                        <div id="este_tipo_fijo">{% for carga in turno.datos.asignaciones_este_tipo_fijo %}{{ carga.docente.nombre }}{% endfor %}</div>
+                        <div class="este_tipo_fijo">{% for carga in turno.datos.asignaciones_este_tipo_fijo %}{{ carga.docente.nombre }}{% endfor %}</div>
 
-                        <div id="este_tipo">{% for carga in turno.datos.asignaciones_este_tipo %}
+                        <div class="este_tipo">{% for carga in turno.datos.asignaciones_este_tipo %}
                             <select name="cambioen_{{ turno.id }}_{{ carga.id }}">
                                 <option value=-1>------</option>
                                 <option value={{ carga.id }} selected>{{ carga.docente.nombre }}</option>
@@ -87,7 +87,7 @@ Fijar docentes a intento {{ intento }}
 
                         {% if turno.datos.necesidades_no_cubiertas %}
                         {% for i in 0|rjust:turno.datos.necesidades_no_cubiertas %}
-                        <div id="no_cubiertas">
+                        <div class="no_cubiertas">
                             <select name="fijoen_{{ turno.id }}_{{ forloop.counter }}">
                                 <option value=-1 selected>------</option>
                                 {% for nueva_carga in cargas_a_distribuir %}
@@ -98,12 +98,9 @@ Fijar docentes a intento {{ intento }}
                         {% endfor %}
                         {% endif %}
 
-                        <div id="otro_tipo">{% for carga in turno.datos.asignaciones_otro_tipo %}{{ carga.docente.nombre }}{% endfor %}</div>
+                        <div class="otro_tipo">{% for carga in turno.datos.asignaciones_otro_tipo %}{{ carga.docente.nombre }}{% endfor %}</div>
                     </td>
-
-                    <td id="comentarios"><input name="comentarios_{{ turno.id }}" type="text" value={{ turno.comentarios }}></td>
-
-
+                    <td class="comentarios"><textarea name="comentarios_{{ turno.id }}" cols=60 rows=2>{{ turno.datos.comentarios }}</textarea></td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -200,7 +200,8 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
                     if creada:
                         logger.info('Fijé a %s al turno %s en el intento %d',
                                     carga.docente, turno, intento)
-            if k.startswith('cambioen'):
+
+            elif k.startswith('cambioen'):
                 _, turno_id, carga_id = k.split('_')
                 turno = Turno.objects.get(pk=int(turno_id))
                 carga = Carga.objects.get(pk=int(carga_id))
@@ -208,6 +209,22 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
                 if nueva_carga_id < 0:  # hay que borrar la asignación
                     asignaciones, _ = Asignacion.objects.filter(carga=carga, turno=turno, intento=intento).delete()
                     logger.info('Borré %d asignación(es) para %s en %s', asignaciones, carga.docente, turno)
+
+            elif k.startswith('comentarios'):
+                _, turno_id = k.split('_')
+                turno = Turno.objects.get(pk=int(turno_id))
+
+                if val:
+                    comentario, creado = Comentario.objects.get_or_create(turno=turno, intento=intento)
+                    comentario.texto = val
+                    comentario.save()
+                    if creado:
+                        logger.info('Guardé un comentario para turno %s en intento %d: "%s"', turno, intento, val)
+                else:
+                    previos = Comentario.objects.filter(turno=turno, intento=intento)
+                    if previos:
+                        logger.info('Borro comentario para turno %s en intento %d', turno, intento)
+                        previos.delete()
 
     def _append_dicts(*dicts):
         ret = defaultdict(list)
@@ -232,6 +249,7 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
         for materia, turnos in materias_turnos:
             for turno in turnos:
                 comentarios = Comentario.objects.filter(intento=intento, turno=turno)
+                if comentarios.count(): logger.info('comentarios: %s', comentarios.first().texto)  # sac
                 comentarios = comentarios.first().texto if comentarios else ''
                 datos = DatosDeTurno(otro_tipo[turno], este_tipo_fijo[turno], este_tipo[turno],
                                      necesidades_no_cubiertas[turno], comentarios)
