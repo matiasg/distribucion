@@ -183,6 +183,7 @@ def filtra_materias(anno, cuatrimestre, intento, tipo, **kwargs):
 
 
 def _fijar_y_desfijar(request, intento):
+    logger.info('voy a fijar/desfijar docentes y comentarios para el intento %d', intento)
     with transaction.atomic():
         for k, val in request.POST.items():
             if k.startswith('fijoen'):
@@ -197,30 +198,30 @@ def _fijar_y_desfijar(request, intento):
                         logger.info('Fijé a %s al turno %s en el intento %d',
                                     carga.docente, turno, intento)
 
-                elif k.startswith('cambioen'):
-                    _, turno_id, carga_id = k.split('_')
-                    turno = Turno.objects.get(pk=int(turno_id))
-                    carga = Carga.objects.get(pk=int(carga_id))
-                    nueva_carga_id = int(val)
-                    if nueva_carga_id < 0:  # hay que borrar la asignación
-                        asignaciones, _ = Asignacion.objects.filter(carga=carga, turno=turno, intento=intento).delete()
-                        logger.info('Borré %d asignación(es) para %s en %s', asignaciones, carga.docente, turno)
+            elif k.startswith('cambioen'):
+                _, turno_id, carga_id = k.split('_')
+                turno = Turno.objects.get(pk=int(turno_id))
+                carga = Carga.objects.get(pk=int(carga_id))
+                nueva_carga_id = int(val)
+                if nueva_carga_id < 0:  # hay que borrar la asignación
+                    asignaciones, _ = Asignacion.objects.filter(carga=carga, turno=turno, intento=intento).all().delete()
+                    logger.info('Borré %d asignación(es) para %s en %s', asignaciones, carga.docente, turno)
 
-                elif k.startswith('comentarios'):
-                    _, turno_id = k.split('_')
-                    turno = Turno.objects.get(pk=int(turno_id))
+            elif k.startswith('comentarios'):
+                _, turno_id = k.split('_')
+                turno = Turno.objects.get(pk=int(turno_id))
 
-                    if val:
-                        comentario, creado = Comentario.objects.get_or_create(turno=turno, intento=intento)
-                        comentario.texto = val
-                        comentario.save()
-                        if creado:
-                            logger.info('Guardé un comentario para turno %s en intento %d: "%s"', turno, intento, val)
-                    else:
-                        previos = Comentario.objects.filter(turno=turno, intento=intento)
-                        if previos:
-                            logger.info('Borro comentario para turno %s en intento %d', turno, intento)
-                            previos.delete()
+                if val:
+                    comentario, creado = Comentario.objects.get_or_create(turno=turno, intento=intento)
+                    comentario.texto = val
+                    comentario.save()
+                    if creado:
+                        logger.debug('Guardé un comentario para turno %s en intento %d: "%s"', turno, intento, val)
+                else:
+                    previos = Comentario.objects.filter(turno=turno, intento=intento)
+                    if previos:
+                        logger.info('Borro comentario para turno %s en intento %d', turno, intento)
+                        previos.delete()
 
 
 def _pasar_docentes(request, ac, tipo, intento):
@@ -283,7 +284,6 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
         for materia, turnos in materias_turnos:
             for turno in turnos:
                 comentarios = Comentario.objects.filter(intento=intento, turno=turno)
-                if comentarios.count(): logger.info('comentarios: %s', comentarios.first().texto)  # sac
                 comentarios = comentarios.first().texto if comentarios else ''
                 datos = DatosDeTurno(otro_tipo[turno], este_tipo_fijo[turno], este_tipo[turno],
                                      necesidades_no_cubiertas[turno], comentarios)
