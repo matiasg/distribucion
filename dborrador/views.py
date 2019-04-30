@@ -182,26 +182,20 @@ def filtra_materias(anno, cuatrimestre, intento, tipo, **kwargs):
     return materias
 
 
-def fijar(request, anno, cuatrimestre, tipo, intento):
-    if 'nuevo_intento' in request.POST:
-        intento = int(request.POST['nuevo_intento'])
-
-    tipo = TipoDocentes[tipo]
-
-    if 'fijar' in request.POST:
-        with transaction.atomic():
-            for k, val in request.POST.items():
-                if k.startswith('fijoen'):
-                    carga_id = int(val)
-                    if carga_id >= 0:  # hay que crear una asignación nueva
-                        _, turno_id, _ = k.split('_')
-                        turno = Turno.objects.get(pk=int(turno_id))
-                        carga = Carga.objects.get(pk=carga_id)
-                        asignacion, creada = Asignacion.objects.get_or_create(
-                            turno=turno, carga=carga, intento=intento)
-                        if creada:
-                            logger.info('Fijé a %s al turno %s en el intento %d',
-                                        carga.docente, turno, intento)
+def _fijar_y_desfijar(request, intento):
+    with transaction.atomic():
+        for k, val in request.POST.items():
+            if k.startswith('fijoen'):
+                carga_id = int(val)
+                if carga_id >= 0:  # hay que crear una asignación nueva
+                    _, turno_id, _ = k.split('_')
+                    turno = Turno.objects.get(pk=int(turno_id))
+                    carga = Carga.objects.get(pk=carga_id)
+                    asignacion, creada = Asignacion.objects.get_or_create(
+                        turno=turno, carga=carga, intento=intento)
+                    if creada:
+                        logger.info('Fijé a %s al turno %s en el intento %d',
+                                    carga.docente, turno, intento)
 
                 elif k.startswith('cambioen'):
                     _, turno_id, carga_id = k.split('_')
@@ -228,12 +222,23 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
                             logger.info('Borro comentario para turno %s en intento %d', turno, intento)
                             previos.delete()
 
-    def _append_dicts(*dicts):
-        ret = defaultdict(list)
-        for d in dicts:
-            for k, l in d.items():
-                ret[k].append(l)
-        return ret
+
+def _append_dicts(*dicts):
+    ret = defaultdict(list)
+    for d in dicts:
+        for k, l in d.items():
+            ret[k].append(l)
+    return ret
+
+
+def fijar(request, anno, cuatrimestre, tipo, intento):
+    if 'nuevo_intento' in request.POST:
+        intento = int(request.POST['nuevo_intento'])
+
+    tipo = TipoDocentes[tipo]
+
+    if 'fijar' in request.POST:
+        _fijar_y_desfijar(request, intento)
 
     context = materias_distribuidas_dict(anno, cuatrimestre, intento, tipo)
     ac = AnnoCuatrimestre(anno, cuatrimestre)
