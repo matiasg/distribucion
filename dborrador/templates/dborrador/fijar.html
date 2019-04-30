@@ -26,13 +26,13 @@ Fijar docentes a intento {{ intento }}
         </div>
     </p>
 
+    {% if intento != 0 %}
     <p>
         <div class="subseccion"><div id="titulo">Pasar docentes fijos a intento 0</div>
             <input type="submit" name="pasar_a_0" value="pasar docentes">
         </div>
     </p>
-
-    {% if intento == 0 %}
+    {% else %}
     <p>
         <div class="subseccion"><div id="titulo">Publicar esta distribución</div>
             <input type="submit" name="publicar" value="publicar">

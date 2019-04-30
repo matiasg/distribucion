@@ -223,6 +223,27 @@ def _fijar_y_desfijar(request, intento):
                             previos.delete()
 
 
+def _pasar_docentes(request, ac, tipo, intento):
+    este_tipo = MapeosDistribucion.asignaciones_para_intento(ac, intento)
+    with transaction.atomic():
+        for turno, cargas in este_tipo.items():
+            for carga in cargas:
+                asignacion = Asignacion.objects.get(carga=carga, intento=intento)
+                asignacion.intento = 0
+                asignacion.save()
+                logger.info('pasé asignación de %s al intento 0', asignacion.carga.docente)
+
+
+def _publicar_docentes(request, ac, tipo):
+    asignaciones = MapeosDistribucion.asignaciones_fijas(ac)
+    with transaction.atomic():
+        for asignacion in asignaciones:
+            carga = asignacion.carga
+            carga.turno = asignacion.turno
+            carga.save()
+            logger.info('publiqué un turno para %s: %s', carga.docente, carga.turno)
+
+
 def _append_dicts(*dicts):
     ret = defaultdict(list)
     for d in dicts:
@@ -236,12 +257,18 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
         intento = int(request.POST['nuevo_intento'])
 
     tipo = TipoDocentes[tipo]
+    ac = AnnoCuatrimestre(anno, cuatrimestre)
 
     if 'fijar' in request.POST:
         _fijar_y_desfijar(request, intento)
 
+    elif 'pasar_a_0' in request.POST:
+        _pasar_docentes(request, ac, tipo, intento)
+
+    elif 'publicar' in request.POST:
+        _publicar_docentes(request, ac, tipo)
+
     context = materias_distribuidas_dict(anno, cuatrimestre, intento, tipo)
-    ac = AnnoCuatrimestre(anno, cuatrimestre)
 
     otro_tipo = _append_dicts(Mapeos.cargas_asignadas_en(ac), MapeosDistribucion.asignaciones_otro_tipo(ac))
     este_tipo = MapeosDistribucion.asignaciones_para_intento(ac, intento)
