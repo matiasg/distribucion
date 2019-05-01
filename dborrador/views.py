@@ -186,7 +186,7 @@ def _append_dicts(*dicts):
     ret = defaultdict(list)
     for d in dicts:
         for k, l in d.items():
-            ret[k].append(l)
+            ret[k].extend(l)
     return ret
 
 
