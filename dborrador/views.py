@@ -155,6 +155,7 @@ def materias_distribuidas_dict(anno, cuatrimestre, intento, tipo):
             'tipo': tipo.name,
             'intento': intento}
 
+
 def filtra_materias(anno, cuatrimestre, intento, tipo, **kwargs):
     cargas = Mapeos.cargas(tipo, AnnoCuatrimestre(anno, cuatrimestre))
 
@@ -233,16 +234,19 @@ def _fijar_y_desfijar(request, intento):
                         previos.delete()
 
 
+def _mover_de_intento(turnos_cargas, desde, hacia):
+    with transaction.atomic():
+        for cargas in turnos_cargas.values():
+            for carga in cargas:
+                asignacion = Asignacion.objects.get(carga=carga, intento=desde)
+                asignacion.intento = hacia
+                asignacion.save()
+    logger.info('Pasé %d asignaciones en %d turnos de intento %d a intento %d',
+                sum(len(a) for a in turnos_cargas.values()), len(turnos_cargas), desde, hacia)
+
 def _pasar_docentes(request, ac, tipo, intento):
     '''Pasa docentes del intento actual a fijos (intento 0)'''
-    este_tipo = MapeosDistribucion.asignaciones_para_intento(ac, intento)
-    with transaction.atomic():
-        for turno, cargas in este_tipo.items():
-            for carga in cargas:
-                asignacion = Asignacion.objects.get(carga=carga, intento=intento)
-                asignacion.intento = 0
-                asignacion.save()
-                logger.info('pasé asignación de %s al intento 0', asignacion.carga.docente)
+    _mover_de_intento(MapeosDistribucion.asignaciones_para_intento(ac, intento), intento, 0)
 
 
 def _publicar_docentes(request, ac):
@@ -259,18 +263,7 @@ def _publicar_docentes(request, ac):
 
 def _terminar_esta_distribucion(request, ac):
     '''Pasa asignaciones de año y cuatrimestre de intento 0 a -1'''
-    turnos_cargas = MapeosDistribucion.asignaciones_fijas(ac)
-    with transaction.atomic():
-        for cargas in turnos_cargas.values():
-            for carga in cargas:
-                asignacion = Asignacion.objects.get(carga=carga, intento=0)
-                asignacion.intento = -1
-                asignacion.save()
-    logger.info('Terminé con la distribución; hay %d asignaciones pasadas para %d turnos',
-                sum(len(a) for a in turnos_cargas.values()),
-                len(turnos_cargas)
-                )
-
+    _mover_de_intento(MapeosDistribucion.asignaciones_fijas(ac), 0, -1)
 
 
 Accion = namedtuple('Accion', ['value', 'titulo', 'texto_on_click', 'funcion', 'args'])
@@ -306,7 +299,6 @@ def _acciones(request, ac, tipo, intento):
                        f'Vas a publicar todas las distribuciones fijadas en {ac.anno} {ac.cuatrimestre}. Confirmalo',
                        _publicar_docentes, (request, ac))
     return acciones
-
 
 
 def fijar(request, anno, cuatrimestre, tipo, intento):
