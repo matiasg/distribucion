@@ -9,9 +9,8 @@ AnnoCuatrimestre = namedtuple('AC', 'anno cuatrimestre')
 
 
 class TipoDocentes(Enum):
-    '''P: profesor, J: JTP y Ay1, A: Ay2'''
 
-    P = 'Profesores'
+    P = 'Profesor'
     J = 'JTP'
     A1 = 'Ay1'
     A2 = 'Ay2'
