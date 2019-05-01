@@ -22,13 +22,15 @@ Fijar docentes a intento {{ intento }}
     </p>
 
     {% for accion in acciones %}
-    <p>
-        <div class="subseccion"><div id="titulo">{{ accion.titulo }}</div>
-            <input type="submit"
-                   {% if accion.texto_on_click %} onclick="return confirm('{{ accion.texto_on_click }}')" {% endif %}
-            name="fijar" value="{{ accion.value }}">
-        </div>
-    </p>
+        {% if accion.incluir_en_pagina %}
+        <p>
+            <div class="subseccion"><div id="titulo">{{ accion.titulo }}</div>
+                <input type="submit"
+                       {% if accion.texto_on_click %} onclick="return confirm('{{ accion.texto_on_click }}')" {% endif %}
+                name="fijar" value="{{ accion.value }}">
+            </div>
+        </p>
+        {% endif %}
     {% endfor %}
 
 

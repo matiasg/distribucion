@@ -249,6 +249,7 @@ def _mover_de_intento(turnos_cargas, desde, hacia):
 def _pasar_docentes(request, ac, tipo, intento):
     '''Pasa docentes del intento actual a fijos (intento 0)'''
     _mover_de_intento(MapeosDistribucion.cargas_de_asignaciones_para_intento(ac, intento), intento, 0)
+    return {'intento': 0}
 
 
 def _publicar_docentes(request, ac):
@@ -272,9 +273,10 @@ def _terminar_esta_distribucion(request, ac):
     _mover_de_intento(MapeosDistribucion.cargas_de_asignaciones_fijas(ac), 0, -1)
     # borro todas las asignaciones en otros intentos
     MapeosDistribucion.asignaciones_para_todos_los_intentos(ac).delete()
+    return {'intento': 0}  # TODO: corregir esta salida (issue #36)
 
 
-Accion = namedtuple('Accion', ['value', 'titulo', 'texto_on_click', 'funcion', 'args'])
+Accion = namedtuple('Accion', ['incluir_en_pagina', 'value', 'titulo', 'texto_on_click', 'funcion', 'args'])
 
 class Acciones:
 
@@ -282,8 +284,8 @@ class Acciones:
         self.acciones = {}
         self.orden = []
 
-    def registrar(self, value, titulo, texto, funcion, args):
-        self.acciones[value] = Accion(value, titulo, texto, funcion, args)
+    def registrar(self, incluir, value, titulo, texto, funcion, args):
+        self.acciones[value] = Accion(incluir, value, titulo, texto, funcion, args)
         self.orden.append(value)
 
     def __getitem__(self, v):
@@ -296,14 +298,18 @@ class Acciones:
 
 def _acciones(request, ac, tipo, intento):
     acciones = Acciones()
-    acciones.registrar('fijar a intento', f'Fijar y desfijar al intento {intento}', '',
+    acciones.registrar(True,
+                       'fijar a intento', f'Fijar y desfijar al intento {intento}', '',
                        _fijar_y_desfijar, (request, intento))
-    acciones.registrar('fijar para todos los intentos', 'Fijar a todos los intentos', 'Confirmá que queres fijar para todos los intentos',
+    acciones.registrar(intento > 0,
+                       'fijar para todos los intentos', 'Fijar a todos los intentos', 'Confirmá que queres fijar para todos los intentos',
                        _pasar_docentes, (request, ac, tipo, intento))
-    acciones.registrar('terminar esta distribución', 'Terminar',
+    acciones.registrar(intento == 0,
+                       'terminar esta distribución', 'Terminar',
                        f'Confirmá que ya no querés distribuir docentes de tipo {tipo.value} en {ac.anno} {ac.cuatrimestre}',
                        _terminar_esta_distribucion, (request, ac))
-    acciones.registrar('publicar todo', 'Publicar',
+    acciones.registrar(intento == 0,
+                       'publicar todo', 'Publicar',
                        f'Vas a publicar todas las distribuciones fijadas en {ac.anno} {ac.cuatrimestre}. Confirmalo',
                        _publicar_docentes, (request, ac))
     return acciones
@@ -317,9 +323,11 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
         # actuar según el botón que se apretó
         acciones = _acciones(request, ac, tipo, intento)
         accion = acciones[request.POST['fijar']]
-        accion.funcion(*accion.args)
+        proximos_pasos = accion.funcion(*accion.args)
+        if proximos_pasos and 'intento' in proximos_pasos:
+            intento = proximos_pasos['intento']
 
-    if 'nuevo_intento' in request.POST:
+    elif 'cambiar' in request.POST:
         intento = int(request.POST['nuevo_intento'])
 
     context = materias_distribuidas_dict(anno, cuatrimestre, intento, tipo)
