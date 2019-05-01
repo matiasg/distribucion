@@ -24,9 +24,10 @@ logger = logging.getLogger(__name__)
 
 def inventar_encuestas(anno, cuatrimestre, tipo_de_docentes):
     now = timezone.now()
-    cargos = set(Mapeos.cargos_de_tipos(tipo_de_docentes))
-    docentes = Mapeos.docentes_de_tipo(tipo_de_docentes)
-    turnos = Mapeos.encuesta_tipo_turno(tipo_de_docentes).filter(anno=anno, cuatrimestre=cuatrimestre)
+    tipo = TipoDocentes[tipo_de_docentes]
+    cargos = set(Mapeos.cargos_de_tipos(tipo))
+    docentes = Mapeos.docentes_de_tipo(tipo)
+    turnos = Mapeos.encuesta_tipo_turno(tipo).filter(anno=anno, cuatrimestre=cuatrimestre)
 
     for docente in docentes:
         doc_cargos = cargos & set(docente.cargos)
