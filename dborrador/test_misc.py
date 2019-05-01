@@ -55,18 +55,18 @@ class TestMapeosDistribucion(TestCase):
         # T2 nec: (0234) pub: (0111) otro: (0110) fijo: (0001) int1: (0001)
 
     def test_asignaciones_otro_tipo(self):
-        cargas = MapeosDistribucion.asignaciones_otro_tipo(self.ac)
+        cargas = MapeosDistribucion.cargas_otro_tipo(self.ac)
         self.assertEqual(cargas[self.turno1], [self.cargas_turno_1[TipoDocentes.P][1]])
         self.assertEqual(set(cargas[self.turno2]),
                          {self.cargas_turno_2[TipoDocentes.J][1], self.cargas_turno_2[TipoDocentes.A1][1]})
 
     def test_asignaciones_fijas(self):
-        cargas = MapeosDistribucion.asignaciones_fijas(self.ac)
+        cargas = MapeosDistribucion.cargas_de_asignaciones_fijas(self.ac)
         self.assertEqual(cargas[self.turno1], [self.cargas_turno_1[TipoDocentes.J][1]])
         self.assertEqual(cargas[self.turno2], [self.cargas_turno_2[TipoDocentes.A2][1]])
 
     def test_asignaciones_intento(self):
-        cargas = MapeosDistribucion.asignaciones_para_intento(self.ac, 1)
+        cargas = MapeosDistribucion.cargas_de_asignaciones_para_intento(self.ac, 1)
         self.assertEqual(cargas[self.turno1], [self.cargas_turno_1[TipoDocentes.J][2]])
         self.assertEqual(cargas[self.turno2], [self.cargas_turno_2[TipoDocentes.A2][2]])
 

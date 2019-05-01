@@ -247,12 +247,12 @@ def _mover_de_intento(turnos_cargas, desde, hacia):
 
 def _pasar_docentes(request, ac, tipo, intento):
     '''Pasa docentes del intento actual a fijos (intento 0)'''
-    _mover_de_intento(MapeosDistribucion.asignaciones_para_intento(ac, intento), intento, 0)
+    _mover_de_intento(MapeosDistribucion.cargas_de_asignaciones_para_intento(ac, intento), intento, 0)
 
 
 def _publicar_docentes(request, ac):
     '''Pasa asignaciones de intento -1 a cargas'''
-    turnos_cargas = MapeosDistribucion.asignaciones_otro_tipo(ac)
+    turnos_cargas = MapeosDistribucion.cargas_otro_tipo(ac)
     with transaction.atomic():
         for turno, cargas in turnos_cargas.items():
             for carga in cargas:
@@ -268,7 +268,7 @@ def _publicar_docentes(request, ac):
 
 def _terminar_esta_distribucion(request, ac):
     '''Pasa asignaciones de año y cuatrimestre de intento 0 a -1'''
-    _mover_de_intento(MapeosDistribucion.asignaciones_fijas(ac), 0, -1)
+    _mover_de_intento(MapeosDistribucion.cargas_de_asignaciones_fijas(ac), 0, -1)
     # borro todas las asignaciones en otros intentos
     MapeosDistribucion.asignaciones_para_todos_los_intentos(ac).delete()
 
@@ -323,11 +323,11 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
 
     context = materias_distribuidas_dict(anno, cuatrimestre, intento, tipo)
 
-    otro_tipo = _append_dicts(Mapeos.cargas_asignadas_en(ac), MapeosDistribucion.asignaciones_otro_tipo(ac))
-    este_tipo = MapeosDistribucion.asignaciones_para_intento(ac, intento)
+    otro_tipo = _append_dicts(Mapeos.cargas_asignadas_en(ac), MapeosDistribucion.cargas_otro_tipo(ac))
+    este_tipo = MapeosDistribucion.cargas_de_asignaciones_para_intento(ac, intento)
     necesidades_no_cubiertas = MapeosDistribucion.necesidades_tipo_no_cubiertas_en(tipo, ac, intento)
     # si queremos fijar docentes al intento 0, tienen que aparecer en este_tipo, no en este_tipo_fijo
-    este_tipo_fijo = MapeosDistribucion.asignaciones_fijas(ac) if intento > 0 else defaultdict(list)
+    este_tipo_fijo = MapeosDistribucion.cargas_de_asignaciones_fijas(ac) if intento > 0 else defaultdict(list)
 
     ### XXX: este masajeo hay que refactorizarlo unificando bien con filtra_materias()
     DatosDeTurno = namedtuple('DDT', ['asignaciones_otro_tipo', 'asignaciones_este_tipo_fijo', 'asignaciones_este_tipo',

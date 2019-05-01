@@ -42,28 +42,28 @@ class MapeosDistribucion:
                 return set()
             return set.union(*(set(v) for v in dicc.values()))
 
-        otro_tipo = union_(MapeosDistribucion.asignaciones_otro_tipo(ac))
-        fijas = union_(MapeosDistribucion.asignaciones_fijas(ac))
-        este_intento = union_(MapeosDistribucion.asignaciones_para_intento(ac, intento))
+        otro_tipo = union_(MapeosDistribucion.cargas_otro_tipo(ac))
+        fijas = union_(MapeosDistribucion.cargas_de_asignaciones_fijas(ac))
+        este_intento = union_(MapeosDistribucion.cargas_de_asignaciones_para_intento(ac, intento))
 
         faltan = set(todas) - otro_tipo - fijas - este_intento
         faltan_de_tipo_pedido = Mapeos.filtrar_cargas_de_tipo_ge(tipo, faltan)
         return faltan_de_tipo_pedido
 
     @staticmethod
-    def asignaciones_otro_tipo(ac):
+    def cargas_otro_tipo(ac):
         '''Devuelve las cargas correspondientes a asignaciones con intento < 0'''
-        return MapeosDistribucion._asignaciones_ac_filtradas(ac, lambda i: i < 0)
+        return MapeosDistribucion._cargas_de_asignaciones_ac_filtradas(ac, lambda i: i < 0)
 
     @staticmethod
-    def asignaciones_fijas(ac):
+    def cargas_de_asignaciones_fijas(ac):
         '''Devuelve las cargas correspondientes a asignaciones con intento = 0'''
-        return MapeosDistribucion._asignaciones_ac_filtradas(ac, lambda i: i == 0)
+        return MapeosDistribucion._cargas_de_asignaciones_ac_filtradas(ac, lambda i: i == 0)
 
     @staticmethod
-    def asignaciones_para_intento(ac, intento):
+    def cargas_de_asignaciones_para_intento(ac, intento):
         '''Devuelve las cargas correspondientes a asignaciones con intento = intento'''
-        return MapeosDistribucion._asignaciones_ac_filtradas(ac, lambda i: i == intento)
+        return MapeosDistribucion._cargas_de_asignaciones_ac_filtradas(ac, lambda i: i == intento)
 
     @staticmethod
     def asignaciones_para_todos_los_intentos(ac):
@@ -73,7 +73,7 @@ class MapeosDistribucion:
                                          intento__gte=0)
 
     @staticmethod
-    def _asignaciones_ac_filtradas(ac, filtro_intento):
+    def _cargas_de_asignaciones_ac_filtradas(ac, filtro_intento):
         '''{Turno -> [Carga]}'''
         ret = defaultdict(list)
         asignaciones = Asignacion.objects.filter(turno__anno=ac.anno,
@@ -103,8 +103,8 @@ class MapeosDistribucion:
             return Counter(turno for turno, cargas in turno_cargas.items()
                            for _ in cargas)
 
-        fijas = cantidad(MapeosDistribucion.asignaciones_fijas(ac))
-        para_intento = cantidad(MapeosDistribucion.asignaciones_para_intento(ac, intento))
+        fijas = cantidad(MapeosDistribucion.cargas_de_asignaciones_fijas(ac))
+        para_intento = cantidad(MapeosDistribucion.cargas_de_asignaciones_para_intento(ac, intento))
         necesidades = Counter(Mapeos.turno_y_necesidad(tipo, ac))
         # TODO: qué se hace si en algún turno necesidades < fijas + para_intento ?
         #       Ahora no se hace nada (la cuenta da 0 y listo)
