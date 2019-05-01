@@ -259,12 +259,17 @@ def _publicar_docentes(request, ac):
 
 def _terminar_esta_distribucion(request, ac):
     '''Pasa asignaciones de año y cuatrimestre de intento 0 a -1'''
-    asignaciones = MapeosDistribucion.asignaciones_fijas(ac)
+    turnos_cargas = MapeosDistribucion.asignaciones_fijas(ac)
     with transaction.atomic():
-        for asignacion in asignaciones:
-            asignacion.intento = -1
-            asignacion.save()
-    logger.info('Terminé con la distribución; hay %d asignaciones pasadas', asignaciones.count())
+        for cargas in turnos_cargas.values():
+            for carga in cargas:
+                asignacion = Asignacion.objects.get(carga=carga, intento=0)
+                asignacion.intento = -1
+                asignacion.save()
+    logger.info('Terminé con la distribución; hay %d asignaciones pasadas para %d turnos',
+                sum(len(a) for a in turnos_cargas.values()),
+                len(turnos_cargas)
+                )
 
 
 
@@ -295,8 +300,8 @@ def _acciones(request, ac, tipo, intento):
     acciones.registrar('fijar para todos los intentos', 'Fijar a todos los intentos', 'Confirmá que queres fijar para todos los intentos',
                        _pasar_docentes, (request, ac, tipo, intento))
     acciones.registrar('terminar esta distribución', 'Terminar',
-                       f'Confirmá que ya no querés distribuir docentes de tipo {tipo.name} en {ac.anno} {ac.cuatrimestre}',
-                       _terminar_esta_distribucion, (request))
+                       f'Confirmá que ya no querés distribuir docentes de tipo {tipo.value} en {ac.anno} {ac.cuatrimestre}',
+                       _terminar_esta_distribucion, (request, ac))
     acciones.registrar('publicar todo', 'Publicar',
                        f'Vas a publicar todas las distribuciones fijadas en {ac.anno} {ac.cuatrimestre}. Confirmalo',
                        _publicar_docentes, (request, ac))
