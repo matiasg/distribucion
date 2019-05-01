@@ -251,14 +251,18 @@ def _pasar_docentes(request, ac, tipo, intento):
 
 def _publicar_docentes(request, ac):
     '''Pasa asignaciones de intento -1 a cargas'''
-    asignaciones = MapeosDistribucion.asignaciones_otro_tipo(ac)
+    turnos_cargas = MapeosDistribucion.asignaciones_otro_tipo(ac)
     with transaction.atomic():
-        for asignacion in asignaciones:
-            carga = asignacion.carga
-            carga.turno = asignacion.turno
-            carga.save()
-            asignacion.delete()
-            logger.info('publiqué un turno para %s: %s', carga.docente, carga.turno)
+        for turno, cargas in turnos_cargas.items():
+            for carga in cargas:
+
+                carga.turno = turno
+                carga.save()
+
+                asignacion = Asignacion.objects.get(carga=carga, intento__lt=0)
+                asignacion.delete()
+
+                logger.info('publiqué un turno para %s: %s', carga.docente, carga.turno)
 
 
 def _terminar_esta_distribucion(request, ac):
