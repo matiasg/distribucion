@@ -72,7 +72,8 @@ def preparar(request):
         logger.info('copiando %s y %s para docents tipo %s', anno, cuatrimestre, tipo)
 
         copiadas, existentes = copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo)
-        context = {'copiadas': copiadas, 'existentes': existentes}
+        context = {'copiadas': copiadas, 'existentes': existentes,
+                   'anno': anno, 'cuatrimestre': cuatrimestre, 'tipo': tipo.name, 'intento': 1}
         return render(request, 'dborrador/despues_de_preparar.html', context)
     except KeyError:
         anno_actual = timezone.now().year
