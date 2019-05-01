@@ -244,6 +244,7 @@ def _mover_de_intento(turnos_cargas, desde, hacia):
     logger.info('Pasé %d asignaciones en %d turnos de intento %d a intento %d',
                 sum(len(a) for a in turnos_cargas.values()), len(turnos_cargas), desde, hacia)
 
+
 def _pasar_docentes(request, ac, tipo, intento):
     '''Pasa docentes del intento actual a fijos (intento 0)'''
     _mover_de_intento(MapeosDistribucion.asignaciones_para_intento(ac, intento), intento, 0)
@@ -268,6 +269,8 @@ def _publicar_docentes(request, ac):
 def _terminar_esta_distribucion(request, ac):
     '''Pasa asignaciones de año y cuatrimestre de intento 0 a -1'''
     _mover_de_intento(MapeosDistribucion.asignaciones_fijas(ac), 0, -1)
+    # borro todas las asignaciones en otros intentos
+    MapeosDistribucion.asignaciones_para_todos_los_intentos(ac).delete()
 
 
 Accion = namedtuple('Accion', ['value', 'titulo', 'texto_on_click', 'funcion', 'args'])

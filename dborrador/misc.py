@@ -52,18 +52,25 @@ class MapeosDistribucion:
 
     @staticmethod
     def asignaciones_otro_tipo(ac):
-        '''Devuelve las asignaciones con intento < 0'''
+        '''Devuelve las cargas correspondientes a asignaciones con intento < 0'''
         return MapeosDistribucion._asignaciones_ac_filtradas(ac, lambda i: i < 0)
 
     @staticmethod
     def asignaciones_fijas(ac):
-        '''Devuelve las asignaciones con intento = 0'''
+        '''Devuelve las cargas correspondientes a asignaciones con intento = 0'''
         return MapeosDistribucion._asignaciones_ac_filtradas(ac, lambda i: i == 0)
 
     @staticmethod
     def asignaciones_para_intento(ac, intento):
-        '''Devuelve las asignaciones con intento = intento'''
+        '''Devuelve las cargas correspondientes a asignaciones con intento = intento'''
         return MapeosDistribucion._asignaciones_ac_filtradas(ac, lambda i: i == intento)
+
+    @staticmethod
+    def asignaciones_para_todos_los_intentos(ac):
+        '''Devuelve las asignaciones con intento >= 0. No las de intento < 0'''
+        return Asignacion.objects.filter(turno__anno=ac.anno,
+                                         turno__cuatrimestre=ac.cuatrimestre,
+                                         intento__gte=0)
 
     @staticmethod
     def _asignaciones_ac_filtradas(ac, filtro_intento):
