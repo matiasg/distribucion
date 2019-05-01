@@ -20,25 +20,17 @@ Fijar docentes a intento {{ intento }}
             <input type="hidden" name="tipo" value="{{ tipo }}">
         </div>
     </p>
-    <p>
-        <div class="subseccion"><div id="titulo">Fijar docentes a este intento</div>
-            <input type="submit" name="fijar" value="fijar docentes y comentarios">
-        </div>
-    </p>
 
-    {% if intento != 0 %}
+    {% for accion in acciones %}
     <p>
-        <div class="subseccion"><div id="titulo">Pasar docentes fijos a intento 0</div>
-            <input type="submit" name="pasar_a_0" value="pasar docentes">
+        <div class="subseccion"><div id="titulo">{{ accion.titulo }}</div>
+            <input type="submit"
+                   {% if accion.texto_on_click %} onclick="return confirm('{{ accion.texto_on_click }}')" {% endif %}
+            name="fijar" value="{{ accion.value }}">
         </div>
     </p>
-    {% else %}
-    <p>
-        <div class="subseccion"><div id="titulo">Publicar esta distribución</div>
-            <input type="submit" name="publicar" value="publicar">
-        </div>
-    </p>
-    {% endif %}
+    {% endfor %}
+
 
     <p>
         <div class="subseccion"><div id="titulo">Problemas encontrados</div>

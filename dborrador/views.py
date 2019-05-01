@@ -182,7 +182,16 @@ def filtra_materias(anno, cuatrimestre, intento, tipo, **kwargs):
     return materias
 
 
+def _append_dicts(*dicts):
+    ret = defaultdict(list)
+    for d in dicts:
+        for k, l in d.items():
+            ret[k].append(l)
+    return ret
+
+
 def _fijar_y_desfijar(request, intento):
+    '''Fija y desfija docentes y comentarios al intento actual'''
     logger.info('voy a fijar/desfijar docentes y comentarios para el intento %d', intento)
     with transaction.atomic():
         for k, val in request.POST.items():
@@ -225,6 +234,7 @@ def _fijar_y_desfijar(request, intento):
 
 
 def _pasar_docentes(request, ac, tipo, intento):
+    '''Pasa docentes del intento actual a fijos (intento 0)'''
     este_tipo = MapeosDistribucion.asignaciones_para_intento(ac, intento)
     with transaction.atomic():
         for turno, cargas in este_tipo.items():
@@ -235,39 +245,77 @@ def _pasar_docentes(request, ac, tipo, intento):
                 logger.info('pasé asignación de %s al intento 0', asignacion.carga.docente)
 
 
-def _publicar_docentes(request, ac, tipo):
-    asignaciones = MapeosDistribucion.asignaciones_fijas(ac)
+def _publicar_docentes(request, ac):
+    '''Pasa asignaciones de intento -1 a cargas'''
+    asignaciones = MapeosDistribucion.asignaciones_otro_tipo(ac)
     with transaction.atomic():
         for asignacion in asignaciones:
             carga = asignacion.carga
             carga.turno = asignacion.turno
             carga.save()
+            asignacion.delete()
             logger.info('publiqué un turno para %s: %s', carga.docente, carga.turno)
 
 
-def _append_dicts(*dicts):
-    ret = defaultdict(list)
-    for d in dicts:
-        for k, l in d.items():
-            ret[k].append(l)
-    return ret
+def _terminar_esta_distribucion(request, ac):
+    '''Pasa asignaciones de año y cuatrimestre de intento 0 a -1'''
+    asignaciones = MapeosDistribucion.asignaciones_fijas(ac)
+    with transaction.atomic():
+        for asignacion in asignaciones:
+            asignacion.intento = -1
+            asignacion.save()
+    logger.info('Terminé con la distribución; hay %d asignaciones pasadas', asignaciones.count())
+
+
+
+Accion = namedtuple('Accion', ['value', 'titulo', 'texto_on_click', 'funcion', 'args'])
+
+class Acciones:
+
+    def __init__(self):
+        self.acciones = {}
+        self.orden = []
+
+    def registrar(self, value, titulo, texto, funcion, args):
+        self.acciones[value] = Accion(value, titulo, texto, funcion, args)
+        self.orden.append(value)
+
+    def __getitem__(self, v):
+        return self.acciones[v]
+
+    def __iter__(self):
+        ret = [self.acciones[k] for k in self.orden]
+        return iter(ret)
+
+
+def _acciones(request, ac, tipo, intento):
+    acciones = Acciones()
+    acciones.registrar('fijar a intento', f'Fijar y desfijar al intento {intento}', '',
+                       _fijar_y_desfijar, (request, intento))
+    acciones.registrar('fijar para todos los intentos', 'Fijar a todos los intentos', 'Confirmá que queres fijar para todos los intentos',
+                       _pasar_docentes, (request, ac, tipo, intento))
+    acciones.registrar('terminar esta distribución', 'Terminar',
+                       f'Confirmá que ya no querés distribuir docentes de tipo {tipo.name} en {ac.anno} {ac.cuatrimestre}',
+                       _terminar_esta_distribucion, (request))
+    acciones.registrar('publicar todo', 'Publicar',
+                       f'Vas a publicar todas las distribuciones fijadas en {ac.anno} {ac.cuatrimestre}. Confirmalo',
+                       _publicar_docentes, (request, ac))
+    return acciones
+
 
 
 def fijar(request, anno, cuatrimestre, tipo, intento):
-    if 'nuevo_intento' in request.POST:
-        intento = int(request.POST['nuevo_intento'])
-
     tipo = TipoDocentes[tipo]
     ac = AnnoCuatrimestre(anno, cuatrimestre)
 
     if 'fijar' in request.POST:
-        _fijar_y_desfijar(request, intento)
+        # actuar según el botón que se apretó
+        acciones = _acciones(request, ac, tipo, intento)
+        accion = acciones[request.POST['fijar']]
+        accion.funcion(*accion.args)
 
-    elif 'pasar_a_0' in request.POST:
-        _pasar_docentes(request, ac, tipo, intento)
-
-    elif 'publicar' in request.POST:
-        _publicar_docentes(request, ac, tipo)
+    if 'nuevo_intento' in request.POST:
+        intento = int(request.POST['nuevo_intento'])
 
     context = materias_distribuidas_dict(anno, cuatrimestre, intento, tipo)
 
@@ -294,5 +342,6 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
 
     # TODO: si hay docentes distribuidos más que sus cargas o turnos cubiertos de más hay que tirar excepción
     context['problemas'] = MapeosDistribucion.chequeo(tipo, ac, intento, este_tipo_fijo, este_tipo)
+    context['acciones'] = _acciones(request, ac, tipo, intento)
 
     return render(request, 'dborrador/fijar.html', context)
