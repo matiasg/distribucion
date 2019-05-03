@@ -72,7 +72,8 @@ def preparar(request):
         logger.info('copiando %s y %s para docents tipo %s', anno, cuatrimestre, tipo)
 
         copiadas, existentes = copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo)
-        context = {'copiadas': copiadas, 'existentes': existentes}
+        context = {'copiadas': copiadas, 'existentes': existentes,
+                   'anno': anno, 'cuatrimestre': cuatrimestre, 'tipo': tipo.name, 'intento': 1}
         return render(request, 'dborrador/despues_de_preparar.html', context)
     except KeyError:
         anno_actual = timezone.now().year
@@ -155,6 +156,7 @@ def materias_distribuidas_dict(anno, cuatrimestre, intento, tipo):
             'tipo': tipo.name,
             'intento': intento}
 
+
 def filtra_materias(anno, cuatrimestre, intento, tipo, **kwargs):
     cargas = Mapeos.cargas(tipo, AnnoCuatrimestre(anno, cuatrimestre))
 
@@ -182,67 +184,159 @@ def filtra_materias(anno, cuatrimestre, intento, tipo, **kwargs):
     return materias
 
 
+def _append_dicts(*dicts):
+    ret = defaultdict(list)
+    for d in dicts:
+        for k, l in d.items():
+            ret[k].extend(l)
+    return ret
+
+
+def _fijar_y_desfijar(request, intento):
+    '''Fija y desfija docentes y comentarios al intento actual'''
+    logger.info('voy a fijar/desfijar docentes y comentarios para el intento %d', intento)
+    with transaction.atomic():
+        for k, val in request.POST.items():
+            if k.startswith('fijoen'):
+                carga_id = int(val)
+                if carga_id >= 0:  # hay que crear una asignación nueva
+                    _, turno_id, _ = k.split('_')
+                    turno = Turno.objects.get(pk=int(turno_id))
+                    carga = Carga.objects.get(pk=carga_id)
+                    asignacion, creada = Asignacion.objects.get_or_create(
+                        turno=turno, carga=carga, intento=intento)
+                    if creada:
+                        logger.info('Fijé a %s al turno %s en el intento %d',
+                                    carga.docente, turno, intento)
+
+            elif k.startswith('cambioen'):
+                _, turno_id, carga_id = k.split('_')
+                turno = Turno.objects.get(pk=int(turno_id))
+                carga = Carga.objects.get(pk=int(carga_id))
+                nueva_carga_id = int(val)
+                if nueva_carga_id < 0:  # hay que borrar la asignación
+                    asignaciones, _ = Asignacion.objects.filter(carga=carga, turno=turno, intento=intento).all().delete()
+                    logger.info('Borré %d asignación(es) para %s en %s', asignaciones, carga.docente, turno)
+
+            elif k.startswith('comentarios'):
+                _, turno_id = k.split('_')
+                turno = Turno.objects.get(pk=int(turno_id))
+
+                if val:
+                    comentario, creado = Comentario.objects.get_or_create(turno=turno, intento=intento)
+                    comentario.texto = val
+                    comentario.save()
+                    if creado:
+                        logger.debug('Guardé un comentario para turno %s en intento %d: "%s"', turno, intento, val)
+                else:
+                    previos = Comentario.objects.filter(turno=turno, intento=intento)
+                    if previos:
+                        logger.info('Borro comentario para turno %s en intento %d', turno, intento)
+                        previos.delete()
+
+
+def _mover_de_intento(turnos_cargas, desde, hacia):
+    with transaction.atomic():
+        for cargas in turnos_cargas.values():
+            for carga in cargas:
+                asignacion = Asignacion.objects.get(carga=carga, intento=desde)
+                asignacion.intento = hacia
+                asignacion.save()
+    logger.info('Pasé %d asignaciones en %d turnos de intento %d a intento %d',
+                sum(len(a) for a in turnos_cargas.values()), len(turnos_cargas), desde, hacia)
+
+
+def _pasar_docentes(request, ac, tipo, intento):
+    '''Pasa docentes del intento actual a fijos (intento 0)'''
+    _mover_de_intento(MapeosDistribucion.cargas_de_asignaciones_para_intento(ac, intento), intento, 0)
+    return {'intento': 0}
+
+
+def _publicar_docentes(request, ac):
+    '''Pasa asignaciones de intento -1 a cargas'''
+    turnos_cargas = MapeosDistribucion.cargas_otro_tipo(ac)
+    with transaction.atomic():
+        for turno, cargas in turnos_cargas.items():
+            for carga in cargas:
+
+                carga.turno = turno
+                carga.save()
+
+                asignacion = Asignacion.objects.get(carga=carga, intento__lt=0)
+                asignacion.delete()
+
+                logger.info('publiqué un turno para %s: %s', carga.docente, carga.turno)
+
+
+def _terminar_esta_distribucion(request, ac):
+    '''Pasa asignaciones de año y cuatrimestre de intento 0 a -1'''
+    _mover_de_intento(MapeosDistribucion.cargas_de_asignaciones_fijas(ac), 0, -1)
+    # borro todas las asignaciones en otros intentos
+    MapeosDistribucion.asignaciones_para_todos_los_intentos(ac).delete()
+    return {'intento': 0}  # TODO: corregir esta salida (issue #36)
+
+
+Accion = namedtuple('Accion', ['incluir_en_pagina', 'value', 'titulo', 'texto_on_click', 'funcion', 'args'])
+
+class Acciones:
+
+    def __init__(self):
+        self.acciones = {}
+        self.orden = []
+
+    def registrar(self, incluir, value, titulo, texto, funcion, args):
+        self.acciones[value] = Accion(incluir, value, titulo, texto, funcion, args)
+        self.orden.append(value)
+
+    def __getitem__(self, v):
+        return self.acciones[v]
+
+    def __iter__(self):
+        ret = [self.acciones[k] for k in self.orden]
+        return iter(ret)
+
+
+def _acciones(request, ac, tipo, intento):
+    acciones = Acciones()
+    acciones.registrar(True,
+                       'fijar a intento', f'Fijar y desfijar al intento {intento}', '',
+                       _fijar_y_desfijar, (request, intento))
+    acciones.registrar(intento > 0,
+                       'fijar para todos los intentos', 'Fijar a todos los intentos', 'Confirmá que queres fijar para todos los intentos',
+                       _pasar_docentes, (request, ac, tipo, intento))
+    acciones.registrar(intento == 0,
+                       'terminar esta distribución', 'Terminar',
+                       f'Confirmá que ya no querés distribuir docentes de tipo {tipo.value} en {ac.anno} {ac.cuatrimestre}',
+                       _terminar_esta_distribucion, (request, ac))
+    acciones.registrar(intento == 0,
+                       'publicar todo', 'Publicar',
+                       f'Vas a publicar todas las distribuciones fijadas en {ac.anno} {ac.cuatrimestre}. Confirmalo',
+                       _publicar_docentes, (request, ac))
+    return acciones
+
+
 def fijar(request, anno, cuatrimestre, tipo, intento):
-    if 'nuevo_intento' in request.POST:
-        intento = int(request.POST['nuevo_intento'])
-
     tipo = TipoDocentes[tipo]
-
-    if 'fijar' in request.POST:
-        with transaction.atomic():
-            for k, val in request.POST.items():
-                if k.startswith('fijoen'):
-                    carga_id = int(val)
-                    if carga_id >= 0:  # hay que crear una asignación nueva
-                        _, turno_id, _ = k.split('_')
-                        turno = Turno.objects.get(pk=int(turno_id))
-                        carga = Carga.objects.get(pk=carga_id)
-                        asignacion, creada = Asignacion.objects.get_or_create(
-                            turno=turno, carga=carga, intento=intento)
-                        if creada:
-                            logger.info('Fijé a %s al turno %s en el intento %d',
-                                        carga.docente, turno, intento)
-
-                elif k.startswith('cambioen'):
-                    _, turno_id, carga_id = k.split('_')
-                    turno = Turno.objects.get(pk=int(turno_id))
-                    carga = Carga.objects.get(pk=int(carga_id))
-                    nueva_carga_id = int(val)
-                    if nueva_carga_id < 0:  # hay que borrar la asignación
-                        asignaciones, _ = Asignacion.objects.filter(carga=carga, turno=turno, intento=intento).delete()
-                        logger.info('Borré %d asignación(es) para %s en %s', asignaciones, carga.docente, turno)
-
-                elif k.startswith('comentarios'):
-                    _, turno_id = k.split('_')
-                    turno = Turno.objects.get(pk=int(turno_id))
-
-                    if val:
-                        comentario, creado = Comentario.objects.get_or_create(turno=turno, intento=intento)
-                        comentario.texto = val
-                        comentario.save()
-                        if creado:
-                            logger.info('Guardé un comentario para turno %s en intento %d: "%s"', turno, intento, val)
-                    else:
-                        previos = Comentario.objects.filter(turno=turno, intento=intento)
-                        if previos:
-                            logger.info('Borro comentario para turno %s en intento %d', turno, intento)
-                            previos.delete()
-
-    def _append_dicts(*dicts):
-        ret = defaultdict(list)
-        for d in dicts:
-            for k, l in d.items():
-                ret[k].append(l)
-        return ret
-
-    context = materias_distribuidas_dict(anno, cuatrimestre, intento, tipo)
     ac = AnnoCuatrimestre(anno, cuatrimestre)
 
-    otro_tipo = _append_dicts(Mapeos.cargas_asignadas_en(ac), MapeosDistribucion.asignaciones_otro_tipo(ac))
-    este_tipo = MapeosDistribucion.asignaciones_para_intento(ac, intento)
+    if 'fijar' in request.POST:
+        # actuar según el botón que se apretó
+        acciones = _acciones(request, ac, tipo, intento)
+        accion = acciones[request.POST['fijar']]
+        proximos_pasos = accion.funcion(*accion.args)
+        if proximos_pasos and 'intento' in proximos_pasos:
+            intento = proximos_pasos['intento']
+
+    elif 'cambiar' in request.POST:
+        intento = int(request.POST['nuevo_intento'])
+
+    context = materias_distribuidas_dict(anno, cuatrimestre, intento, tipo)
+
+    otro_tipo = _append_dicts(Mapeos.cargas_asignadas_en(ac), MapeosDistribucion.cargas_otro_tipo(ac))
+    este_tipo = MapeosDistribucion.cargas_de_asignaciones_para_intento(ac, intento)
     necesidades_no_cubiertas = MapeosDistribucion.necesidades_tipo_no_cubiertas_en(tipo, ac, intento)
     # si queremos fijar docentes al intento 0, tienen que aparecer en este_tipo, no en este_tipo_fijo
-    este_tipo_fijo = MapeosDistribucion.asignaciones_fijas(ac) if intento > 0 else defaultdict(list)
+    este_tipo_fijo = MapeosDistribucion.cargas_de_asignaciones_fijas(ac) if intento > 0 else defaultdict(list)
 
     ### XXX: este masajeo hay que refactorizarlo unificando bien con filtra_materias()
     DatosDeTurno = namedtuple('DDT', ['asignaciones_otro_tipo', 'asignaciones_este_tipo_fijo', 'asignaciones_este_tipo',
@@ -251,7 +345,6 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
         for materia, turnos in materias_turnos:
             for turno in turnos:
                 comentarios = Comentario.objects.filter(intento=intento, turno=turno)
-                if comentarios.count(): logger.info('comentarios: %s', comentarios.first().texto)  # sac
                 comentarios = comentarios.first().texto if comentarios else ''
                 datos = DatosDeTurno(otro_tipo[turno], este_tipo_fijo[turno], este_tipo[turno],
                                      necesidades_no_cubiertas[turno], comentarios)
@@ -262,5 +355,6 @@ def fijar(request, anno, cuatrimestre, tipo, intento):
 
     # TODO: si hay docentes distribuidos más que sus cargas o turnos cubiertos de más hay que tirar excepción
     context['problemas'] = MapeosDistribucion.chequeo(tipo, ac, intento, este_tipo_fijo, este_tipo)
+    context['acciones'] = _acciones(request, ac, tipo, intento)
 
     return render(request, 'dborrador/fijar.html', context)
