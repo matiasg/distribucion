@@ -1,11 +1,16 @@
 import os
+from django.core.management.utils import get_random_secret_key
 
 
 os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# XXX: no dejar esto en github
-SECRET_KEY = '@fb7dxhx7p^+(9b$em=38s$=$$-$9frcrj3wxi2%el&l#_d)j2'
+
+# seguridad
+SECRET_KEY = get_random_secret_key()
 DEBUG = False
 ALLOWED_HOSTS = ['*']
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+CSRF_COOKIE_SECURE = True
 
 AUTH_USER_MODEL = 'usuarios.Usuario'
 
