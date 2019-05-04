@@ -25,7 +25,8 @@ logger = logging.getLogger(__name__)
 def copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo):
     '''devuelve: (prefs copiadas, prefs ya existentes) '''
     copiadas = 0
-    existentes, _ = Preferencia.objects.all().delete()
+    existentes, _ = Preferencia.objects.filter(preferencia__turno__anno=anno,
+                                               preferencia__turno__cuatrimestre=cuatrimestre).delete()
 
     for docente in Mapeos.docentes_de_tipo(tipo):
         prefs = PreferenciasDocente.objects.filter(turno__anno=anno,
