@@ -10,12 +10,10 @@ from . import views
 app_name = 'dborrador'
 urlpatterns = [
     path('', views.index, name='index'),
-    path('preparar', views.preparar, name='preparar'),
+    path('preparar/<int:anno>/<str:cuatrimestre>/<str:tipo>',
+         views.preparar, name='preparar'),
     path('distribuir/<int:anno>/<str:cuatrimestre>/<str:tipo>/<int:intento>',
          views.distribuir, name='distribuir'),
     path('fijar/<int:anno>/<str:cuatrimestre>/<str:tipo>/<int:intento>',
          views.fijar, name='fijar'),
 ]
-
-# if settings.DEBUG:
-#     urlpatterns += static(settings.STATIC_URL, view=never_cache(serve))

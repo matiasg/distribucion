@@ -11,7 +11,7 @@
     <h2>Qué hacer</h2>
     {% if anno %}
     <ul>
-        <li> <a href="{% url 'dborrador:preparar' %}">copiar encuestas</a></li>
+        <li> <a href="{% url 'dborrador:preparar' anno cuatrimestre tipo %}">copiar encuestas</a></li>
         <li> <a href="{% url 'dborrador:distribuir' anno cuatrimestre tipo intento %}">hacer una distribución</a></li>
         <li> <a href="{% url 'dborrador:fijar' anno cuatrimestre tipo intento %}">Fijar docentes en una distribución</a></li>
     </ul>
