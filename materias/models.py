@@ -93,6 +93,7 @@ class Turno(models.Model):
     necesidad_ay1 = models.PositiveIntegerField(validators=[MaxValueValidator(15)])
     necesidad_ay2 = models.PositiveIntegerField(validators=[MaxValueValidator(15)])
     alumnos = models.PositiveIntegerField(validators=[MaxValueValidator(1000)], default=0)
+    dificil_de_cubrir = models.BooleanField(default=False)
     history = HistoricalRecords()
 
     def __str__(self):
