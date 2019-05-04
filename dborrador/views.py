@@ -66,18 +66,15 @@ def index(request):
     except KeyError:
         return render(request, 'dborrador/base.html', _anno_cuat_tipos_context())
 
-def preparar(request):
-    try:
-        anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
-        logger.info('copiando %s y %s para docents tipo %s', anno, cuatrimestre, tipo)
+def preparar(request, anno, cuatrimestre, tipo):
+    tipo = TipoDocentes[tipo]
+    logger.info('copiando %s y %s para docents tipo %s', anno, cuatrimestre, tipo)
 
-        copiadas, existentes = copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo)
-        context = {'copiadas': copiadas, 'existentes': existentes,
-                   'anno': anno, 'cuatrimestre': cuatrimestre, 'tipo': tipo.name, 'intento': 1}
-        return render(request, 'dborrador/despues_de_preparar.html', context)
-    except KeyError:
-        anno_actual = timezone.now().year
-        return render(request, 'dborrador/elegir_ac.html', _anno_cuat_tipos_context())
+    copiadas, existentes = copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo)
+    context = {'copiadas': copiadas, 'existentes': existentes,
+               'anno': anno, 'cuatrimestre': cuatrimestre, 'tipo': tipo.name,
+               'intento': 1}
+    return render(request, 'dborrador/despues_de_preparar.html', context)
 
 
 @login_required
