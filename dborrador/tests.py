@@ -11,24 +11,7 @@ from encuestas.models import PreferenciasDocente
 
 class TestPreparar(TestCase):
 
-    def test_no_falla_si_no_hay_preferencias(self):
-        c = Client()
-        response = c.get('/dborrador/preparar')
-        self.assertEqual(response.status_code, 200)
-
-        response = c.post('/dborrador/preparar', {'anno': '2100', 'cuatrimestre': 'P', 'tipo': 'P'})
-        self.assertEqual(response.status_code, 200)
-        content = response.content.decode()
-
-        self.assertTrue(re.search('Copiadas:[^0-9]*0[^0-9]*\n', content),
-                        'La página deberia decir que se copiaron 0 preferencias')
-        self.assertTrue(re.search('Borradas:[^0-9]*0[^0-9]*\n', content),
-                        'La página deberia decir que se borraron 0 preferencias')
-        self.assertTrue('Preferencias copiadas' in response.content.decode(),
-                        'La página debería decir "Preferencias copiadas" y dice {}'.format(
-                            response.content.decode()))
-
-    def test_copia_preferencias(self):
+    def _agrega_preferencias(self):
         docente = Docente.objects.create(nombre='juan', email='mail@nada.org',
                                          telefono='1234',
                                          cargos=[CargoDedicacion.TitSim.name])
@@ -43,8 +26,27 @@ class TestPreparar(TestCase):
         pref1 = PreferenciasDocente.objects.create(docente=docente, turno=turno1, peso=1, fecha_encuesta=now)
         pref2 = PreferenciasDocente.objects.create(docente=docente, turno=turno2, peso=3, fecha_encuesta=now)
 
+    def test_no_falla_si_no_hay_preferencias(self):
         c = Client()
-        response = c.post('/dborrador/preparar', {'anno': '2100', 'cuatrimestre': 'P', 'tipo': 'P'})
+        response = c.get('/dborrador/preparar/2100/P/P')
+        self.assertEqual(response.status_code, 200)
+
+        response = c.post('/dborrador/preparar/2100/P/P')
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+
+        self.assertTrue(re.search('Copiadas:[^0-9]*0[^0-9]*\n', content),
+                        'La página deberia decir que se copiaron 0 preferencias')
+        self.assertTrue(re.search('Borradas:[^0-9]*0[^0-9]*\n', content),
+                        'La página deberia decir que se borraron 0 preferencias')
+        self.assertTrue('Preferencias copiadas' in response.content.decode(),
+                        'La página debería decir "Preferencias copiadas" y dice {}'.format(
+                            response.content.decode()))
+
+    def test_copia_preferencias(self):
+        self._agrega_preferencias()
+        c = Client()
+        response = c.post('/dborrador/preparar/2100/P/P')
         content = response.content.decode()
 
         self.assertEqual(response.status_code, 200)
@@ -69,7 +71,7 @@ class TestPaginaPrincipal(TestCase):
         response = c.post('/dborrador/', {'anno': 2100, 'cuatrimestre': 'P', 'tipo': 'P', 'intento': 0},
                           follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(re.search('<a href="/dborrador/preparar">', response.content.decode()),
+        self.assertTrue(re.search('<a href="/dborrador/preparar/2100/P/P">', response.content.decode()),
                         'La página redirigida no contiene un link a /dborrador/preparar')
         self.assertTrue(re.search('<a href="/dborrador/distribuir/2100/P/P/0">', response.content.decode()),
                         'La página redirigida no contiene un link a /dborrador/distribuir')
