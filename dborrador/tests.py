@@ -12,19 +12,19 @@ from encuestas.models import PreferenciasDocente
 class TestPreparar(TestCase):
 
     def _agrega_preferencias(self):
-        docente = Docente.objects.create(nombre='juan', email='mail@nada.org',
-                                         telefono='1234',
-                                         cargos=[CargoDedicacion.TitSim.name])
-        materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
-        turno1 = Turno.objects.create(materia=materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
-                                      numero=1, tipo=TipoTurno.A.name,
-                                      necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        turno2 = Turno.objects.create(materia=materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
-                                      numero=2, tipo=TipoTurno.A.name,
-                                      necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        self.docente = Docente.objects.create(nombre='juan', email='mail@nada.org',
+                                              telefono='1234',
+                                              cargos=[CargoDedicacion.TitSim.name])
+        self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
+        self.turno1 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                           numero=1, tipo=TipoTurno.A.name,
+                                           necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        self.turno2 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                           numero=2, tipo=TipoTurno.A.name,
+                                           necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
         now = timezone.now()
-        pref1 = PreferenciasDocente.objects.create(docente=docente, turno=turno1, peso=1, fecha_encuesta=now)
-        pref2 = PreferenciasDocente.objects.create(docente=docente, turno=turno2, peso=3, fecha_encuesta=now)
+        self.pref1 = PreferenciasDocente.objects.create(docente=self.docente, turno=self.turno1, peso=1, fecha_encuesta=now)
+        self.pref2 = PreferenciasDocente.objects.create(docente=self.docente, turno=self.turno2, peso=3, fecha_encuesta=now)
 
     def test_no_falla_si_no_hay_preferencias(self):
         c = Client()
@@ -55,6 +55,39 @@ class TestPreparar(TestCase):
         self.assertTrue(re.search('Borradas:[^0-9]*0[^0-9]*\n', content),
                         'La página deberia decir que se borraron 0 preferencias')
         self.assertEqual(Preferencia.objects.all().count(), 2, 'Debería haber dos preferencias copiadas')
+
+    def test_borro_preferencias_correctas(self):
+        self._agrega_preferencias()
+        turno_otro_anno = Turno.objects.create(materia=self.materia, anno=2345, cuatrimestre=Cuatrimestres.P.name,
+                                               numero=1, tipo=TipoTurno.A.name,
+                                               necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        turno_otro_cuatri = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.S.name,
+                                                 numero=1, tipo=TipoTurno.A.name,
+                                                 necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        now = timezone.now()
+
+        pref = Preferencia.objects.create(preferencia=self.pref1, peso_normalizado=1)
+
+        pref_doc_otro_anno = PreferenciasDocente.objects.create(docente=self.docente, turno=turno_otro_anno, peso=3, fecha_encuesta=now)
+        pref_otro_anno = Preferencia.objects.create(preferencia=pref_doc_otro_anno, peso_normalizado=1)
+
+        pref_doc_otro_cuatri = PreferenciasDocente.objects.create(docente=self.docente, turno=turno_otro_cuatri, peso=3, fecha_encuesta=now)
+        pref_otro_cuatri = Preferencia.objects.create(preferencia=pref_doc_otro_cuatri, peso_normalizado=1)
+
+        c = Client()
+        response = c.get('/dborrador/preparar/2100/P/P')
+        self.assertEqual(response.status_code, 200)
+
+        copiadas = Preferencia.objects.filter(preferencia__turno__anno=2100, preferencia__turno__cuatrimestre=Cuatrimestres.P.name)
+        self.assertEqual(copiadas.count(), 2)
+        self.assertTrue(pref not in copiadas)
+
+        todas = Preferencia.objects.all()
+
+        self.assertEqual(len(todas), 4)
+        self.assertTrue(pref_otro_anno in todas)
+        self.assertTrue(pref_otro_cuatri in todas)
+
 
 
 class TestPaginaPrincipal(TestCase):
