@@ -8,11 +8,23 @@ from enum import Enum
 
 
 class Dias(Enum):
-    Lu = 'Lunes'
-    Ma = 'Martes'
-    Mi = 'Miércoles'
-    Ju = 'Jueves'
-    Vi = 'Viernes'
+    Lu = ('Lunes', 1)
+    Ma = ('Martes', 2)
+    Mi = ('Miércoles', 3)
+    Ju = ('Jueves', 4)
+    Vi = ('Viernes', 5)
+
+    def __ge__(self, other):
+        return self.value[1] >= other.value[1] if other.__class__ is Dias else NotImplemented
+
+    def __le__(self, other):
+        return self.value[1] <= other.value[1] if other.__class__ is Dias else NotImplemented
+
+    def __gt__(self, other):
+        return self.value[1] > other.value[1] if other.__class__ is Dias else NotImplemented
+
+    def __lt__(self, other):
+        return self.value[1] < other.value[1] if other.__class__ is Dias else NotImplemented
 
 
 class Cargos(Enum):
@@ -61,8 +73,8 @@ class TipoMateria(Enum):
     N = 'optativa no regular'
 
 
-def choice_enum(enum_cls):
-    return ((e.name, e.value) for e in enum_cls)
+def choice_enum(enum_cls, long_value=(lambda v: v)):
+    return ((e.name, long_value(e.value)) for e in enum_cls)
 
 
 def get_key_enum(enum_cls):
@@ -137,7 +149,7 @@ class Turno(models.Model):
 
 
 class Horario(models.Model):
-    dia = models.CharField(max_length=2, choices=choice_enum(Dias))
+    dia = models.CharField(max_length=2, choices=choice_enum(Dias, lambda v: v[0]))
     comienzo = models.TimeField('comienzo')
     final = models.TimeField('final')
     aula = models.CharField(max_length=5, blank=True, null=True)
