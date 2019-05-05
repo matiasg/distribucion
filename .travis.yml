@@ -8,6 +8,9 @@ services:
 
 install:
   - pip install -r requirements.txt
+  - git clone https://github.com/matiasg/allocation.git
+  - pip install -e allocation
+  - pip install -r allocation/requirements.txt
 
 script:
   - python manage.py test
