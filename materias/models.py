@@ -153,6 +153,11 @@ class Horario(models.Model):
     def __str__(self):
         return f'{self.turno}: {self.dia}  {self.comienzo}--{self.final}'
 
+    def __lt__(self, other):
+        if other.__class__ is self.__class__:
+            return (Dias[self.dia], self.comienzo) < (Dias[other.dia], other.comienzo)
+        return NotImplemented
+
 
 class Docente(models.Model):
     nombre = models.CharField(max_length=60)
