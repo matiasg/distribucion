@@ -16,7 +16,8 @@ class Usuarios(TestCase):
     def test_puede_distribuir_deslogueado(self):
         client = Client()
         response = client.get(reverse('dborrador:distribuir', args=self.context), follow=True)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[0], ('/admin/login?next=/dborrador/distribuir/2100/P/P/1', 302))
 
     def test_puede_distribuir_logueado_autorizado(self):
         client = Client()
@@ -29,4 +30,6 @@ class Usuarios(TestCase):
         client = Client()
         client.login(username='desautorizado', password='1234')
         response = client.get(reverse('dborrador:distribuir', args=self.context), follow=True)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[0], ('/admin/login?next=/dborrador/distribuir/2100/P/P/1', 302))
+        self.assertEqual(response.redirect_chain[-1], ('/admin/', 302))
