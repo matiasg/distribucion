@@ -41,7 +41,7 @@ def por_anno_y_cuatrimestre(request, anno_cuat):
 
 
 def filtra_materias(**kwargs):
-    turnos = Turno.objects.filter(**kwargs)
+    turnos_filtrados = Turno.objects.filter(**kwargs)
     tipo_dict = {TipoMateria.B.name: 'Obligatorias',
                  TipoMateria.R.name: 'Optativas regulares',
                  TipoMateria.N.name: 'Optativas no regulares'}
@@ -50,7 +50,7 @@ def filtra_materias(**kwargs):
     for tipo, tipo_largo in tipo_dict.items():
         tmaterias = Materia.objects.filter(obligatoriedad=tipo)
         materias_turnos = [
-                (materia, Turno.objects.filter(materia=materia, **kwargs))
+                (materia, sorted(turnos_filtrados.filter(materia=materia)))
                 for materia in tmaterias
                 ]
         materias.append((tipo_largo, materias_turnos))

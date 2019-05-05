@@ -1,4 +1,5 @@
 from collections import namedtuple
+from functools import total_ordering
 
 from django.db import models
 from django.core.validators import int_list_validator, MaxValueValidator
@@ -7,12 +8,16 @@ from simple_history.models import HistoricalRecords
 from enum import Enum
 
 
+@total_ordering
 class Dias(Enum):
-    Lu = 'Lunes'
-    Ma = 'Martes'
-    Mi = 'Miércoles'
-    Ju = 'Jueves'
-    Vi = 'Viernes'
+    Lu = ('Lunes', 1)
+    Ma = ('Martes', 2)
+    Mi = ('Miércoles', 3)
+    Ju = ('Jueves', 4)
+    Vi = ('Viernes', 5)
+
+    def __lt__(self, other):
+        return self.value[1] < other.value[1] if other.__class__ is Dias else NotImplemented
 
 
 class Cargos(Enum):
@@ -61,8 +66,8 @@ class TipoMateria(Enum):
     N = 'optativa no regular'
 
 
-def choice_enum(enum_cls):
-    return ((e.name, e.value) for e in enum_cls)
+def choice_enum(enum_cls, long_value=(lambda v: v)):
+    return ((e.name, long_value(e.value)) for e in enum_cls)
 
 
 def get_key_enum(enum_cls):
@@ -113,11 +118,22 @@ class Turno(models.Model):
             return ' y '.join(lst)
 
         tipoynumero = f'{TipoTurno[self.tipo].value} {self.numero}'
-        horarios = self.horario_set.all()
+        horarios = sorted(self.horario_set.all())
         dias = join([h.dia for h in horarios])
         horas = join([f'{time_str(h.comienzo)} a {time_str(h.final)}' for h in horarios])
         aulas = join([f'{h.aula} (P.{h.pabellon})' for h in horarios])
         return TurnoInfo(tipoynumero, f'{dias}: {horas}', aulas)
+
+    def __lt__(self, other):
+        if other.__class__ is self.__class__:
+            horarios_self = sorted(self.horario_set.all())
+            if not horarios_self:
+                return True
+            horarios_other = sorted(other.horario_set.all())
+            if not horarios_other:
+                return False
+            return horarios_self[0] < horarios_other[0]
+        return NotImplemented
 
     def docentes(self):
         return ' - '.join([f'{carga.docente.nombre}' for carga in self.carga_set.all()])
@@ -137,7 +153,7 @@ class Turno(models.Model):
 
 
 class Horario(models.Model):
-    dia = models.CharField(max_length=2, choices=choice_enum(Dias))
+    dia = models.CharField(max_length=2, choices=choice_enum(Dias, lambda v: v[0]))
     comienzo = models.TimeField('comienzo')
     final = models.TimeField('final')
     aula = models.CharField(max_length=5, blank=True, null=True)
@@ -147,6 +163,11 @@ class Horario(models.Model):
 
     def __str__(self):
         return f'{self.turno}: {self.dia}  {self.comienzo}--{self.final}'
+
+    def __lt__(self, other):
+        if other.__class__ is self.__class__:
+            return (Dias[self.dia], self.comienzo) < (Dias[other.dia], other.comienzo)
+        return NotImplemented
 
 
 class Docente(models.Model):
