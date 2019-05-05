@@ -1,6 +1,7 @@
 from django.test import TestCase, Client
 from django.utils import timezone
 from django.urls import reverse
+from django.contrib.auth.models import Permission
 
 import re
 
@@ -8,8 +9,15 @@ from dborrador.models import Preferencia, Asignacion
 from materias.models import Docente, Materia, Turno, Cuatrimestres, Cargos, Carga, CargoDedicacion, TipoTurno, TipoMateria
 from materias.misc import TipoDocentes
 from encuestas.models import PreferenciasDocente
+from usuarios.models import Usuario
 
 class TestPreparar(TestCase):
+
+    def setUp(self):
+        self.autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
+        permiso = Permission.objects.get(codename='add_asignacion')
+        self.autorizado.user_permissions.add(permiso)
+        self.client.login(username='autorizado', password='1234')
 
     def _agrega_preferencias(self):
         self.docente = Docente.objects.create(nombre='juan', email='mail@nada.org',
@@ -27,11 +35,10 @@ class TestPreparar(TestCase):
         self.pref2 = PreferenciasDocente.objects.create(docente=self.docente, turno=self.turno2, peso=3, fecha_encuesta=now)
 
     def test_no_falla_si_no_hay_preferencias(self):
-        c = Client()
-        response = c.get('/dborrador/preparar/2100/P/P')
+        response = self.client.get('/dborrador/preparar/2100/P/P')
         self.assertEqual(response.status_code, 200)
 
-        response = c.post('/dborrador/preparar/2100/P/P')
+        response = self.client.post('/dborrador/preparar/2100/P/P')
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
 
@@ -45,8 +52,7 @@ class TestPreparar(TestCase):
 
     def test_copia_preferencias(self):
         self._agrega_preferencias()
-        c = Client()
-        response = c.post('/dborrador/preparar/2100/P/P')
+        response = self.client.post('/dborrador/preparar/2100/P/P')
         content = response.content.decode()
 
         self.assertEqual(response.status_code, 200)
@@ -74,8 +80,7 @@ class TestPreparar(TestCase):
         pref_doc_otro_cuatri = PreferenciasDocente.objects.create(docente=self.docente, turno=turno_otro_cuatri, peso=3, fecha_encuesta=now)
         pref_otro_cuatri = Preferencia.objects.create(preferencia=pref_doc_otro_cuatri, peso_normalizado=1)
 
-        c = Client()
-        response = c.get('/dborrador/preparar/2100/P/P')
+        response = self.client.get('/dborrador/preparar/2100/P/P')
         self.assertEqual(response.status_code, 200)
 
         copiadas = Preferencia.objects.filter(preferencia__turno__anno=2100, preferencia__turno__cuatrimestre=Cuatrimestres.P.name)
@@ -92,17 +97,21 @@ class TestPreparar(TestCase):
 
 class TestPaginaPrincipal(TestCase):
 
+    def setUp(self):
+        self.autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
+        permiso = Permission.objects.get(codename='add_asignacion')
+        self.autorizado.user_permissions.add(permiso)
+        self.client.login(username='autorizado', password='1234')
+
     def test_hay_pagina_principal_sin_datos(self):
-        c = Client()
-        response = c.get('/dborrador/')
+        response = self.client.get('/dborrador/')
         self.assertContains(response, '<select name="anno">')
         self.assertContains(response, '<select name="cuatrimestre">')
         self.assertContains(response, '<select name="tipo">')
 
     def test_hay_pagina_principal_con_datos(self):
-        c = Client()
-        response = c.post('/dborrador/', {'anno': 2100, 'cuatrimestre': 'P', 'tipo': 'P', 'intento': 0},
-                          follow=True)
+        response = self.client.post('/dborrador/', {'anno': 2100, 'cuatrimestre': 'P', 'tipo': 'P', 'intento': 0},
+                                    follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(re.search('<a href="/dborrador/preparar/2100/P/P">', response.content.decode()),
                         'La página redirigida no contiene un link a /dborrador/preparar')
@@ -130,9 +139,14 @@ class TestVerDistribucion(TestCase):
                                            anno=2100, cuatrimestre=Cuatrimestres.P.name, turno=self.turno1)
         self.carga2 = Carga.objects.create(docente=self.docente2, cargo=CargoDedicacion.TitSim.name,
                                            anno=2100, cuatrimestre=Cuatrimestres.P.name)
+        self.autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
+        permiso = Permission.objects.get(codename='add_asignacion')
+        self.autorizado.user_permissions.add(permiso)
+        self.client.login(username='autorizado', password='1234')
         self.now = timezone.now()
 
     def test_figuran_docentes_no_distribuidos(self):
+
         Asignacion.objects.create(intento=1, carga=self.carga1, turno=self.turno1)
         response = self.client.get(reverse('dborrador:fijar',
                                            args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
