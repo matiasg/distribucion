@@ -133,11 +133,6 @@ class TestVerDistribucion(TestCase):
         self.now = timezone.now()
 
     def test_figuran_docentes_no_distribuidos(self):
-        pref_doc = PreferenciasDocente.objects.create(docente=self.docente1, carga=self.turno1, cargo=Cargos.Tit,
-                                                      peso=1, fecha_encuesta=self.now)
-        Preferencia.objects.create(preferencia=pref_doc, peso_normalizado=1)
-
-    def test_figuran_docentes_no_distribuidos(self):
         Asignacion.objects.create(intento=1, carga=self.carga1, turno=self.turno1)
         response = self.client.get(reverse('dborrador:fijar',
                                            args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
