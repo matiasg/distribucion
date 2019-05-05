@@ -118,7 +118,7 @@ class Turno(models.Model):
             return ' y '.join(lst)
 
         tipoynumero = f'{TipoTurno[self.tipo].value} {self.numero}'
-        horarios = self.horario_set.all()
+        horarios = sorted(self.horario_set.all())
         dias = join([h.dia for h in horarios])
         horas = join([f'{time_str(h.comienzo)} a {time_str(h.final)}' for h in horarios])
         aulas = join([f'{h.aula} (P.{h.pabellon})' for h in horarios])
