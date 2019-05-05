@@ -26,6 +26,8 @@ SESSION_COOKIE_SECURE = False
 SECURE_SSL_REDIRECT = False
 CSRF_COOKIE_SECURE = True
 
+LOGIN_URL = '/admin/login'
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 

@@ -58,6 +58,8 @@ def _anno_cuat_tipo_de_request(request):
     tipo = TipoDocentes[tipo_name]
     return int(anno), cuatrimestre, tipo
 
+@login_required
+@permission_required('dborrador.add_asignacion')
 def index(request):
     try:
         anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
@@ -67,6 +69,8 @@ def index(request):
     except KeyError:
         return render(request, 'dborrador/base.html', _anno_cuat_tipos_context())
 
+@login_required
+@permission_required('dborrador.add_asignacion')
 def preparar(request, anno, cuatrimestre, tipo):
     tipo = TipoDocentes[tipo]
     logger.info('copiando %s y %s para docents tipo %s', anno, cuatrimestre, tipo)
@@ -313,6 +317,8 @@ def _acciones(request, ac, tipo, intento):
     return acciones
 
 
+@login_required
+@permission_required('dborrador.add_asignacion')
 def fijar(request, anno, cuatrimestre, tipo, intento):
     tipo = TipoDocentes[tipo]
     ac = AnnoCuatrimestre(anno, cuatrimestre)
