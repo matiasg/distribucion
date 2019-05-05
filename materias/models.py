@@ -124,6 +124,17 @@ class Turno(models.Model):
         aulas = join([f'{h.aula} (P.{h.pabellon})' for h in horarios])
         return TurnoInfo(tipoynumero, f'{dias}: {horas}', aulas)
 
+    def __lt__(self, other):
+        if other.__class__ is self.__class__:
+            horarios_self = sorted(self.horario_set.all())
+            if not horarios_self:
+                return True
+            horarios_other = sorted(other.horario_set.all())
+            if not horarios_other:
+                return False
+            return horarios_self[0] < horarios_other[0]
+        return NotImplemented
+
     def docentes(self):
         return ' - '.join([f'{carga.docente.nombre}' for carga in self.carga_set.all()])
 
