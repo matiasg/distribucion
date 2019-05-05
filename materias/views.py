@@ -50,7 +50,7 @@ def filtra_materias(**kwargs):
     for tipo, tipo_largo in tipo_dict.items():
         tmaterias = Materia.objects.filter(obligatoriedad=tipo)
         materias_turnos = [
-                (materia, Turno.objects.filter(materia=materia, **kwargs))
+                (materia, sorted(Turno.objects.filter(materia=materia, **kwargs)))
                 for materia in tmaterias
                 ]
         materias.append((tipo_largo, materias_turnos))
