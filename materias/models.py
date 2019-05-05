@@ -1,4 +1,5 @@
 from collections import namedtuple
+from functools import total_ordering
 
 from django.db import models
 from django.core.validators import int_list_validator, MaxValueValidator
@@ -7,21 +8,13 @@ from simple_history.models import HistoricalRecords
 from enum import Enum
 
 
+@total_ordering
 class Dias(Enum):
     Lu = ('Lunes', 1)
     Ma = ('Martes', 2)
     Mi = ('Miércoles', 3)
     Ju = ('Jueves', 4)
     Vi = ('Viernes', 5)
-
-    def __ge__(self, other):
-        return self.value[1] >= other.value[1] if other.__class__ is Dias else NotImplemented
-
-    def __le__(self, other):
-        return self.value[1] <= other.value[1] if other.__class__ is Dias else NotImplemented
-
-    def __gt__(self, other):
-        return self.value[1] > other.value[1] if other.__class__ is Dias else NotImplemented
 
     def __lt__(self, other):
         return self.value[1] < other.value[1] if other.__class__ is Dias else NotImplemented
