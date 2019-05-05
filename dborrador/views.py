@@ -158,7 +158,7 @@ def materias_distribuidas_dict(anno, cuatrimestre, intento, tipo):
 def filtra_materias(anno, cuatrimestre, intento, tipo, **kwargs):
     cargas = Mapeos.cargas(tipo, AnnoCuatrimestre(anno, cuatrimestre))
 
-    turnos = Turno.objects.filter(**kwargs)
+    turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre, **kwargs)
     obligatoriedades = {TipoMateria.B.name: 'Obligatorias',
                         TipoMateria.R.name: 'Optativas regulares',
                         TipoMateria.N.name: 'Optativas no regulares'}
@@ -167,7 +167,7 @@ def filtra_materias(anno, cuatrimestre, intento, tipo, **kwargs):
     for obligatoriedad, obligatoriedad_largo in obligatoriedades.items():
         tmaterias = Materia.objects.filter(obligatoriedad=obligatoriedad)
         materias_turnos = [
-                (materia, Turno.objects.filter(materia=materia, anno=anno, cuatrimestre=cuatrimestre))
+                (materia, sorted(turnos_ac.filter(materia=materia)))
                 for materia in tmaterias
                 ]
         #  TODO: mejorar esto como está en fijar()
