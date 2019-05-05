@@ -100,3 +100,59 @@ class TestModels(TestCase):
         Horario.objects.create(dia=Dias.Ma.name, comienzo=datetime.time(7), final=datetime.time(8), turno=turno2)
         self.assertLess(self.turno, turno2)
         self.assertGreater(turno2, self.turno)
+
+
+class TestPaginas(TestCase):
+
+    def setUp(self):
+        self.materia1 = Materia.objects.create(nombre='lacan 1', obligatoriedad=TipoMateria.B.name)
+        self.materia2 = Materia.objects.create(nombre='lacan 2', obligatoriedad=TipoMateria.B.name)
+        self.materia3 = Materia.objects.create(nombre='lacan 3', obligatoriedad=TipoMateria.B.name)
+
+        dict_nec = {'necesidad_prof': 0, 'necesidad_jtp': 0, 'necesidad_ay1': 0, 'necesidad_ay2': 0}
+        self.turno11 = Turno.objects.create(materia=self.materia1, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                            numero=1, tipo=TipoTurno.T.name, **dict_nec)
+        self.turno12 = Turno.objects.create(materia=self.materia1, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                            numero=2, tipo=TipoTurno.T.name, **dict_nec)
+        self.turno13 = Turno.objects.create(materia=self.materia1, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                            numero=3, tipo=TipoTurno.T.name, **dict_nec)
+        self.turno14 = Turno.objects.create(materia=self.materia1, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                            numero=4, tipo=TipoTurno.T.name, **dict_nec)
+        self.turno21 = Turno.objects.create(materia=self.materia2, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                            numero=1, tipo=TipoTurno.T.name, **dict_nec)
+        self.turno22 = Turno.objects.create(materia=self.materia2, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                            numero=2, tipo=TipoTurno.T.name, **dict_nec)
+
+        siete, ocho, nueve = datetime.time(7), datetime.time(8), datetime.time(9)
+        self.horario111 = Horario.objects.create(turno=self.turno11, dia=Dias.Lu.name, comienzo=ocho, final=nueve)
+        self.horario112 = Horario.objects.create(turno=self.turno11, dia=Dias.Ju.name, comienzo=siete, final=ocho)
+        self.horario121 = Horario.objects.create(turno=self.turno12, dia=Dias.Lu.name, comienzo=siete, final=nueve)
+        self.horario122 = Horario.objects.create(turno=self.turno12, dia=Dias.Ju.name, comienzo=ocho, final=ocho)
+
+        self.horario131 = Horario.objects.create(turno=self.turno13, dia=Dias.Ju.name, comienzo=ocho, final=ocho)
+        self.horario141 = Horario.objects.create(turno=self.turno14, dia=Dias.Mi.name, comienzo=siete, final=ocho)
+
+    def test_pagina_principal_con_y_sin_turnos(self):
+        c = Client()
+        response = c.get('/materias/21001')
+        self.assertContains(response, 'class="nombremateria"' )
+        self.assertContains(response, self.materia1.nombre.upper())
+        self.assertContains(response, self.materia2.nombre.upper())
+        self.assertNotContains(response, self.materia3.nombre.upper())
+
+        response = c.get('/materias/21002')
+        self.assertNotContains(response, 'class="nombremateria"' )
+
+        response = c.get('/materias/21011')
+        self.assertNotContains(response, 'class="nombremateria"' )
+
+    def test_turnos_en_orden(self):
+        c = Client()
+        response = c.get('/materias/21001')
+        ubicacion_t11 = response.content.decode().index('Lu y Ju: 8 a 9 y 7 a 8')
+        ubicacion_t12 = response.content.decode().index('Lu y Ju: 7 a 9 y 8 a 8')
+        ubicacion_t13 = response.content.decode().index('Ju: 8 a 8')
+        ubicacion_t14 = response.content.decode().index('Mi: 7 a 8')
+        self.assertLess(ubicacion_t12, ubicacion_t11)
+        self.assertLess(ubicacion_t11, ubicacion_t14)
+        self.assertLess(ubicacion_t14, ubicacion_t13)
