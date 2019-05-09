@@ -13,7 +13,6 @@ RUN apt-get update && apt-get install -y git
 RUN git clone https://ecebb780114e159b713bbdb48dd3434c57b8c24a@github.com/matiasg/distribucion.git
 
 RUN cp distribucion/settings.py distribucion/distribucion/settings.py
-#RUN sed -i 's/DEBUG = False/DEBUG = True/' distribucion/distribucion/settings.py
 RUN chmod +x distribucion/tools/create_db
 
 RUN git clone https://github.com/matiasg/allocation.git
