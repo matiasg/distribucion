@@ -74,9 +74,10 @@ def convierte_a_horarios(text):
 tipo_turnos = {'Teórica': TipoTurno.T.name,
                'Práctica': TipoTurno.P.name,
                'Teórico-Práctica': TipoTurno.A.name}
-cargo_tipoturno = {'Teórica': CargoDedicacion.TitSim.name,
-                   'Práctica': CargoDedicacion.JTPSim.name,
-                   'Teórico-Práctica': CargoDedicacion.JTPSim.name}
+cargo_tipoturno = {'Teórica': [CargoDedicacion.AsoExc],
+                   'Práctica': [CargoDedicacion.JTPSim, CargoDedicacion.Ay1Sim, CargoDedicacion.Ay2Sim],
+                   'Teórico-Práctica': [CargoDedicacion.AsoExc,
+                                        CargoDedicacion.JTPSim, CargoDedicacion.Ay1Sim, CargoDedicacion.Ay2Sim]}
 
 def salva_datos(html, anno_actual, cuatrimestre, anno_nuevo):
     soup = BeautifulSoup(html, 'html.parser')
@@ -110,12 +111,18 @@ def salva_datos(html, anno_actual, cuatrimestre, anno_nuevo):
                 if tipo_turno == TipoTurno.T.name:
                     necesidad_prof = 1
                     necesidad_jtp = necesidad_ay1 = necesidad_ay2 = 0
-                else:
+                elif tipo_turno == TipoTurno.P.name:
                     tercio_docentes = len(turno_docentes) / 3
                     necesidad_prof = 0
-                    necesidad_jtp = math.floor(tercio_docentes)
+                    necesidad_jtp = max(math.floor(tercio_docentes), 1)
                     necesidad_ay1 = round(tercio_docentes)
-                    necesidad_ay2 = math.ceil(tercio_docentes)
+                    necesidad_ay2 = len(turno_docentes) - necesidad_prof - necesidad_jtp - necesidad_ay1
+                else:
+                    tercio_docentes = (len(turno_docentes) - 1) / 3
+                    necesidad_prof = 1
+                    necesidad_jtp = max(math.floor(tercio_docentes), 1 if len(turno_docentes) > 1 else 0)
+                    necesidad_ay1 = round(tercio_docentes)
+                    necesidad_ay2 = len(turno_docentes) - necesidad_prof - necesidad_jtp - necesidad_ay1
                 defaults = {
                     'necesidad_prof': necesidad_prof,
                     'necesidad_jtp': necesidad_jtp,
@@ -131,30 +138,30 @@ def salva_datos(html, anno_actual, cuatrimestre, anno_nuevo):
                     subnumero = tipoynumero[1][1:]
 
 
-                turno, creado = Turno.objects.get_or_create(
-                                                materia=materia,
-                                                anno=anno_nuevo,
-                                                cuatrimestre=cuatrimestre,
-                                                numero=numero_turno,
-                                                subnumero=subnumero,
-                                                tipo=tipo_turno,
-                                                defaults=defaults)
+                datos_turno = {
+                    'materia': materia,
+                    'cuatrimestre': cuatrimestre,
+                    'numero': numero_turno,
+                    'subnumero': subnumero,
+                    'tipo': tipo_turno,
+                }
+                turno, creado = Turno.objects.get_or_create(**datos_turno, anno=anno_nuevo, defaults=defaults)
                 if creado:
                     logger.info('nuevo turno creado: %s', turno)
 
-                turno_actual, _ = Turno.objects.get_or_create(materia=materia,
-                                                              anno=anno_actual,
-                                                              cuatrimestre=cuatrimestre,
-                                                              numero=numero_turno,
-                                                              tipo=tipo_turno,
-                                                              defaults=defaults)
+                turno_actual, _ = Turno.objects.get_or_create(**datos_turno, anno=anno_actual, defaults=defaults)
 
                 # docentes y cargas
-                cargo = cargo_tipoturno[tipoynumero[0]]
-                for docente in turno_docentes:
+                cargos = cargo_tipoturno[tipoynumero[0]]
+                cargos_inferidos = [CargoDedicacion.AsoExc] * necesidad_prof + [CargoDedicacion.JTPSim] * necesidad_jtp \
+                                   + [CargoDedicacion.Ay1Sim] * necesidad_ay1 + [CargoDedicacion.Ay2Sim] * necesidad_ay2
+                cargos_inferidos += [cargos_inferidos[-1]] * (len(turno_docentes) - len(cargos_inferidos))
+                for i, docente in enumerate(turno_docentes):
                     # evitamos el docente '' que aparece en turnos sin asignaciones
                     if not docente:
                         continue
+
+                    cargo = cargos_inferidos[i].name
                     doc, creado = Docente.objects.get_or_create(nombre=docente,
                                                                 defaults={'cargos': [cargo]})
                     if creado:
@@ -169,7 +176,7 @@ def salva_datos(html, anno_actual, cuatrimestre, anno_nuevo):
                     carga_prox_cuat, _ = Carga.objects.get_or_create(docente=doc,
                                                                      turno=None,
                                                                      anno=anno_nuevo, cuatrimestre=cuatrimestre,
-                                                                     cargo=carga.cargo)
+                                                                     cargo=cargo)
 
                 # horarios
                 horarios = convierte_a_horarios(rows[1].text)
