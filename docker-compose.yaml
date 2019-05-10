@@ -7,8 +7,6 @@ services:
       - distribucion_pgdata:/var/lib/postgresql/data
   web:
     build: .
-    #environment:
-    #  - DB_NAME=${DB_NAME:-db.sqlite}
     volumes:
       - distribucion_pgdata:/var/lib/postgresql/data
     working_dir: /codigo/distribucion
@@ -19,8 +17,6 @@ services:
       - db
   bash:
     build: .
-    #environment:
-    #  - DB_NAME=${DB_NAME:-db.sqlite}
     volumes:
       - distribucion_pgdata:/var/lib/postgresql/data
     command: /bin/bash
