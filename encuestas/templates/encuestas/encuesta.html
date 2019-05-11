@@ -11,22 +11,22 @@
 </div>
 {% endif %}
 
-<h1>encuesta para el cuatrimestre {{ cuatrimestre_value }} de {{ anno }}</h1>
+<div id="titulo">encuesta para el cuatrimestre {{ cuatrimestre_value }} de {{ anno }}</div>
 
 <form action="{% url 'encuestas:encuesta' anno cuatrimestre tipo_docente %}" method="post">
 {% csrf_token %}
 
-<div id="h2">Nombre:
-    <select name="docente">
-        {% for docente in docentes %}
-        <option value="{{ docente.id }}">{{ docente }}</option>
-        {% endfor %}
-    </select>
-</div>
+<div id="subtitulo">Nombre:</div>
+<select name="docente">
+    {% for docente in docentes %}
+    <option value="{{ docente.id }}">{{ docente }}</option>
+    {% endfor %}
+</select>
 
-{% for i, lista_larga in opciones %}
 <p>
-    <div id="h2">Turno {{ i }})
+<div id="subtitulo">Turnos elegidos</div>
+{% for i, lista_larga in opciones %}
+    <div id="seleccion">
         <select name="opcion{{ i }}">
             <option value="" selected></option>
             {% for turno in turnos %}
@@ -41,9 +41,8 @@
 {% endfor %}
 
 <p>
-    <div id="h2">Comentarios
-        <textarea name="comentarios" cols=120 rows=3></textarea>
-    </div>
+    <div id="subtitulo">Comentarios</div>
+    <textarea name="comentarios" cols=120 rows=3></textarea>
 </p>
 
 

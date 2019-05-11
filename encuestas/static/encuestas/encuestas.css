@@ -3,3 +3,22 @@
   font-size: 24px;
   color: red;
 }
+
+div#titulo
+{
+  font-weight: bolder;
+  font-size: xx-large;
+  color: #104040;
+}
+
+div#subtitulo
+{
+  font-weight: bold;
+  font-size: x-large;
+  color: #207070;
+}
+
+div#seleccion
+{
+  font-size: large;
+}
