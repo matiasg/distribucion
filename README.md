@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org//matiasg/distribucion.svg)](https://travis-ci.org/matiasg/distribucion)
+[![Coverage Status](https://img.shields.io/coveralls/github/matiasg/distribucion.svg)](https://coveralls.io/github/matiasg/distribucion)
+
 Distribución
 ============
 
