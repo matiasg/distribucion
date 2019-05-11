@@ -14,7 +14,7 @@ install:
   - pip install coveralls
 
 script:
-  - coverage run --source=. manage.py test
+  - coverage run --source=materias,dborrador,encuestas,usuarios manage.py test
 
 after_success:
   - coveralls
