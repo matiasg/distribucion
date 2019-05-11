@@ -16,24 +16,35 @@
 <form action="{% url 'encuestas:encuesta' anno cuatrimestre tipo_docente %}" method="post">
 {% csrf_token %}
 
-<select name="docente">
-{% for docente in docentes %}
-    <option value="{{ docente.id }}">{{ docente }}</option>
-{% endfor %}
-</select>
-
-{% for i, lista_larga in opciones %}
-    <p>
-    <select name="opcion{{ i }}">
-        <option value="" selected></option>
-        {% for turno in turnos %}
-        {% if turno.dificil_de_cubrir or lista_larga %}
-        <option value="{{ turno.id }}">{{ turno }} ({{ turno.horarios_info.diayhora }})</option>
-        {% endif %}
+<div id="h2">Nombre:
+    <select name="docente">
+        {% for docente in docentes %}
+        <option value="{{ docente.id }}">{{ docente }}</option>
         {% endfor %}
     </select>
-    Peso: <input type="number" name="peso{{ forloop.counter }}" min=0 max={{ maximo_peso }} value=1>
+</div>
+
+{% for i, lista_larga in opciones %}
+<p>
+    <div id="h2">Turno {{ i }})
+        <select name="opcion{{ i }}">
+            <option value="" selected></option>
+            {% for turno in turnos %}
+            {% if turno.dificil_de_cubrir or lista_larga %}
+            <option value="{{ turno.id }}">{{ turno }} ({{ turno.horarios_info.diayhora }})</option>
+            {% endif %}
+            {% endfor %}
+        </select>
+        Peso: <input type="number" name="peso{{ forloop.counter }}" min=0 max={{ maximo_peso }} value=1>
+    </div>
+</p>
 {% endfor %}
+
+<p>
+    <div id="h2">Comentarios
+        <textarea name="comentarios" cols=120 rows=3></textarea>
+    </div>
+</p>
 
 
 <p>
