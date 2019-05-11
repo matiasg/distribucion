@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org//matiasg/distribucion.svg)](https://travis-ci.org/matiasg/distribucion)
+
 Distribución
 ============
 
