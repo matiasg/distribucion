@@ -25,12 +25,12 @@
 
 <p>
 <div id="subtitulo">Turnos elegidos</div>
-{% for i, lista_larga in opciones %}
+{% for i, lista_corta in opciones %}
     <div id="seleccion">
         <select name="opcion{{ i }}">
             <option value="" selected></option>
             {% for turno in turnos %}
-            <option value="{{ turno.id }}" {% if not turno.dificil_de_cubrir and not lista_larga %}disabled{% endif %}>
+            <option value="{{ turno.id }}" {% if lista_corta and not turno.dificil_de_cubrir %}disabled{% endif %}>
             {{ turno }} ({{ turno.horarios_info.diayhora }})
             </option>
             {% endfor %}

@@ -62,7 +62,7 @@ def encuesta(request, anno, cuatrimestre, tipo_docente):
     turnos = Mapeos.encuesta_tipo_turno(tipo).filter(anno=anno, cuatrimestre=cuatrimestre)
     turnos = sorted(turnos, key=lambda t: t.materia.nombre)
     docentes = sorted(Mapeos.docentes_de_tipo(tipo), key=lambda d: d.nombre)
-    opciones = [(i, i > 2) for i in range(1, 6)]  # las opciones 1 y 2 tienen que ser de las difíciles
+    opciones = [(i, i <= 2) for i in range(1, 6)]  # las opciones 1 y 2 tienen que ser de las difíciles
     context = {'opciones': opciones,
                'turnos': turnos,
                'docentes': docentes,
