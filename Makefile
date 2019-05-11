@@ -3,14 +3,16 @@ build:
 	docker-compose build
 	docker volume create --name=distribucion_pgdata
 	docker-compose up --no-start
-	echo -e "sugerencia: correr \n\ndocker-compose run web sh tools/create_db"
+	echo -e "sugerencia: correr \n\ndocker-compose run --rm web sh tools/create_db"
 
 rebuild:
 	docker build -t distribucion . --no-cache
 	docker-compose build
 
 populate:
+	docker-compose run web python tools/current_html_to_db.py V 2020
 	docker-compose run web python tools/current_html_to_db.py 1 2020
+	docker-compose run web python tools/current_html_to_db.py 2 2020
 
 demo: build populate
 	docker-compose run web python tools/inventar_encuestas.py -a 2020 -c P -d J
