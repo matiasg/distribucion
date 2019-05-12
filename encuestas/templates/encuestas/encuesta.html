@@ -16,15 +16,22 @@
 <form action="{% url 'encuestas:encuesta' anno cuatrimestre tipo_docente %}" method="post">
 {% csrf_token %}
 
-<div id="subtitulo">Nombre:</div>
-<select name="docente">
-    {% for docente in docentes %}
-    <option value="{{ docente.id }}">{{ docente }}</option>
-    {% endfor %}
-</select>
+<p>
+    <div id="subtitulo">Nombre:</div>
+    <select name="docente">
+        {% for docente in docentes %}
+        <option value="{{ docente.id }}">{{ docente }}</option>
+        {% endfor %}
+    </select>
+</p>
 
 <p>
-<div id="subtitulo">Turnos elegidos</div>
+    <div id="subtitulo">Turnos que debe cubrir:</div>
+    <input type="number" name="cargas" min=0 max=3 value=1>
+</p>
+
+<p>
+<div id="subtitulo">Turnos preferidos</div>
 {% for i, lista_corta in opciones %}
     <div id="seleccion">
         <select name="opcion{{ i }}">
@@ -52,7 +59,7 @@
 
 <p>
     <div id="subtitulo">Comentarios</div>
-    <textarea name="comentarios" cols=120 rows=3></textarea>
+    <textarea name="comentario" cols=120 rows=3></textarea>
 </p>
 
 
