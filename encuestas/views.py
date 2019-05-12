@@ -4,10 +4,11 @@ from django.urls import reverse
 from django.utils import timezone
 from django.forms import ValidationError
 from django.contrib import messages
+from django.core.validators import EmailValidator
 
 from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres
 from materias.misc import Mapeos, TipoDocentes
-from encuestas.models import PreferenciasDocente
+from encuestas.models import PreferenciasDocente, OtrosDatos, telefono_validator
 
 from collections import Counter
 from enum import Enum
@@ -17,14 +18,32 @@ logger = logging.getLogger(__name__)
 
 
 def checkear_y_salvar(datos):
+    fecha_encuesta = timezone.now()
+
+    # chequeos
     cuenta = Counter(datos.get(f'opcion{o}', '') for o in range(1, 6))
     cuenta.pop('', None)  # descarto opciones no completadas
     if any(v > 1 for v in cuenta.values()):
-        raise ValidationError(
-                'Hay turnos repetidos', code='invalid')
+        raise ValidationError('Hay turnos repetidos', code='invalid')
 
-    fecha_encuesta = timezone.now()
+    email = datos['email']
+    telefono = datos['telefono']
+
+    email_validator = EmailValidator(message='La dirección de email es incorrecta')
+    email_validator(email)
+    telefono_validator(telefono)
+
+    # OtrosDatos
     docente = Docente.objects.get(pk=datos['docente'])
+    otros_datos, _ = OtrosDatos.objects.get_or_create(docente=docente)
+    otros_datos.fecha_encuesta = fecha_encuesta
+    otros_datos.cargas = datos['cargas']
+    otros_datos.email = email
+    otros_datos.telefono = telefono
+    otros_datos.comentario = datos['comentario']
+    otros_datos.save()
+
+    #  PreferenciasDocente
     opciones = []
     for opcion in range(1, 6):
         opcion_id_str = datos['opcion{}'.format(opcion)]
