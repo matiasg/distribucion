@@ -35,10 +35,12 @@
 {% for i, lista_corta in opciones %}
     <div id="seleccion">
         <select name="opcion{{ i }}">
-            <option value="" selected></option>
+            {% comment %}<option value="" selected></option>{% endcomment %}
             {% for turno in turnos %}
-            <option value="{{ turno.id }}" {% if lista_corta and not turno.dificil_de_cubrir %}disabled{% endif %}>
-            {{ turno }} ({{ turno.horarios_info.diayhora }})
+            <option value="{{ turno.id }}"
+                    {% if lista_corta and not turno.dificil_de_cubrir %}disabled{% endif %}
+                    {% if turno.elegido %}selected{% endif %}>
+            {{ turno.texto }}
             </option>
             {% endfor %}
         </select>

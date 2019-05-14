@@ -10,7 +10,7 @@ from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, 
 from materias.misc import Mapeos, TipoDocentes
 from encuestas.models import PreferenciasDocente, OtrosDatos, telefono_validator
 
-from collections import Counter
+from collections import Counter, namedtuple
 from enum import Enum
 import logging
 import logging.config
@@ -76,10 +76,19 @@ def index(request):
     raise Http404('Todavía no hay contenido para esta página')
 
 
+
+TurnoParaEncuesta = namedtuple('TurnoParaEncuesta',
+                               ['id', 'texto', 'dificil_de_cubrir', 'elegido'])
+
+
 def _generar_contexto(anno, cuatrimestre, tipo_docente):
     tipo = TipoDocentes[tipo_docente]
-    turnos = Mapeos.encuesta_tipo_turno(tipo).filter(anno=anno, cuatrimestre=cuatrimestre)
-    turnos = sorted(turnos, key=lambda t: t.materia.nombre)
+    turnos_ac = Mapeos.encuesta_tipo_turno(tipo).filter(anno=anno, cuatrimestre=cuatrimestre)
+
+    turnos = [TurnoParaEncuesta('', '', True, True)]
+    turnos += [TurnoParaEncuesta(turno.id, f'{turno} (turno.horarios_info().diayhora)', turno.dificil_de_cubrir, False)
+               for turno in sorted(turnos_ac, key=lambda t: t.materia.nombre)]
+
     docentes = sorted(Mapeos.docentes_de_tipo(tipo), key=lambda d: d.nombre)
     opciones = [(i, i <= 2) for i in range(1, 6)]  # las opciones 1 y 2 tienen que ser de las difíciles
     context = {'opciones': opciones,
