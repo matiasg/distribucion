@@ -76,7 +76,7 @@ def index(request):
     raise Http404('Todavía no hay contenido para esta página')
 
 
-def encuesta(request, anno, cuatrimestre, tipo_docente):
+def _generar_contexto(anno, cuatrimestre, tipo_docente):
     tipo = TipoDocentes[tipo_docente]
     turnos = Mapeos.encuesta_tipo_turno(tipo).filter(anno=anno, cuatrimestre=cuatrimestre)
     turnos = sorted(turnos, key=lambda t: t.materia.nombre)
@@ -91,6 +91,10 @@ def encuesta(request, anno, cuatrimestre, tipo_docente):
                'tipo_docente': tipo_docente,
                'maximo_peso': 20,
                }
+    return context
+
+def encuesta(request, anno, cuatrimestre, tipo_docente):
+    context = _generar_contexto(anno, cuatrimestre, tipo_docente)
     try:
         docente = Docente.objects.get(pk=request.POST['docente'])
     except (ValueError, KeyError, Turno.DoesNotExist):
