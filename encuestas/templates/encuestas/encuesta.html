@@ -20,7 +20,9 @@
     <div id="subtitulo">Nombre:</div>
     <select name="docente">
         {% for docente in docentes %}
-        <option value="{{ docente.id }}">{{ docente }}</option>
+        <option value="{{ docente.id }}"
+                {% if docente.id == docente_selected %}selected{% endif %}
+        >{{ docente.nombre }}</option>
         {% endfor %}
     </select>
 </p>

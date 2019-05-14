@@ -77,6 +77,7 @@ def index(request):
 
 
 
+DocenteParaEncuesta = namedtuple('DocenteParaEncuesta', ['id', 'nombre'])
 TurnoParaEncuesta = namedtuple('TurnoParaEncuesta', ['id', 'texto', 'dificil_de_cubrir'])
 OpcionesParaEncuesta = namedtuple('OpcionesParaEncuesta', ['numero', 'lista_corta', 'turno_elegido', 'peso'])
 
@@ -89,12 +90,16 @@ def _generar_contexto(anno, cuatrimestre, tipo_docente):
     turnos += [TurnoParaEncuesta(turno.id, f'{turno} ({turno.horarios_info().diayhora})', turno.dificil_de_cubrir)
                for turno in sorted(turnos_ac, key=lambda t: t.materia.nombre)]
 
-    docentes = sorted(Mapeos.docentes_de_tipo(tipo), key=lambda d: d.nombre)
+    docentes = [DocenteParaEncuesta(-1, '')]
+    docentes += [DocenteParaEncuesta(docente.id, docente.nombre)
+                 for docente in sorted(Mapeos.docentes_de_tipo(tipo), key=lambda d: d.nombre)]
+
     opciones = [OpcionesParaEncuesta(i, i <= 2, -1, 1)
                 for i in range(1, 6)]  # las opciones 1 y 2 tienen que ser de las difíciles
     context = {'opciones': opciones,
                'turnos': turnos,
                'docentes': docentes,
+               'docente_selected': -1,
                'anno': anno,
                'cuatrimestre': cuatrimestre,
                'cuatrimestre_value': Cuatrimestres[cuatrimestre].value,
@@ -112,8 +117,11 @@ def _modificar_contexto_con_datos_request(context, datos):
         peso = datos[f'peso{opcion}']
         nuevas_opciones.append(OpcionesParaEncuesta(opcion, dificil, elegido, peso))
     context['opciones'] = nuevas_opciones
+
     for campo in ['cargas', 'email', 'telefono', 'comentario']:
         context[campo] = datos[campo]
+
+    context['docente_selected'] = int(datos['docente'])
 
 
 def encuesta(request, anno, cuatrimestre, tipo_docente):
