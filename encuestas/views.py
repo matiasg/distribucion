@@ -35,7 +35,9 @@ def checkear_y_salvar(datos):
 
     # OtrosDatos
     docente = Docente.objects.get(pk=datos['docente'])
-    otros_datos, _ = OtrosDatos.objects.get_or_create(docente=docente)
+    otros_datos, _ = OtrosDatos.objects.get_or_create(docente=docente,
+                                                      defaults={'fecha_encuesta': fecha_encuesta,
+                                                                'cargas': 0, 'comentario': ''})
     otros_datos.fecha_encuesta = fecha_encuesta
     otros_datos.cargas = datos['cargas']
     otros_datos.email = email
@@ -53,11 +55,9 @@ def checkear_y_salvar(datos):
             logger.debug('miro preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
                          docente, turno, peso, fecha_encuesta)
 
-            pref, creada = PreferenciasDocente.objects.get_or_create(
-                                                docente=docente,
-                                                turno=turno,
-                                                defaults={'peso': peso, 'fecha_encuesta': fecha_encuesta}
-                                                )
+            pref, creada = PreferenciasDocente.objects.get_or_create(docente=docente, turno=turno,
+                                                                     defaults={'peso': peso,
+                                                                               'fecha_encuesta': fecha_encuesta})
             if creada:
                 logger.info('Agrego preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
                             docente, turno, peso, fecha_encuesta)
