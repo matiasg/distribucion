@@ -48,9 +48,9 @@ def checkear_y_salvar(datos):
     #  PreferenciasDocente
     opciones = []
     for opcion in range(1, 6):
-        opcion_id_str = datos['opcion{}'.format(opcion)]
-        if opcion_id_str:
-            turno = Turno.objects.get(pk=opcion_id_str)
+        opcion_id = int(datos['opcion{}'.format(opcion)])
+        if opcion_id >= 0:
+            turno = Turno.objects.get(pk=opcion_id)
             peso = float(datos['peso{}'.format(opcion)])
             logger.debug('miro preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
                          docente, turno, peso, fecha_encuesta)
@@ -77,20 +77,21 @@ def index(request):
 
 
 
-TurnoParaEncuesta = namedtuple('TurnoParaEncuesta',
-                               ['id', 'texto', 'dificil_de_cubrir', 'elegido'])
+TurnoParaEncuesta = namedtuple('TurnoParaEncuesta', ['id', 'texto', 'dificil_de_cubrir'])
+OpcionesParaEncuesta = namedtuple('OpcionesParaEncuesta', ['numero', 'lista_corta', 'turno_elegido', 'peso'])
 
 
 def _generar_contexto(anno, cuatrimestre, tipo_docente):
     tipo = TipoDocentes[tipo_docente]
     turnos_ac = Mapeos.encuesta_tipo_turno(tipo).filter(anno=anno, cuatrimestre=cuatrimestre)
 
-    turnos = [TurnoParaEncuesta('', '', True, True)]
-    turnos += [TurnoParaEncuesta(turno.id, f'{turno} (turno.horarios_info().diayhora)', turno.dificil_de_cubrir, False)
+    turnos = [TurnoParaEncuesta(-1, '', True)]
+    turnos += [TurnoParaEncuesta(turno.id, f'{turno} ({turno.horarios_info().diayhora})', turno.dificil_de_cubrir)
                for turno in sorted(turnos_ac, key=lambda t: t.materia.nombre)]
 
     docentes = sorted(Mapeos.docentes_de_tipo(tipo), key=lambda d: d.nombre)
-    opciones = [(i, i <= 2) for i in range(1, 6)]  # las opciones 1 y 2 tienen que ser de las difíciles
+    opciones = [OpcionesParaEncuesta(i, i <= 2, -1, 1)
+                for i in range(1, 6)]  # las opciones 1 y 2 tienen que ser de las difíciles
     context = {'opciones': opciones,
                'turnos': turnos,
                'docentes': docentes,
@@ -99,8 +100,21 @@ def _generar_contexto(anno, cuatrimestre, tipo_docente):
                'cuatrimestre_value': Cuatrimestres[cuatrimestre].value,
                'tipo_docente': tipo_docente,
                'maximo_peso': 20,
+               'cargas': 1, 'email': '', 'telefono': '', 'comentario': ''
                }
     return context
+
+
+def _modificar_contexto_con_datos_request(context, datos):
+    nuevas_opciones = []
+    for opcion, dificil, _, _ in context['opciones']:
+        elegido = int(datos[f'opcion{opcion}'])
+        peso = datos[f'peso{opcion}']
+        nuevas_opciones.append(OpcionesParaEncuesta(opcion, dificil, elegido, peso))
+    context['opciones'] = nuevas_opciones
+    for campo in ['cargas', 'email', 'telefono', 'comentario']:
+        context[campo] = datos[campo]
+
 
 def encuesta(request, anno, cuatrimestre, tipo_docente):
     context = _generar_contexto(anno, cuatrimestre, tipo_docente)
@@ -118,4 +132,5 @@ def encuesta(request, anno, cuatrimestre, tipo_docente):
                                'comentario': otros_datos.comentario})
     except ValidationError as e:
         messages.error(request, e.message)
+        _modificar_contexto_con_datos_request(context, request.POST)
         return render(request, 'encuestas/encuesta.html', context)

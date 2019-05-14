@@ -27,41 +27,40 @@
 
 <p>
     <div id="subtitulo">Turnos que debe cubrir:</div>
-    <input type="number" name="cargas" min=0 max=3 value=1>
+    <input type="number" name="cargas" min=0 max=3 value={{ cargas }}>
 </p>
 
 <p>
 <div id="subtitulo">Turnos preferidos</div>
-{% for i, lista_corta in opciones %}
+{% for i, lista_corta, elegido, peso in opciones %}
     <div id="seleccion">
         <select name="opcion{{ i }}">
-            {% comment %}<option value="" selected></option>{% endcomment %}
             {% for turno in turnos %}
             <option value="{{ turno.id }}"
                     {% if lista_corta and not turno.dificil_de_cubrir %}disabled{% endif %}
-                    {% if turno.elegido %}selected{% endif %}>
+                    {% if turno.id == elegido %}selected{% endif %}>
             {{ turno.texto }}
             </option>
             {% endfor %}
         </select>
-        Peso: <input type="number" name="peso{{ forloop.counter }}" min=0 max={{ maximo_peso }} value=1>
+        Peso: <input type="number" name="peso{{ forloop.counter }}" min=0 max={{ maximo_peso }} value={{ peso }}>
     </div>
 </p>
 {% endfor %}
 
 <p>
     <div id="subtitulo">email</div>
-    <input type="email" name="email">
+    <input type="email" name="email" value="{{ email }}">
 </p>
 
 <p>
     <div id="subtitulo">Teléfono</div>
-    <input type="tel" name="telefono">
+    <input type="tel" name="telefono" value="{{ telefono }}">
 </p>
 
 <p>
     <div id="subtitulo">Comentarios</div>
-    <textarea name="comentario" cols=120 rows=3></textarea>
+    <textarea name="comentario" cols=120 rows=3>{{ comentario }}</textarea>
 </p>
 
 
