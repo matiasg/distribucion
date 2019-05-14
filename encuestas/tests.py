@@ -1,4 +1,4 @@
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.test.utils import setup_test_environment
 from django.urls import reverse
 from django.forms import ValidationError
@@ -8,7 +8,7 @@ import re
 from materias.models import (Docente, Cargos, Materia, Turno, TipoTurno, TipoMateria,
                              CargoDedicacion, Cuatrimestres)
 from materias.misc import TipoDocentes
-from .models import PreferenciasDocente
+from .models import PreferenciasDocente, OtrosDatos
 from .views import checkear_y_salvar
 
 
@@ -27,6 +27,7 @@ class TestEncuesta(TestCase):
                                                   numero=2, tipo=TipoTurno.T.name,
                                                   necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0,
                                                   dificil_de_cubrir=True)
+        self.otros_datos = {'telefono': '+54911 1234-5678', 'email': 'nadie@gmail.com', 'cargas': 1}
 
     def test_sin_docente(self):
         datos = {}
@@ -121,9 +122,26 @@ class TestEncuesta(TestCase):
 
     def test_encuesta_distingue_turnos_dificiles(self):
         '''Chequeamos que el turno dificil aparece 5 veces en la encuesta y el facil 3'''
-        c = Client()
-        response = c.get(f'/encuestas/encuesta/{self.anno}/{Cuatrimestres.P.name}/{TipoDocentes.P.name}')
+        response = self.client.get(f'/encuestas/encuesta/{self.anno}/{Cuatrimestres.P.name}/{TipoDocentes.P.name}')
         opcion_reg_facil = re.compile('^.*<option value.*Teórico-Práctica 1', re.MULTILINE)
         opcion_reg_dificil = re.compile('^.*<option value.*Teórica 2', re.MULTILINE)
         self.assertEqual(len(opcion_reg_facil.findall(response.content.decode())), 3)
         self.assertEqual(len(opcion_reg_dificil.findall(response.content.decode())), 5)
+
+    def test_encuesta_salva_otros_datos(self):
+        opciones = {'opcion1': self.turno.id, 'peso1': 1}
+        for o in range(2, 6):
+            opciones[f'opcion{o}'] = ''
+            opciones[f'peso{o}'] = 0
+        response = self.client.post(f'/encuestas/encuesta/{self.anno}/{Cuatrimestres.P.name}/{TipoDocentes.P.name}',
+                                    {'docente': self.docente.id,
+                                     **opciones,
+                                     'telefono': '+54911 1234-5678', 'email': 'juan@dm.uba.ar',
+                                     'cargas': 1, 'comentario': 'pero qué corno'},
+                                    follow=True)
+        self.assertEqual(OtrosDatos.objects.count(), 1)
+        od = OtrosDatos.objects.first()
+        self.assertEqual(od.comentario, 'pero qué corno')
+        self.assertEqual(od.cargas, 1)
+        self.assertEqual(od.telefono,  '+54911 1234-5678')
+        self.assertEqual(od.email,  'juan@dm.uba.ar')
