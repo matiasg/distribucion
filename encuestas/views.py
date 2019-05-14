@@ -110,7 +110,3 @@ def encuesta(request, anno, cuatrimestre, tipo_docente):
     except ValidationError as e:
         messages.error(request, e.message)
         return render(request, 'encuestas/encuesta.html', context)
-
-
-def final(request):
-    return render(request, 'encuestas/final.html')
