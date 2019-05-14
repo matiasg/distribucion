@@ -69,7 +69,7 @@ def checkear_y_salvar(datos):
                     pref.fecha_encuesta = fecha_encuesta
                     pref.save()
             opciones.append(pref)
-    return opciones
+    return opciones, otros_datos
 
 
 def index(request):
@@ -96,10 +96,13 @@ def encuesta(request, anno, cuatrimestre, tipo_docente):
     except (ValueError, KeyError, Turno.DoesNotExist):
         return render(request, 'encuestas/encuesta.html', context)
     try:
-        opciones = checkear_y_salvar(request.POST)
+        opciones, otros_datos = checkear_y_salvar(request.POST)
         return render(request,
                       'encuestas/final.html',
-                      context={'opciones': opciones, 'docente': docente})
+                      context={'opciones': opciones, 'docente': docente,
+                               'email': otros_datos.email,
+                               'telefono': otros_datos.telefono,
+                               'comentario': otros_datos.comentario})
     except ValidationError as e:
         messages.error(request, e.message)
         return render(request, 'encuestas/encuesta.html', context)
