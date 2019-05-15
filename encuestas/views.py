@@ -21,8 +21,8 @@ def checkear_y_salvar(datos):
     fecha_encuesta = timezone.now()
 
     # chequeos
-    cuenta = Counter(datos.get(f'opcion{o}', '') for o in range(1, 6))
-    cuenta.pop('', None)  # descarto opciones no completadas
+    cuenta = Counter(datos.get(f'opcion{o}', '-1') for o in range(1, 6))
+    cuenta.pop('-1', None)  # descarto opciones no completadas
     if any(v > 1 for v in cuenta.values()):
         raise ValidationError('Hay turnos repetidos', code='invalid')
 
