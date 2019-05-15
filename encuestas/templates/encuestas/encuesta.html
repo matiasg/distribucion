@@ -11,29 +11,59 @@
 </div>
 {% endif %}
 
-<h1>encuesta para el cuatrimestre {{ cuatrimestre_value }} de {{ anno }}</h1>
+<div id="titulo">Encuesta para el cuatrimestre {{ cuatrimestre_value }} de {{ anno }}</div>
 
 <form action="{% url 'encuestas:encuesta' anno cuatrimestre tipo_docente %}" method="post">
 {% csrf_token %}
 
-<select name="docente">
-{% for docente in docentes %}
-    <option value="{{ docente.id }}">{{ docente }}</option>
-{% endfor %}
-</select>
-
-{% for i, lista_larga in opciones %}
-    <p>
-    <select name="opcion{{ i }}">
-        <option value="" selected></option>
-        {% for turno in turnos %}
-        {% if turno.dificil_de_cubrir or lista_larga %}
-        <option value="{{ turno.id }}">{{ turno }} ({{ turno.horarios_info.diayhora }})</option>
-        {% endif %}
+<p>
+    <div id="subtitulo">Nombre:</div>
+    <select name="docente">
+        {% for docente in docentes %}
+        <option value="{{ docente.id }}"
+                {% if docente.id == docente_selected %}selected{% endif %}
+        >{{ docente.nombre }}</option>
         {% endfor %}
     </select>
-    Peso: <input type="number" name="peso{{ forloop.counter }}" min=0 max={{ maximo_peso }} value=1>
+</p>
+
+<p>
+    <div id="subtitulo">Turnos que debe cubrir:</div>
+    <input type="number" name="cargas" min=0 max=3 value={{ cargas }}>
+</p>
+
+<p>
+<div id="subtitulo">Turnos preferidos</div>
+{% for i, lista_corta, elegido, peso in opciones %}
+    <div id="seleccion">
+        <select name="opcion{{ i }}">
+            {% for turno in turnos %}
+            <option value="{{ turno.id }}"
+                    {% if lista_corta and not turno.dificil_de_cubrir %}disabled{% endif %}
+                    {% if turno.id == elegido %}selected{% endif %}>
+            {{ turno.texto }}
+            </option>
+            {% endfor %}
+        </select>
+        Peso: <input type="number" name="peso{{ forloop.counter }}" min=0 max={{ maximo_peso }} value={{ peso }}>
+    </div>
+</p>
 {% endfor %}
+
+<p>
+    <div id="subtitulo">email</div>
+    <input type="email" name="email" value="{{ email }}">
+</p>
+
+<p>
+    <div id="subtitulo">Teléfono</div>
+    <input type="tel" name="telefono" value="{{ telefono }}">
+</p>
+
+<p>
+    <div id="subtitulo">Comentarios</div>
+    <textarea name="comentario" cols=120 rows=3>{{ comentario }}</textarea>
+</p>
 
 
 <p>

@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'encuestas/encuestas.css' %}">
+
 <h1>Gracias por completar la encuesta</h1>
 
 <h2>Se salvaron estas opciones para {{ docente }}</h2>
@@ -7,3 +12,10 @@
     <tr><td>{{ opcion.turno }}</td><td>Peso: {{ opcion.peso }}</td></tr>
     {% endfor %}
 </table>
+
+<h2>Otros datos guardados</h2>
+<dl>
+    <dt>email:</dt>       <dd>{{ email }}</dd>
+    <dt>teléfono:</dt>    <dd>{{ telefono }}</dd>
+    <dt>comentarios:</dt> <dd>{{ comentario }}</dd>
+</dl>
