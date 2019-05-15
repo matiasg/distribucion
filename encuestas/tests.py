@@ -27,16 +27,17 @@ class TestEncuesta(TestCase):
                                                   numero=2, tipo=TipoTurno.T.name,
                                                   necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0,
                                                   dificil_de_cubrir=True)
-        self.otros_datos = {'telefono': '+54911 1234-5678', 'email': 'nadie@gmail.com', 'cargas': 1}
+        self.otros_datos = {'telefono': '+54911 1234-5678', 'email': 'nadie@gmail.com', 'comentario': '',
+                            'cargas': 1}
 
     def test_sin_docente(self):
-        datos = {}
+        datos = self.otros_datos
         with self.assertRaises(KeyError):
             checkear_y_salvar(datos)
 
     def test_docente_no_existe(self):
         docente_inexistente_id = str(self.docente.id + 1)
-        datos = {'docente': docente_inexistente_id}
+        datos = {'docente': docente_inexistente_id, **self.otros_datos}
         with self.assertRaises(Docente.DoesNotExist):
             checkear_y_salvar(datos)
 
@@ -46,7 +47,7 @@ class TestEncuesta(TestCase):
             checkear_y_salvar(datos)
 
     def test_turno_no_existe(self):
-        datos = {'docente': self.docente.id}
+        datos = {'docente': self.docente.id, **self.otros_datos}
         for opcion in range(1, 6):
             datos['opcion{}'.format(opcion)] = str(self.turno.id + opcion)
             datos['peso{}'.format(opcion)] = str(opcion)
@@ -54,15 +55,15 @@ class TestEncuesta(TestCase):
             checkear_y_salvar(datos)
 
     def test_docente_y_opciones_vacias(self):
-        datos = {'docente': self.docente.id}
+        datos = {'docente': self.docente.id, **self.otros_datos}
         for opcion in range(1, 6):
-            datos['opcion{}'.format(opcion)] = ''
+            datos['opcion{}'.format(opcion)] = '-1'
             datos['peso{}'.format(opcion)] = str(opcion)
         checkear_y_salvar(datos)
         self.assertEqual(len(PreferenciasDocente.objects.all()), 0)
 
     def test_docente_y_opciones_con_sentido(self):
-        datos = {'docente': self.docente.id}
+        datos = {'docente': self.docente.id, **self.otros_datos}
         for opcion in range(1, 6):
             turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
                                          numero=1, tipo=TipoTurno.T.name,
@@ -73,7 +74,7 @@ class TestEncuesta(TestCase):
         self.assertEqual(len(PreferenciasDocente.objects.all()), 5)
 
     def test_algunas_opciones_vacias(self):
-        datos = {'docente': self.docente.id}
+        datos = {'docente': self.docente.id, **self.otros_datos}
         for opcion in range(1, 3):
             turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
                                          numero=1, tipo=TipoTurno.T.name,
@@ -81,7 +82,7 @@ class TestEncuesta(TestCase):
             datos['opcion{}'.format(opcion)] = turno.id
             datos['peso{}'.format(opcion)] = str(opcion)
         for opcion in range(3, 6):
-            datos['opcion{}'.format(opcion)] = ''
+            datos['opcion{}'.format(opcion)] = '-1'
             datos['peso{}'.format(opcion)] = str(opcion)
         checkear_y_salvar(datos)
         self.assertEqual(len(PreferenciasDocente.objects.all()), 2)
@@ -123,15 +124,15 @@ class TestEncuesta(TestCase):
     def test_encuesta_distingue_turnos_dificiles(self):
         '''Chequeamos que el turno dificil aparece 5 veces en la encuesta y el facil 3'''
         response = self.client.get(f'/encuestas/encuesta/{self.anno}/{Cuatrimestres.P.name}/{TipoDocentes.P.name}')
-        opcion_reg_facil = re.compile('^.*<option value.*Teórico-Práctica 1', re.MULTILINE)
-        opcion_reg_dificil = re.compile('^.*<option value.*Teórica 2', re.MULTILINE)
+        opcion_reg_facil = re.compile(f'^.*<option value="{self.turno.id}"[ \n]*>', re.MULTILINE)
+        opcion_reg_dificil = re.compile(f'^.*<option value="{self.turno_dificil.id}"[ \n]*>', re.MULTILINE)
         self.assertEqual(len(opcion_reg_facil.findall(response.content.decode())), 3)
         self.assertEqual(len(opcion_reg_dificil.findall(response.content.decode())), 5)
 
     def test_encuesta_salva_otros_datos(self):
         opciones = {'opcion1': self.turno.id, 'peso1': 1}
         for o in range(2, 6):
-            opciones[f'opcion{o}'] = ''
+            opciones[f'opcion{o}'] = '-1'
             opciones[f'peso{o}'] = 0
         response = self.client.post(f'/encuestas/encuesta/{self.anno}/{Cuatrimestres.P.name}/{TipoDocentes.P.name}',
                                     {'docente': self.docente.id,
