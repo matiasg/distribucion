@@ -1,12 +1,14 @@
+DOCKER_DIR := .
+
 build:
-	docker build -t distribucion .
+	docker build -t distribucion $(DOCKER_DIR)
 	docker-compose build
 	docker volume create --name=distribucion_pgdata
 	docker-compose up --no-start
 	echo -e "sugerencia: correr \n\ndocker-compose run --rm web sh tools/create_db"
 
 rebuild:
-	docker build -t distribucion . --no-cache
+	docker build -t distribucion $(DOCKER_DIR) --no-cache
 	docker-compose build
 
 populate:
