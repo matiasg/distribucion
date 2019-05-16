@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED 1
 RUN mkdir /codigo
 WORKDIR /codigo
 
-COPY uba/apt.conf /etc/apt/apt.conf
+COPY apt.conf /etc/apt/apt.conf
 RUN cat /etc/apt/sources.list | grep 'deb.debian.org' | sed 's+deb.debian.org+ftp.ccc.uba.ar/pub/linux/debian+' > /etc/apt/sources.list.d/uba.list
 
 RUN apt-get update && apt-get install -y git
