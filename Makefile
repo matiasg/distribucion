@@ -12,14 +12,14 @@ rebuild:
 	docker-compose build
 
 populate:
-	docker-compose run web python tools/current_html_to_db.py V 2020
-	docker-compose run web python tools/current_html_to_db.py 1 2020
-	docker-compose run web python tools/current_html_to_db.py 2 2020
+	docker-compose run --rm web python tools/current_html_to_db.py V 2020
+	docker-compose run --rm web python tools/current_html_to_db.py 1 2020
+	docker-compose run --rm web python tools/current_html_to_db.py 2 2020
 
 demo: build populate
-	docker-compose run web python tools/inventar_encuestas.py -a 2019 -c S -d J
-	docker-compose run web python tools/inventar_encuestas.py -a 2019 -c S -d A1
-	docker-compose run web python tools/inventar_encuestas.py -a 2019 -c S -d A2
+	docker-compose run --rm web python tools/inventar_encuestas.py -a 2019 -c S -d J
+	docker-compose run --rm web python tools/inventar_encuestas.py -a 2019 -c S -d A1
+	docker-compose run --rm web python tools/inventar_encuestas.py -a 2019 -c S -d A2
 
 FECHA := $(shell date +%F_%T)
 backup:
