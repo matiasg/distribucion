@@ -12,7 +12,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "distribucion.settings")
 import django
 django.setup()
 
-from materias.models import (Materia, Turno, Docente, Cuatrimestres, TipoTurno,
+from materias.models import (Materia, Turno, Docente, Carga, Cuatrimestres, TipoTurno,
                              CargoDedicacion, Cargos, choice_enum)
 from materias.misc import Mapeos, TipoDocentes
 from encuestas.models import PreferenciasDocente
@@ -32,6 +32,11 @@ def inventar_encuestas(anno, cuatrimestre, tipo_de_docentes):
     for docente in docentes:
         doc_cargos = cargos & set(docente.cargos)
         logger.info('inventando encuestas para %s', docente)
+
+        for cargo in doc_cargos:
+            Carga.objects.get_or_create(docente=docente, cargo=cargo,
+                                        anno=anno, cuatrimestre=cuatrimestre)
+
         for turno in set(random.choices(turnos, k=5)):
             for cargo in doc_cargos:
                 PreferenciasDocente.objects.create(docente=docente, turno=turno,
