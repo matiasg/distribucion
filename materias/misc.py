@@ -2,7 +2,6 @@ from enum import Enum
 from collections import namedtuple, defaultdict
 
 from materias.models import Docente, Turno, Carga, TipoTurno, Cargos, CargoDedicacion
-from dborrador.models import Preferencia, Asignacion
 
 
 AnnoCuatrimestre = namedtuple('AC', 'anno cuatrimestre')
