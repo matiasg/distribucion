@@ -1,14 +1,18 @@
-DOCKER_DIR := .
+prebuild:
+	cat dockerfiles/dockerfile_header dockerfiles/dockerfile_body > Dockerfile
+
+uba_prebuild:
+	cat dockerfiles/dockerfile_header dockerfiles/uba_docker_setting dockerfiles/dockerfile_body > Dockerfile
 
 build:
-	docker build -t distribucion $(DOCKER_DIR)
+	docker build -t distribucion .
 	docker-compose build
 	docker volume create --name=distribucion_pgdata
 	docker-compose up --no-start
 	echo -e "sugerencia: correr \n\ndocker-compose run --rm web sh tools/create_db"
 
 rebuild:
-	docker build -t distribucion $(DOCKER_DIR) --no-cache
+	docker build -t distribucion . --no-cache
 	docker-compose build
 
 populate:
