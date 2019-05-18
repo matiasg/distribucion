@@ -15,6 +15,12 @@ rebuild:
 	docker build -t distribucion . --no-cache
 	docker-compose build
 
+empezar:
+	docker-compose up
+
+terminar:
+	docker-compose down
+
 populate:
 	docker-compose run --rm web python tools/current_html_to_db.py V 2020
 	docker-compose run --rm web python tools/current_html_to_db.py 1 2020
