@@ -34,11 +34,10 @@
   color: #fff;
   text-align: left;
   border-radius: 6px;
-  padding: 5px 0;
   position: absolute;
   z-index: 1;
   top: 100%;
-  left: 20%;
+  left: 120px;
   padding: 6px;
   opacity: 0;
   transition: opacity 0.3s;
