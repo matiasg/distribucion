@@ -102,8 +102,9 @@ class Turno(models.Model):
     history = HistoricalRecords()
 
     def __str__(self):
+        numero = f' {self.numero}' if self.numero else ''
         return (f'{self.materia.nombre}, cuat {Cuatrimestres[self.cuatrimestre].value} {self.anno}, '
-                f'{TipoTurno[self.tipo].value} {self.numero}')
+                f'{TipoTurno[self.tipo].value}{numero}')
 
     def horarios_info(self):
 
@@ -117,7 +118,8 @@ class Turno(models.Model):
                 return lst[0]
             return ' y '.join(lst)
 
-        tipoynumero = f'{TipoTurno[self.tipo].value} {self.numero}'
+        tipo = f'{TipoTurno[self.tipo].value}'
+        tipoynumero = f'{tipo} {self.numero}' if self.numero else tipo
         horarios = sorted(self.horario_set.all())
         dias = join([h.dia for h in horarios])
         horas = join([f'{time_str(h.comienzo)} a {time_str(h.final)}' for h in horarios])
