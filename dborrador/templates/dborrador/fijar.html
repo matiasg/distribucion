@@ -71,8 +71,18 @@ Fijar docentes a intento {{ intento }}
             {% if problemas.necesidades_no_cubiertas %}
             <div id="problema">Turnos con necesidades insatisfechas</div>
             <ul>
-                {% for turno, necesidad in problemas.necesidades_no_cubiertas %}
-                <li>{{ turno }} necesita <b>{{ necesidad }}</b> docente(s)</li>
+                {% for turno, necesidad, docentes in problemas.necesidades_no_cubiertas %}
+                <li>
+                    <div class="tooltip">{{ turno }} necesita <b>{{ necesidad }}</b> docente(s)
+                        <span class="tooltiptext">
+                            <span class="titulo">Docentes que pidieron {{ turno }}</span>
+                            <ul>{% for docente in docentes %}
+                                <li>{{ docente }}</li>
+                                {% endfor %}
+                            </ul>
+                        </span>
+                    </div>
+                </li>
                 {% endfor %}
             </ul>
             {% endif %}
