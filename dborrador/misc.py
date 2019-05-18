@@ -1,6 +1,6 @@
 from collections import Counter, namedtuple, defaultdict
 
-from .models import Asignacion
+from .models import Asignacion, Preferencia
 from materias.misc import Mapeos
 
 
@@ -137,11 +137,15 @@ class MapeosDistribucion:
     def chequeo(tipo, ac, intento, este_tipo_fijo, este_tipo):
         '''TipoDocentes -> AnnoCuatrimestre -> intento -> ([Carga], [Turno, necesidad])'''
         cargas_no_distribuidas = MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(tipo, ac, intento)
+        cargas_no_distribuidas_con_pedidos = [
+            (c, Preferencia.objects.filter(preferencia__docente=c.docente)) for c in cargas_no_distribuidas
+        ]
+
         necesidades = MapeosDistribucion.necesidades_tipo_no_cubiertas_en(tipo, ac, intento)
         necesidades_no_cubiertas = [(turno, necesidad)
                                     for turno, necesidad in necesidades.items() if necesidad > 0]
         recargas = MapeosDistribucion.docentes_recargados(este_tipo_fijo, este_tipo, intento)
-        return Problemas(cargas_no_distribuidas, necesidades_no_cubiertas, recargas)
+        return Problemas(cargas_no_distribuidas_con_pedidos, necesidades_no_cubiertas, recargas)
 
     @staticmethod
     def docentes_recargados(fijas, para_intento, intento):
