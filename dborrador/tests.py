@@ -151,7 +151,7 @@ class TestVerDistribucion(TestCase):
                                            args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
         content = response.content.decode()
 
-        self.assertTrue(re.search('Cargas docentes sin distribución(</div>|<ul>|<li>|\s)*jose', content, flags=re.DOTALL),
+        self.assertTrue(re.search('Cargas docentes sin distribución(<div [^>]*>|</div>|<ul>|<li>|\s)*jose', content, flags=re.DOTALL),
                         'No figura un docente no distribuido')
         self.assertTrue(re.search('Turnos con necesidades insatisfechas.*epistemologia.*Teórico-Práctica 2',
                                   content, flags=re.DOTALL),
@@ -168,6 +168,6 @@ class TestVerDistribucion(TestCase):
         response = self.client.get(reverse('dborrador:fijar',
                                            args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
         content = response.content.decode()
-
-        self.assertTrue(re.search(f'jose \({self.turno1}, {self.turno2}\)', content, flags=re.DOTALL),
+        self.assertTrue(re.search(f'jose(<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*{self.materia.nombre}',
+                                  content, flags=re.DOTALL),
                         'No figuran las preferencias de un docente no distribuido')
