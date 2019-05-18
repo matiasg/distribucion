@@ -1,0 +1,2 @@
+COPY uba/apt.conf /etc/apt/apt.conf
+RUN cat /etc/apt/sources.list | grep 'deb.debian.org' | sed 's+deb.debian.org+ftp.ccc.uba.ar/pub/linux/debian+' > /etc/apt/sources.list.d/uba.list

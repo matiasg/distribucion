@@ -1,10 +1,3 @@
-FROM python:3.7.2-slim-stretch
-
-ENV PYTHONUNBUFFERED 1
-
-RUN mkdir /codigo
-WORKDIR /codigo
-
 RUN apt-get update && apt-get install -y git
 
 RUN git clone https://github.com/matiasg/distribucion.git
