@@ -171,3 +171,18 @@ class TestVerDistribucion(TestCase):
         self.assertTrue(re.search(f'jose(<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*{self.materia.nombre}',
                                   content, flags=re.DOTALL),
                         'No figuran las preferencias de un docente no distribuido')
+
+    def test_figuran_interesados_en_turnos_sin_docentes(self):
+        now = timezone.now()
+        pd = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1, fecha_encuesta=now)
+        Preferencia.objects.create(preferencia=pd, peso_normalizado=1)
+        response = self.client.get(reverse('dborrador:fijar',
+                                           args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
+
+        content = response.content.decode()
+        print(content)
+        self.assertTrue(re.search(('epistemologia.*necesita.*docente\(s\)'
+                                   '(<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*'
+                                   'jose'),
+                                  content, flags=re.DOTALL),
+                        'No figuran los docentes que prefieren un turno sin docentes')
