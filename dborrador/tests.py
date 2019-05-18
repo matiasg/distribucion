@@ -180,7 +180,6 @@ class TestVerDistribucion(TestCase):
                                            args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
 
         content = response.content.decode()
-        print(content)
         self.assertTrue(re.search(('epistemologia.*necesita.*docente\(s\)'
                                    '(<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*'
                                    'jose'),
