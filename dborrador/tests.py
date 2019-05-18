@@ -147,11 +147,11 @@ class TestVerDistribucion(TestCase):
 
     def test_figuran_docentes_no_distribuidos(self):
         Asignacion.objects.create(intento=1, carga=self.carga1, turno=self.turno1)
-        response = self.client.get(reverse('dborrador:fijar',
-                                           args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
+        response = self.client.get(reverse('dborrador:fijar', args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
         content = response.content.decode()
 
-        self.assertTrue(re.search('Cargas docentes sin distribución(<div [^>]*>|</div>|<ul>|<li>|\s)*jose', content, flags=re.DOTALL),
+        self.assertTrue(re.search('Cargas docentes sin distribución(<div [^>]*>|</div>|<ul>|<li>|\s)*jose',
+                                  content, flags=re.DOTALL),
                         'No figura un docente no distribuido')
         self.assertTrue(re.search('Turnos con necesidades insatisfechas.*epistemologia.*Teórico-Práctica 2',
                                   content, flags=re.DOTALL),
