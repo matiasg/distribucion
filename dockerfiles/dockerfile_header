@@ -1,0 +1,6 @@
+FROM python:3.7.2-slim-stretch
+
+ENV PYTHONUNBUFFERED 1
+
+RUN mkdir /codigo
+WORKDIR /codigo

@@ -6,7 +6,7 @@ services:
     volumes:
       - distribucion_pgdata:/var/lib/postgresql/data
   web:
-    build: .
+    image: distribucion
     volumes:
       - distribucion_pgdata:/var/lib/postgresql/data
     working_dir: /codigo/distribucion
@@ -16,7 +16,7 @@ services:
     depends_on:
       - db
   bash:
-    build: .
+    image: distribucion
     volumes:
       - distribucion_pgdata:/var/lib/postgresql/data
     command: /bin/bash
