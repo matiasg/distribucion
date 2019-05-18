@@ -35,7 +35,7 @@ FECHA := $(shell date +%F_%T)
 backup:
 	docker run --rm -v distribucion_pgdata:/source:ro busybox tar -czC /source . > data_backup_$(FECHA).tar.gz
 
-ULTIMO_BACKUP := $(shell ls data_backup*.tar.gz | tail -1)
+ULTIMO_BACKUP := $(shell ls data_backup*.tar.gz 2> /dev/null | tail -1)
 restore:
 	@echo Voy a parar el sistema de distribucion
 	docker-compose stop
