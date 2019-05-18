@@ -53,8 +53,18 @@ Fijar docentes a intento {{ intento }}
             {% if problemas.cargas_no_distribuidas %}
             <div id="problema">Cargas docentes sin distribución</div>
             <ul>
-                {% for carga in problemas.cargas_no_distribuidas %}
-                <li>{{ carga.docente }}</li>
+                {% for carga, encuestas in problemas.cargas_no_distribuidas %}
+                <li>
+                    <div class="tooltip">{{ carga.docente }}
+                        <span class="tooltiptext">
+                            <span class="titulo">Encuesta de {{ carga.docente }}:</span>
+                            <ul>{% for preferencia in encuestas %}
+                                <li>{{ preferencia.preferencia.turno }} ({{preferencia.peso_normalizado|floatformat:4}})</li>
+                                {% endfor %}
+                            </ul>
+                        </span>
+                    </div>
+                </li>
                 {% endfor %}
             </ul>
             {% endif %}
