@@ -29,7 +29,7 @@
 
 .tooltip .tooltiptext {
   visibility: hidden;
-  width: 1000px;
+  width: max-content;
   background-color: #444;
   color: #fff;
   text-align: left;
@@ -38,8 +38,8 @@
   position: absolute;
   z-index: 1;
   top: 100%;
-  left: 100%;
-  margin-left: -6px;
+  left: 20%;
+  padding: 6px;
   opacity: 0;
   transition: opacity 0.3s;
 }
