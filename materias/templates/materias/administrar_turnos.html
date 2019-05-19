@@ -13,6 +13,7 @@
     <p>
     {% for materia, turnos in materias_turnos %}
         {% if turnos %}
+        <span class="tabla_numeros_chicos">
         <table>
             <thead>{{ materia.nombre.upper }}</thead>
             <tbody>
@@ -28,6 +29,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </span>
         {% endif %}
     {% endfor %}
     </p>
