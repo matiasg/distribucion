@@ -145,16 +145,17 @@ class TestPaginas(TestCase):
 
     def test_pagina_principal_con_y_sin_turnos(self):
         response = self.client.get('/materias/21001')
-        self.assertContains(response, 'class="nombremateria"' )
+        self.assertContains(response, '<div class="seccion">Obligatorias</div>' )
+        self.assertContains(response, '<table' )
         self.assertContains(response, self.materia1.nombre.upper())
         self.assertContains(response, self.materia2.nombre.upper())
         self.assertNotContains(response, self.materia3.nombre.upper())
 
         response = self.client.get('/materias/21002')
-        self.assertNotContains(response, 'class="nombremateria"' )
+        self.assertNotContains(response, '<table' )
 
         response = self.client.get('/materias/21011')
-        self.assertNotContains(response, 'class="nombremateria"' )
+        self.assertNotContains(response, '<table' )
 
     def test_turnos_en_orden(self):
         response = self.client.get('/materias/21001')
