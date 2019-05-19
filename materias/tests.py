@@ -101,6 +101,14 @@ class TestModels(TestCase):
         self.assertLess(self.turno, turno2)
         self.assertGreater(turno2, self.turno)
 
+    def test_turno_0(self):
+        turno0 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                      numero=0, tipo=TipoTurno.T.name,
+                                      necesidad_prof=0, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        self.assertTrue('Teórica' in str(turno0))
+        self.assertTrue('Teórica 0' not in str(turno0))
+        self.assertTrue('Teórica 1' in str(self.turno))
+
 
 class TestPaginas(TestCase):
 
@@ -137,16 +145,17 @@ class TestPaginas(TestCase):
 
     def test_pagina_principal_con_y_sin_turnos(self):
         response = self.client.get('/materias/21001')
-        self.assertContains(response, 'class="nombremateria"' )
+        self.assertContains(response, '<div class="seccion">Obligatorias</div>' )
+        self.assertContains(response, '<table' )
         self.assertContains(response, self.materia1.nombre.upper())
         self.assertContains(response, self.materia2.nombre.upper())
         self.assertNotContains(response, self.materia3.nombre.upper())
 
         response = self.client.get('/materias/21002')
-        self.assertNotContains(response, 'class="nombremateria"' )
+        self.assertNotContains(response, '<table' )
 
         response = self.client.get('/materias/21011')
-        self.assertNotContains(response, 'class="nombremateria"' )
+        self.assertNotContains(response, '<table' )
 
     def test_turnos_en_orden(self):
         response = self.client.get('/materias/21001')
@@ -161,3 +170,12 @@ class TestPaginas(TestCase):
     def test_tabla_dice_aula(self):
         response = self.client.get('/materias/21001')
         self.assertContains(response, '<td class="aula">Aula: 3 (P.1)</td>')
+
+    def test_turno_no_tiene_0(self):
+        turno0 = Turno.objects.create(materia=self.materia1, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                      numero=0, tipo=TipoTurno.T.name,
+                                      necesidad_prof=0, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        response = self.client.get('/materias/21001')
+        self.assertNotContains(response, 'Teórica 0')
+        self.assertContains(response, 'Teórica 1')
+

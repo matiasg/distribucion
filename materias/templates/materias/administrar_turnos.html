@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+
 {% load static %}
 
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
@@ -10,26 +12,26 @@
     {% for tipo, materias_turnos in materias %}
     <div class="seccion">{{ tipo }}</div>
 
-    <p>
-    {% for materia, turnos in materias_turnos %}
-        {% if turnos %}
-        <table>
-            <thead>{{ materia.nombre.upper }}</thead>
-            <tbody>
-                {% for turno in turnos %}
-                <tr>
-                    <td class="fondo{{ turno.tipo }}">{{ turno.tipo }} {{ turno.numero }}</td>
-                    <td><input type="number" name="alumnos_{{ turno.id }}" min=0 max=1000 value={{ turno.alumnos }}></td>
-                    <td><input type="number" name="necesidadprof_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_prof }}></td>
-                    <td><input type="number" name="necesidadjtp_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_jtp }}></td>
-                    <td><input type="number" name="necesidaday1_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_ay1 }}></td>
-                    <td><input type="number" name="necesidaday2_{{ turno.id }}" min=0 max=10 value={{ turno.necesidad_ay2 }}></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
-    {% endfor %}
-    </p>
+        {% for materia, turnos in materias_turnos %}
+            {% if turnos %}
+            <span class="tabla_numeros_chicos">
+            <table>
+                <caption>{{ materia.nombre.upper }}</caption>
+                <tbody>
+                    {% for turno in turnos %}
+                    <tr>
+                        <td class="fondo{{ turno.tipo }}">{{ turno.tipo }} {{ turno.numero }}</td>
+                        <td><input type="number" name="alumnos_{{ turno.id }}" min=0 max=1000 value={{ turno.alumnos }}></td>
+                        <td><input type="number" name="necesidadprof_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_prof }}></td>
+                        <td><input type="number" name="necesidadjtp_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_jtp }}></td>
+                        <td><input type="number" name="necesidaday1_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_ay1 }}></td>
+                        <td><input type="number" name="necesidaday2_{{ turno.id }}" min=0 max=10 value={{ turno.necesidad_ay2 }}></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </span>
+            {% endif %}
+        {% endfor %}
     {% endfor %}
 </form>
