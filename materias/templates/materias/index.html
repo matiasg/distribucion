@@ -10,8 +10,8 @@
     {% for materia, turnos in lista %}
 
     {% if turnos %}
-    <table class="contentbold" border="1" cellspacing="0" cellpadding="5" frame="hsides">
-        <thead><div class="nombremateria">{{ materia.nombre.upper }}</div></thead>
+    <table border=1 cellpadding=5 cellspacing=0>
+        <caption>{{ materia.nombre.upper }}</caption>
         <tbody>
         {% for turno in turnos %}
             <tr>
