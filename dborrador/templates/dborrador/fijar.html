@@ -53,16 +53,36 @@ Fijar docentes a intento {{ intento }}
             {% if problemas.cargas_no_distribuidas %}
             <div id="problema">Cargas docentes sin distribución</div>
             <ul>
-                {% for carga in problemas.cargas_no_distribuidas %}
-                <li>{{ carga.docente }}</li>
+                {% for carga, encuestas in problemas.cargas_no_distribuidas %}
+                <li>
+                    <div class="tooltip">{{ carga.docente }}
+                        <span class="tooltiptext">
+                            <span class="titulo">Encuesta de {{ carga.docente }}:</span>
+                            <ul>{% for preferencia in encuestas %}
+                                <li>{{ preferencia.preferencia.turno }} ({{preferencia.peso_normalizado|floatformat:4}})</li>
+                                {% endfor %}
+                            </ul>
+                        </span>
+                    </div>
+                </li>
                 {% endfor %}
             </ul>
             {% endif %}
             {% if problemas.necesidades_no_cubiertas %}
             <div id="problema">Turnos con necesidades insatisfechas</div>
             <ul>
-                {% for turno, necesidad in problemas.necesidades_no_cubiertas %}
-                <li>{{ turno }} necesita <b>{{ necesidad }}</b> docente(s)</li>
+                {% for turno, necesidad, docentes in problemas.necesidades_no_cubiertas %}
+                <li>
+                    <div class="tooltip">{{ turno }} necesita <b>{{ necesidad }}</b> docente(s)
+                        <span class="tooltiptext">
+                            <span class="titulo">Docentes que pidieron {{ turno }}</span>
+                            <ul>{% for docente in docentes %}
+                                <li>{{ docente }}</li>
+                                {% endfor %}
+                            </ul>
+                        </span>
+                    </div>
+                </li>
                 {% endfor %}
             </ul>
             {% endif %}
