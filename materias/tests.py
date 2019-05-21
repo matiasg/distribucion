@@ -179,3 +179,6 @@ class TestPaginas(TestCase):
         self.assertNotContains(response, 'Teórica 0')
         self.assertContains(response, 'Teórica 1')
 
+    def test_pagina_principal_sin_ac(self):
+        response = self.client.get('/materias/')
+        self.assertNotContains(response, 'Teórica')

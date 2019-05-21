@@ -9,9 +9,21 @@ from .models import Materia, Turno, Horario, Cuatrimestres, TipoMateria
 
 
 def index(request):
-    materias = filtra_materias()
-    context = {'materias': materias}
-    return render(request, 'materias/index.html', context)
+    # Llamada sin anno y cuatrimestre. Tomamos el período actual
+    # Fechas inventadas de período actual:
+    # Cuatrimestre de Verano: 1/1 al 15/3
+    # Primer Cuatrimestre: 16/3 al 31/7
+    # Segundo: 1/8 al 31/12
+    now = timezone.now()
+    anno = now.year
+    mes_dia = (now.month, now.day)
+    if mes_dia < (3, 16):
+        c = Cuatrimestres.V
+    elif mes_dia < (8, 1):
+        c = Cuatrimestres.P
+    else:
+        c = Cuatrimestres.S
+    return por_anno_y_cuatrimestre(request, f'{anno}{c.value}')
 
 
 def anno_y_cuatrimestre(anno_cuat):
