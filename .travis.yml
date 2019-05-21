@@ -6,6 +6,11 @@ python:
 services:
   - postgresql
 
+addons:
+  apt:
+    packages:
+      - language-pack-es
+
 install:
   - pip install -r requirements.txt
   - git clone https://github.com/matiasg/allocation.git
