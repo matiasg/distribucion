@@ -180,3 +180,19 @@ class TestEncuesta(TestCase):
                                 for materia in orden
                                 for turno in orden]
         self.assertEqual(''.join(turnos), ''.join(esperados))
+
+    def test_orden_materias_argentina(self):
+        desorden = ['b', 'á', 'ñ', 'ü', 't']
+        orden = ['á', 'b', 'ñ', 't', 'ü']
+
+        for materia in desorden:
+            m = Materia.objects.create(nombre=f'materia{materia}', obligatoriedad=TipoMateria.B.name)
+            Turno.objects.create(materia=m, anno=2107, cuatrimestre=Cuatrimestres.P.name,
+                                 numero=1, tipo=TipoTurno.T.name,
+                                 necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+
+        response = self.client.get(f'/encuestas/encuesta/2107/{Cuatrimestres.P.name}/{TipoDocentes.P.name}')
+
+        materias = re.findall('materia(.),', response.content.decode())
+        self.assertEqual(materias, [f'{materia}' for opcion in range(5)
+                                                 for materia in orden])
