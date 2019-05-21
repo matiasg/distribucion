@@ -88,7 +88,7 @@ def _generar_contexto(anno, cuatrimestre, tipo_docente):
 
     turnos = [TurnoParaEncuesta(-1, '', True)]
     turnos += [TurnoParaEncuesta(turno.id, f'{turno} ({turno.horarios_info().diayhora})', turno.dificil_de_cubrir)
-               for turno in sorted(turnos_ac, key=lambda t: t.materia.nombre)]
+               for turno in sorted(turnos_ac, key=lambda t: (t.materia.nombre, t.numero))]
 
     docentes = [DocenteParaEncuesta(-1, '')]
     docentes += [DocenteParaEncuesta(docente.id, docente.nombre)
