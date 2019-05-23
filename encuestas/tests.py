@@ -146,3 +146,53 @@ class TestEncuesta(TestCase):
         self.assertEqual(od.cargas, 1)
         self.assertEqual(od.telefono,  '+54911 1234-5678')
         self.assertEqual(od.email,  'juan@dm.uba.ar')
+
+    def test_orden_docentes(self):
+        for docente in [5, 1, 3, 8, 9, 6, 0, 7, 2, 4]:
+            Docente.objects.create(nombre=f'doc{docente}', email='mail@nada.org', telefono='1234',
+                                   cargos=[CargoDedicacion.JTPSmx.name])
+        response = self.client.get(f'/encuestas/encuesta/{self.anno}/{Cuatrimestres.P.name}/{TipoDocentes.J.name}')
+
+        docentes_en_desplegable = re.findall('>(doc[0-9])<', response.content.decode())
+        self.assertEqual(docentes_en_desplegable, [f'doc{d}' for d in range(10)])
+
+    def test_orden_materias_y_turnos(self):
+        desorden = [4, 1, 3, 5, 2]
+        orden = sorted(desorden)
+
+        for materia in desorden:
+            m = Materia.objects.create(nombre=f'materia{materia}', obligatoriedad=TipoMateria.B.name)
+            for turno in desorden:
+                Turno.objects.create(materia=m, anno=2107, cuatrimestre=Cuatrimestres.P.name,
+                                     numero=turno, tipo=TipoTurno.T.name,
+                                     necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+
+        response = self.client.get(f'/encuestas/encuesta/2107/{Cuatrimestres.P.name}/{TipoDocentes.P.name}')
+
+        materias = re.findall('materia([0-9]),', response.content.decode())
+        self.assertEqual(materias, [f'{materia}' for opcion in range(5)
+                                                 for materia in orden
+                                                 for turno in orden])
+
+        turnos = re.findall(f'materia[0-9],.*, {TipoTurno.T.value} ([0-9]) ', response.content.decode())
+        # por alguna razón, unittest se cuelga con un assertEqual para turnos igual al de materias, así que los convierto en str
+        esperados = [f'{turno}' for opcion in range(5)
+                                for materia in orden
+                                for turno in orden]
+        self.assertEqual(''.join(turnos), ''.join(esperados))
+
+    def test_orden_materias_argentina(self):
+        desorden = ['b', 'á', 'ñ', 'ü', 't']
+        orden = ['á', 'b', 'ñ', 't', 'ü']
+
+        for materia in desorden:
+            m = Materia.objects.create(nombre=f'materia{materia}', obligatoriedad=TipoMateria.B.name)
+            Turno.objects.create(materia=m, anno=2107, cuatrimestre=Cuatrimestres.P.name,
+                                 numero=1, tipo=TipoTurno.T.name,
+                                 necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+
+        response = self.client.get(f'/encuestas/encuesta/2107/{Cuatrimestres.P.name}/{TipoDocentes.P.name}')
+
+        materias = re.findall('materia(.),', response.content.decode())
+        self.assertEqual(materias, [f'{materia}' for opcion in range(5)
+                                                 for materia in orden])
