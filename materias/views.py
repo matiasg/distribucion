@@ -71,7 +71,7 @@ def filtra_materias(**kwargs):
 
 
 @login_required
-@permission_required('dborrador.add_turno')
+@permission_required('materias.add_turno')
 def administrar(request):
     if 'turnos' in request.POST:
         anno = int(request.POST['anno'])
@@ -87,7 +87,7 @@ def administrar(request):
 
 
 @login_required
-@permission_required('dborrador.add_turno')
+@permission_required('materias.add_turno')
 def administrar_turnos(request, anno, cuatrimestre):
     if 'cambiar' in request.POST:
         key_to_field = {'alumnos': 'alumnos',
