@@ -5,6 +5,8 @@ import datetime
 from materias.models import (Cargos, Dedicaciones, CargoDedicacion, Docente,
                              Materia, Turno, TipoMateria, TipoTurno, Dias, Cuatrimestres,
                              Horario)
+from usuarios.models import Usuario
+from django.contrib.auth.models import Permission
 
 class TestModels(TestCase):
 
@@ -182,3 +184,17 @@ class TestPaginas(TestCase):
     def test_pagina_principal_sin_ac(self):
         response = self.client.get('/materias/')
         self.assertNotContains(response, 'Teórica')
+
+    def test_administrar(self):
+        autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
+        permiso = Permission.objects.get(content_type__app_label='materias', codename='add_turno')
+        autorizado.user_permissions.add(permiso)
+        self.client.login(username='autorizado', password='1234')
+
+        self.turno11.dificil_de_cubrir = True
+        self.turno11.save()
+
+        response = self.client.get('/materias/administrar_turnos/2100/P', follow=True)
+        self.assertContains(response, 'dificil')
+
+        self.assertContains(response, f'name="dificil_{self.turno11.id}" checked')
