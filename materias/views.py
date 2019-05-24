@@ -90,19 +90,25 @@ def administrar(request):
 @permission_required('materias.add_turno')
 def administrar_turnos(request, anno, cuatrimestre):
     if 'cambiar' in request.POST:
-        key_to_field = {'alumnos': 'alumnos',
-                        'necesidadprof': 'necesidad_prof',
-                        'necesidadjtp': 'necesidad_jtp',
-                        'necesidaday1': 'necesidad_ay1',
-                        'necesidaday2': 'necesidad_ay2',
+        key_to_field = {'alumnos': ('alumnos', int),
+                        'necesidadprof': ('necesidad_prof', int),
+                        'necesidadjtp': ('necesidad_jtp', int),
+                        'necesidaday1': ('necesidad_ay1', int),
+                        'necesidaday2': ('necesidad_ay2', int),
+                        'dificil': ('dificil_de_cubrir', bool),
                         }
+
         with transaction.atomic():
-            for k, v in request.POST.items():
-                if k.startswith('alumnos') or k.startswith('necesidad'):
-                    k_field, turno_id = k.split('_')
-                    turno = Turno.objects.get(pk=int(turno_id))
-                    setattr(turno, key_to_field[k_field], int(v))
-                    turno.save()
+            for turno in Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre):
+                for page_field, (field, _type) in key_to_field.items():
+                    page_field_turno = f'{page_field}_{turno.id}'
+                    if _type is int:
+                        v = _type(request.POST[page_field_turno])
+                    elif _type is bool:
+                        # checkbox aparece solo si está marcado
+                        v = page_field_turno in request.POST
+                    setattr(turno, field, v)
+                turno.save()
         return HttpResponseRedirect(reverse('materias:administrar'))
 
     else:
