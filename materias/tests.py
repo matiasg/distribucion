@@ -198,6 +198,22 @@ class TestPaginas(TestCase):
         response = self.client.get(url, follow=True)
         self.assertContains(response, f'name="dificil_{self.turno11.id}" checked')
 
-        self.client.post(url, {f'dificil_{self.turno11.id}': False, f'dificil_{self.turno12.id}': True})
-        self.assertFalse(self.turno11.dificil_de_cubrir)
-        self.assertTrue(self.turno12.dificil_de_cubrir)
+        key_to_field = {'alumnos': 'alumnos',
+                        'necesidadprof': 'necesidad_prof',
+                        'necesidadjtp': 'necesidad_jtp',
+                        'necesidaday1': 'necesidad_ay1',
+                        'necesidaday2': 'necesidad_ay2'}
+
+        post = dict()
+        for k_field, t_attr in key_to_field.items():
+            for turno in Turno.objects.all():
+                post[f'{k_field}_{turno.id}'] = getattr(turno, t_attr)
+
+        post[f'dificil_{self.turno12.id}'] = 'on'
+        post['cambiar'] = True
+        self.client.post(url, post)
+
+        nturno11 = Turno.objects.get(pk=self.turno11.id)
+        nturno12 = Turno.objects.get(pk=self.turno12.id)
+        self.assertFalse(nturno11.dificil_de_cubrir)
+        self.assertTrue(nturno12.dificil_de_cubrir)
