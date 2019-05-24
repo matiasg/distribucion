@@ -194,7 +194,10 @@ class TestPaginas(TestCase):
         self.turno11.dificil_de_cubrir = True
         self.turno11.save()
 
-        response = self.client.get('/materias/administrar_turnos/2100/P', follow=True)
-        self.assertContains(response, 'dificil')
-
+        url = '/materias/administrar_turnos/2100/P'
+        response = self.client.get(url, follow=True)
         self.assertContains(response, f'name="dificil_{self.turno11.id}" checked')
+
+        self.client.post(url, {f'dificil_{self.turno11.id}': False, f'dificil_{self.turno12.id}': True})
+        self.assertFalse(self.turno11.dificil_de_cubrir)
+        self.assertTrue(self.turno12.dificil_de_cubrir)
