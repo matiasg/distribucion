@@ -1,6 +1,8 @@
 from django.test import TestCase
+from unittest.mock import patch
 
 import datetime
+from django.utils import timezone
 
 from materias.models import (Cargos, Dedicaciones, CargoDedicacion, Docente,
                              Materia, Turno, TipoMateria, TipoTurno, Dias, Cuatrimestres,
@@ -184,6 +186,16 @@ class TestPaginas(TestCase):
     def test_pagina_principal_sin_ac(self):
         response = self.client.get('/materias/')
         self.assertNotContains(response, 'Teórica')
+        with patch.object(timezone, 'now', return_value=datetime.datetime(2100, 1, 1)):
+            response = self.client.get('/materias/')
+            self.assertNotContains(response, 'Teórica')
+        with patch.object(timezone, 'now', return_value=datetime.datetime(2100, 5, 1)):
+            response = self.client.get('/materias/')
+            self.assertContains(response, 'Teórica')
+        with patch.object(timezone, 'now', return_value=datetime.datetime(2100, 10, 1)):
+            response = self.client.get('/materias/')
+            self.assertNotContains(response, 'Teórica')
+
 
     def test_administrar(self):
         autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
