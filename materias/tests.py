@@ -205,7 +205,7 @@ class TestPaginas(TestCase):
             response = self.client.get('/materias/')
             self.assertNotContains(response, 'Teórica')
 
-    def test_administrar(self):
+    def test_administrar_permisos(self):
         response = self.client.get('/materias/administrar', follow=True)
         self.assertEqual(response.redirect_chain[0], ('/admin/login?next=/materias/administrar', 302))
 
@@ -217,6 +217,15 @@ class TestPaginas(TestCase):
         response = self.client.get('/materias/administrar', follow=True)
         self.assertContains(response, 'Administrar turnos')
         self.assertEqual(len(response.redirect_chain), 0)
+
+    def test_administrar_dirige_bien(self):
+        self.client.login(username='autorizado', password='1234')
+        response = self.client.post('/materias/administrar',
+                                    {'turnos': True, 'anno': 2100, 'cuatrimestre': Cuatrimestres.P.name},
+                                    follow=True)
+        self.assertEqual(response.redirect_chain[-1],
+                         (f'/materias/administrar_turnos/2100/{Cuatrimestres.P.name}', 302),
+                         'No está redirigiendo bien a administrar_turnos')
 
     def test_administrar_turnos(self):
         self.client.login(username='autorizado', password='1234')
