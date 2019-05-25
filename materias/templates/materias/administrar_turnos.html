@@ -18,6 +18,15 @@
             <table>
                 <caption>{{ materia.nombre.upper }}</caption>
                 <tbody>
+                    <tr>
+                        <th></th>
+                        <th>alumnos</th>
+                        <th>Prof</th>
+                        <th>JTP</th>
+                        <th>Ay1</th>
+                        <th>Ay2</th>
+                        <th>difícil</th>
+                    </tr>
                     {% for turno in turnos %}
                     <tr>
                         <td class="fondo{{ turno.tipo }}">{{ turno.tipo }} {{ turno.numero }}</td>
@@ -26,6 +35,7 @@
                         <td><input type="number" name="necesidadjtp_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_jtp }}></td>
                         <td><input type="number" name="necesidaday1_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_ay1 }}></td>
                         <td><input type="number" name="necesidaday2_{{ turno.id }}" min=0 max=10 value={{ turno.necesidad_ay2 }}></td>
+                        <td><input type="checkbox" name="dificil_{{ turno.id }}" {% if turno.dificil_de_cubrir %}checked{% endif %}></td>
                     </tr>
                     {% endfor %}
                 </tbody>

@@ -5,6 +5,8 @@ import datetime
 from materias.models import (Cargos, Dedicaciones, CargoDedicacion, Docente,
                              Materia, Turno, TipoMateria, TipoTurno, Dias, Cuatrimestres,
                              Horario)
+from usuarios.models import Usuario
+from django.contrib.auth.models import Permission
 
 class TestModels(TestCase):
 
@@ -182,3 +184,36 @@ class TestPaginas(TestCase):
     def test_pagina_principal_sin_ac(self):
         response = self.client.get('/materias/')
         self.assertNotContains(response, 'Teórica')
+
+    def test_administrar(self):
+        autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
+        permiso = Permission.objects.get(content_type__app_label='materias', codename='add_turno')
+        autorizado.user_permissions.add(permiso)
+        self.client.login(username='autorizado', password='1234')
+
+        self.turno11.dificil_de_cubrir = True
+        self.turno11.save()
+
+        url = '/materias/administrar_turnos/2100/P'
+        response = self.client.get(url, follow=True)
+        self.assertContains(response, f'name="dificil_{self.turno11.id}" checked')
+
+        key_to_field = {'alumnos': 'alumnos',
+                        'necesidadprof': 'necesidad_prof',
+                        'necesidadjtp': 'necesidad_jtp',
+                        'necesidaday1': 'necesidad_ay1',
+                        'necesidaday2': 'necesidad_ay2'}
+
+        post = dict()
+        for k_field, t_attr in key_to_field.items():
+            for turno in Turno.objects.all():
+                post[f'{k_field}_{turno.id}'] = getattr(turno, t_attr)
+
+        post[f'dificil_{self.turno12.id}'] = 'on'
+        post['cambiar'] = True
+        self.client.post(url, post)
+
+        nturno11 = Turno.objects.get(pk=self.turno11.id)
+        nturno12 = Turno.objects.get(pk=self.turno12.id)
+        self.assertFalse(nturno11.dificil_de_cubrir)
+        self.assertTrue(nturno12.dificil_de_cubrir)
