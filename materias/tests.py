@@ -1,6 +1,8 @@
 from django.test import TestCase
+from unittest.mock import patch
 
 import datetime
+from django.utils import timezone
 
 from materias.models import (Cargos, Dedicaciones, CargoDedicacion, Docente,
                              Materia, Turno, TipoMateria, TipoTurno, Dias, Cuatrimestres,
@@ -144,6 +146,10 @@ class TestPaginas(TestCase):
 
         self.horario211 = Horario.objects.create(turno=self.turno21, dia=Dias.Vi.name, comienzo=diez, final=diez,
                                                  aula='3', pabellon=1)
+        Usuario.objects.create_user(username='desautorizado', password='123')
+        autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
+        permiso = Permission.objects.get(content_type__app_label='materias', codename='add_turno')
+        autorizado.user_permissions.add(permiso)
 
     def test_pagina_principal_con_y_sin_turnos(self):
         response = self.client.get('/materias/21001')
@@ -181,14 +187,47 @@ class TestPaginas(TestCase):
         self.assertNotContains(response, 'Teórica 0')
         self.assertContains(response, 'Teórica 1')
 
+    def test_ac_mal_formado(self):
+        for ac in ['abc', '1234', '1234a', '0x231', '10005', '1000Y']:
+            response = self.client.get(f'/materias/{ac}')
+            self.assertEqual(response.status_code, 404)
+
     def test_pagina_principal_sin_ac(self):
         response = self.client.get('/materias/')
         self.assertNotContains(response, 'Teórica')
+        with patch.object(timezone, 'now', return_value=datetime.datetime(2100, 1, 1)):
+            response = self.client.get('/materias/')
+            self.assertNotContains(response, 'Teórica')
+        with patch.object(timezone, 'now', return_value=datetime.datetime(2100, 5, 1)):
+            response = self.client.get('/materias/')
+            self.assertContains(response, 'Teórica')
+        with patch.object(timezone, 'now', return_value=datetime.datetime(2100, 10, 1)):
+            response = self.client.get('/materias/')
+            self.assertNotContains(response, 'Teórica')
 
-    def test_administrar(self):
-        autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
-        permiso = Permission.objects.get(content_type__app_label='materias', codename='add_turno')
-        autorizado.user_permissions.add(permiso)
+    def test_administrar_permisos(self):
+        response = self.client.get('/materias/administrar', follow=True)
+        self.assertEqual(response.redirect_chain[0], ('/admin/login?next=/materias/administrar', 302))
+
+        self.client.login(username='desautorizado', password='123')
+        response = self.client.get('/materias/administrar', follow=True)
+        self.assertEqual(response.redirect_chain[0], ('/admin/login?next=/materias/administrar', 302))
+
+        self.client.login(username='autorizado', password='1234')
+        response = self.client.get('/materias/administrar', follow=True)
+        self.assertContains(response, 'Administrar turnos')
+        self.assertEqual(len(response.redirect_chain), 0)
+
+    def test_administrar_dirige_bien(self):
+        self.client.login(username='autorizado', password='1234')
+        response = self.client.post('/materias/administrar',
+                                    {'turnos': True, 'anno': 2100, 'cuatrimestre': Cuatrimestres.P.name},
+                                    follow=True)
+        self.assertEqual(response.redirect_chain[-1],
+                         (f'/materias/administrar_turnos/2100/{Cuatrimestres.P.name}', 302),
+                         'No está redirigiendo bien a administrar_turnos')
+
+    def test_administrar_turnos(self):
         self.client.login(username='autorizado', password='1234')
 
         self.turno11.dificil_de_cubrir = True
