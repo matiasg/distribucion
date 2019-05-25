@@ -146,6 +146,10 @@ class TestPaginas(TestCase):
 
         self.horario211 = Horario.objects.create(turno=self.turno21, dia=Dias.Vi.name, comienzo=diez, final=diez,
                                                  aula='3', pabellon=1)
+        Usuario.objects.create_user(username='desautorizado', password='123')
+        autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
+        permiso = Permission.objects.get(content_type__app_label='materias', codename='add_turno')
+        autorizado.user_permissions.add(permiso)
 
     def test_pagina_principal_con_y_sin_turnos(self):
         response = self.client.get('/materias/21001')
@@ -201,12 +205,20 @@ class TestPaginas(TestCase):
             response = self.client.get('/materias/')
             self.assertNotContains(response, 'Teórica')
 
-
-
     def test_administrar(self):
-        autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
-        permiso = Permission.objects.get(content_type__app_label='materias', codename='add_turno')
-        autorizado.user_permissions.add(permiso)
+        response = self.client.get('/materias/administrar', follow=True)
+        self.assertEqual(response.redirect_chain[0], ('/admin/login?next=/materias/administrar', 302))
+
+        self.client.login(username='desautorizado', password='123')
+        response = self.client.get('/materias/administrar', follow=True)
+        self.assertEqual(response.redirect_chain[0], ('/admin/login?next=/materias/administrar', 302))
+
+        self.client.login(username='autorizado', password='1234')
+        response = self.client.get('/materias/administrar', follow=True)
+        self.assertContains(response, 'Administrar turnos')
+        self.assertEqual(len(response.redirect_chain), 0)
+
+    def test_administrar_turnos(self):
         self.client.login(username='autorizado', password='1234')
 
         self.turno11.dificil_de_cubrir = True
