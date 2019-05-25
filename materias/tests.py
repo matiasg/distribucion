@@ -183,6 +183,11 @@ class TestPaginas(TestCase):
         self.assertNotContains(response, 'Teórica 0')
         self.assertContains(response, 'Teórica 1')
 
+    def test_ac_mal_formado(self):
+        for ac in ['abc', '1234', '1234a', '0x231', '10005', '1000Y']:
+            response = self.client.get(f'/materias/{ac}')
+            self.assertEqual(response.status_code, 404)
+
     def test_pagina_principal_sin_ac(self):
         response = self.client.get('/materias/')
         self.assertNotContains(response, 'Teórica')
@@ -195,6 +200,7 @@ class TestPaginas(TestCase):
         with patch.object(timezone, 'now', return_value=datetime.datetime(2100, 10, 1)):
             response = self.client.get('/materias/')
             self.assertNotContains(response, 'Teórica')
+
 
 
     def test_administrar(self):
