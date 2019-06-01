@@ -1,4 +1,5 @@
 import datetime
+import pytz
 import logging
 import coloredlogs
 from pathlib import Path
@@ -6,7 +7,7 @@ import csv
 import re
 from argparse import ArgumentParser
 
-from django.utils.dateparse import parse_time
+from django.utils.dateparse import parse_datetime
 from django.db import transaction
 
 import sys
@@ -18,6 +19,7 @@ django.setup()
 
 from materias.models import (Materia, Turno, Horario, Docente, Carga, Cuatrimestres, TipoMateria, TipoTurno,
                              Cargos, Dedicaciones, CargoDedicacion, Dias, get_key_enum)
+from encuestas.models import PreferenciasDocente, OtrosDatos
 from tools.current_html_to_db import maymin, convierte_a_horarios
 
 logger = logging.getLogger()
@@ -34,8 +36,10 @@ cuatrimestre = Cuatrimestres.S
 def borra_datos_de_anno_y_cuatrimestre():
     tb = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
     cb = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
+    eb = PreferenciasDocente.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre.name).delete()
     logger.warning('Borré datos de turnos: %s', tb)
     logger.warning('Borré datos de cargas: %s', cb)
+    logger.warning('Borré datos de preferencias: %s', eb)
 
 
 class LectorDeCsv:
@@ -54,7 +58,6 @@ class LectorDeCsv:
         '1': Dedicaciones.Exc,  # TODO: realmente es así el código?
         '3': Dedicaciones.Sim,
     }
-
 
     @classmethod
     def csv_reader(cls, txt):
@@ -114,6 +117,30 @@ class LectorDeCsv:
         return [{'docente': docente, 'turno': turno}
                 for _, _, _, _, docente, turno in cls.csv_reader('dictat.txt')
                 ]
+
+    @classmethod
+    def lee_encuestas(cls):
+        buenos_aires_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+        datos_docentes = {encuesta_id: {'docente': docente,
+                                        'timestamp': buenos_aires_tz.localize(parse_datetime(timestamp)),
+                                        'email': email,
+                                        'telefono': telefono.replace(' ', ''),
+                                        'observaciones_generales': observaciones,
+                                        }
+                          for encuesta_id, timestamp, email, telefono, observaciones, _, docente in cls.csv_reader('encuesta.txt')}
+
+        for encuesta_periodo_id, _, cargas, _, _, _, observaciones, encuesta_id in cls.csv_reader('encuestaperiodo.txt'):
+            datos_docentes[encuesta_id].update({'encuesta_periodo_id': encuesta_periodo_id,
+                                                'cargas': int(cargas),
+                                                'observaciones_particulares': observaciones})
+
+        # ponemos encuesta_periodo_id como key porque eso es lo que viene en opciones
+        datos_docentes = {dato['encuesta_periodo_id']: dato for dato in datos_docentes.values()}
+
+        opciones = [{'encuesta_periodo_id': encuesta_periodo_id, 'turno': turno, 'peso': int(peso)}
+                    for _, peso, _, encuesta_periodo_id, turno in cls.csv_reader('opcion.txt')]
+
+        return opciones, datos_docentes
 
 
 def main():
@@ -199,6 +226,48 @@ def main():
             carga.turno = turnos_nuestros[carga_fila['turno']]
             carga.save()
             logger.info('Carga generada: %s', carga)
+
+        opciones, datos_docentes = LectorDeCsv.lee_encuestas()
+
+        # chequeamos que las cargas pedidas sean las que tenemos
+        # y creamos o borramos cargas si no
+        for datos in datos_docentes.values():
+            docente = docentes_nuestros[datos['docente']]
+            cargas_esperadas = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name, docente=docente)
+            fecha_encuesta = datos['timestamp']
+
+            if datos['cargas'] < cargas_esperadas.count():
+                a_borrar = cargas_esperadas.count() - datos['cargas']
+                logger.warning("%s tiene %d carga(s) esperada(s) pero pide %d. Le borro %d carga(s)",
+                               docente, cargas_esperadas.count(), datos['cargas'], a_borrar)
+                for _ in range(a_borrar):
+                    cargas_esperadas.filter(turno=None).last().delete()
+
+            elif datos['cargas'] > cargas_esperadas.count():
+                a_crear = datos['cargas'] - cargas_esperadas.count()
+                logger.warning("%s tiene %d carga(s) esperada(s) pero pide %d. Le agrego %d carga(s)",
+                               docente, cargas_esperadas.count(), datos['cargas'], a_crear)
+                for _ in range(a_crear):
+                    Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre.name, docente=docente)
+
+            OtrosDatos.objects.create(
+                docente=docente,
+                fecha_encuesta=fecha_encuesta,
+                email=datos['email'],
+                telefono=datos['telefono'],
+                cargas=datos['cargas'],
+                comentario=f'General: {datos["observaciones_generales"]}. Cuatrimestre: {datos["observaciones_particulares"]}'
+            )
+
+        # salvamos opciones
+        for opcion in opciones:
+            datos = datos_docentes[opcion['encuesta_periodo_id']]
+            docente = docentes_nuestros[datos['docente']]
+            turno = turnos_nuestros[opcion['turno']]
+            cargo = docente.cargos[0][:3]
+            PreferenciasDocente.objects.get_or_create(docente=docente, cargo=cargo,
+                                                      turno=turno, peso=opcion['peso'],
+                                                      fecha_encuesta=fecha_encuesta)
 
 
 if __name__ == '__main__':
