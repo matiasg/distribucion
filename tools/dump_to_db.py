@@ -23,7 +23,7 @@ from encuestas.models import PreferenciasDocente, OtrosDatos
 from tools.current_html_to_db import maymin, convierte_a_horarios
 
 logger = logging.getLogger()
-coloredlogs.install(level='DEBUG')
+coloredlogs.install(level='WARNING')
 
 
 path = Path(__file__).parent / '../../sitio_anterior'
@@ -37,9 +37,9 @@ def borra_datos_de_anno_y_cuatrimestre():
     tb = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
     cb = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
     eb = PreferenciasDocente.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre.name).delete()
-    logger.warning('Borré datos de turnos: %s', tb)
-    logger.warning('Borré datos de cargas: %s', cb)
-    logger.warning('Borré datos de preferencias: %s', eb)
+    logger.info('Borré datos de turnos: %s', tb)
+    logger.info('Borré datos de cargas: %s', cb)
+    logger.info('Borré datos de preferencias: %s', eb)
 
 
 class LectorDeCsv:
@@ -106,10 +106,11 @@ class LectorDeCsv:
         materias = {_id: {'nombre': nombre, 'tipo': _a_obligatoriedad[tipo]}
                     for _id, nombre, periodo, tipo in cls.csv_reader('materia.txt')}
         turnos = {_id: {'tipo': tipo, 'numero': _a_numero(identificador),
+                        'secuencia': int(secuencia),
                         'horarios': convierte_a_horarios(horario),
                         'nec_prof': int(usa_1), 'nec_jtp': int(usa_2), 'nec_ay1': int(usa_3), 'nec_ay2': int(usa_4),
                         'dificil': forzar == '1', 'materia': materia_id}
-                  for _id, _, tipo, identificador, horario, _, _, usa_1, usa_2, usa_3, usa_4, forzar, materia_id in cls.csv_reader('turno.txt')}
+                  for _id, secuencia, tipo, identificador, horario, _, _, usa_1, usa_2, usa_3, usa_4, forzar, materia_id in cls.csv_reader('turno.txt')}
         return materias, turnos
 
     @classmethod
@@ -163,33 +164,39 @@ def main():
                                                                anno=anno, cuatrimestre=cuatrimestre.name,
                                                                numero=turno['numero'],
                                                                tipo=turno['tipo'],
-                                                               defaults={
-                                                                   'necesidad_prof': turno['nec_prof'],
-                                                                   'necesidad_jtp': turno['nec_jtp'],
-                                                                   'necesidad_ay1': turno['nec_ay1'],
-                                                                   'necesidad_ay2': turno['nec_ay2'],
-                                                                   'dificil_de_cubrir': turno['dificil'],
-                                                               },
+                                                               defaults={'necesidad_prof': turno['nec_prof'],
+                                                                         'necesidad_jtp': turno['nec_jtp'],
+                                                                         'necesidad_ay1': turno['nec_ay1'],
+                                                                         'necesidad_ay2': turno['nec_ay2'],
+                                                                         'dificil_de_cubrir': turno['dificil']},
                                                                )
-            turnos_nuestros[_id] = turno_actual
             if creado:
                 logger.info('Creé el turno %s', turno_actual)
+                turnos_nuestros[_id] = turno_actual
             else:
-                logger.debug('Actualizo datos del turno %s', turno_actual)
-                turno_actual.necesidad_prof=turno['nec_prof'],
-                turno_actual.necesidad_jtp=turno['nec_jtp'],
-                turno_actual.necesidad_ay1=turno['nec_ay1'],
-                turno_actual.necesidad_ay2=turno['nec_ay2'],
-                turno_actual.dificil_de_cubrir=turno['dificil'],
+                logger.error('Ya hay un turno que colisiona con este: %s. Invento identificadores en base a secuencia', turno_actual)
+                # busco la secuencia del turno anterior
+                id_previa = next(ide for ide, t in turnos_nuestros.items() if t == turno_actual)
+                turno_actual_info_de_tabla = turnos[id_previa]
+                turno_actual.numero = turno_actual_info_de_tabla['secuencia']
+                turno_actual.save()
+                # ahora salvo este
+                turno_actual = Turno.objects.create(materia=materias_nuestras[turno['materia']],
+                                                    anno=anno, cuatrimestre=cuatrimestre.name,
+                                                    numero=turno['secuencia'],
+                                                    tipo=turno['tipo'],
+                                                    necesidad_prof=turno['nec_prof'], necesidad_jtp=turno['nec_jtp'],
+                                                    necesidad_ay1=turno['nec_ay1'], necesidad_ay2=turno['nec_ay2'],
+                                                    dificil_de_cubrir=turno['dificil'])
+                turnos_nuestros[_id] = turno_actual
 
             for horario in turno['horarios']:
                 logger.info('horario: %s, %s, %s', horario[0], horario[1], horario[2])
-                h, creado = Horario.objects.get_or_create(
-                                        dia=horario[0],
-                                        comienzo=horario[1],
-                                        final=horario[2],
-                                        turno=turno_actual,
-                                        defaults={'aula': '', 'pabellon': 1})
+                h, creado = Horario.objects.get_or_create(dia=horario[0],
+                                                          comienzo=horario[1],
+                                                          final=horario[2],
+                                                          turno=turno_actual,
+                                                          defaults={'aula': '', 'pabellon': 1})
                 if creado:
                     logger.debug('Agregué un nuevo horario: %s', h)
 
