@@ -26,7 +26,7 @@ logger = logging.getLogger()
 coloredlogs.install(level='WARNING')
 
 
-path = Path(__file__).parent / '../../sitio_anterior'
+path = Path('/sitio_anterior')
 anno = 2019
 cuatrimestre = Cuatrimestres.S
 
