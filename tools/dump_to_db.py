@@ -108,7 +108,7 @@ class LectorDeCsv:
         turnos = {_id: {'tipo': tipo, 'numero': _a_numero(identificador),
                         'horarios': convierte_a_horarios(horario),
                         'nec_prof': int(usa_1), 'nec_jtp': int(usa_2), 'nec_ay1': int(usa_3), 'nec_ay2': int(usa_4),
-                        'dificil': bool(forzar), 'materia': materia_id}
+                        'dificil': forzar == '1', 'materia': materia_id}
                   for _id, _, tipo, identificador, horario, _, _, usa_1, usa_2, usa_3, usa_4, forzar, materia_id in cls.csv_reader('turno.txt')}
         return materias, turnos
 
