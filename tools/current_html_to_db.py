@@ -79,7 +79,7 @@ cargo_tipoturno = {'Teórica': [CargoDedicacion.AsoExc],
                    'Teórico-Práctica': [CargoDedicacion.AsoExc,
                                         CargoDedicacion.JTPSim, CargoDedicacion.Ay1Sim, CargoDedicacion.Ay2Sim]}
 
-def salva_datos(html, anno_actual, cuatrimestre):
+def salva_datos(html, anno, cuatrimestre):
     soup = BeautifulSoup(html, 'html.parser')
     comienzo = soup.find_all('div', attrs={'class': 'seccion'})[0]
 
@@ -145,9 +145,9 @@ def salva_datos(html, anno_actual, cuatrimestre):
                     'subnumero': subnumero,
                     'tipo': tipo_turno,
                 }
-                turno_actual, creado = Turno.objects.get_or_create(**datos_turno, anno=anno_actual, defaults=defaults)
+                turno, creado = Turno.objects.get_or_create(**datos_turno, anno=anno, defaults=defaults)
                 if creado:
-                    logger.info('nuevo turno creado: %s', turno_actual)
+                    logger.info('nuevo turno creado: %s', turno)
 
 
                 # docentes y cargas
@@ -167,23 +167,23 @@ def salva_datos(html, anno_actual, cuatrimestre):
                         logger.info('agregue a: %s', doc)
 
                     carga, creada = Carga.objects.get_or_create(docente=doc,
-                                                                turno=turno_actual,
-                                                                anno=anno_actual, cuatrimestre=cuatrimestre,
+                                                                turno=turno,
+                                                                anno=anno, cuatrimestre=cuatrimestre,
                                                                 defaults={'cargo': cargo})
                     if creada:
-                        logger.info('Carga docente: %s -> %s', doc.nombre, turno_actual)
+                        logger.info('Carga docente: %s -> %s', doc.nombre, turno)
 
                 # horarios
                 horarios = convierte_a_horarios(rows[1].text)
                 for horario in horarios:
                     logger.info('horario: %s, %s, %s', horario[0], horario[1], horario[2])
-                    h_actual, creado = Horario.objects.get_or_create(dia=horario[0],
-                                                                     comienzo=horario[1],
-                                                                     final=horario[2],
-                                                                     turno=turno_actual,
-                                                                     defaults={'aula': '', 'pabellon': 1})
+                    h, creado = Horario.objects.get_or_create(dia=horario[0],
+                                                              comienzo=horario[1],
+                                                              final=horario[2],
+                                                              turno=turno,
+                                                              defaults={'aula': '', 'pabellon': 1})
                     if creado:
-                        logger.debug('Agregué un nuevo horario para %s: %s', turno_actual, h_actual)
+                        logger.debug('Agregué un nuevo horario para %s: %s', turno, h)
 
 
 
@@ -191,15 +191,15 @@ def salva_datos(html, anno_actual, cuatrimestre):
 def parse():
     anno = datetime.datetime.now().year
     parser = ArgumentParser(description='utilitario para llenar materias en la db')
-    parser.add_argument('año_actual', type=int,
+    parser.add_argument('año', type=int,
                         help='Año del que se quiere tomar la información')
     parser.add_argument('cuatrimestre',
                         choices=[c.value for c in Cuatrimestres],
-                        help='cuatrimestre del que se quiere tomar la información')
+                        help='Cuatrimestre del que se quiere tomar la información')
     return parser.parse_args()
 
 if __name__ == '__main__':
     args = parse()
     cuatrimestre_name = get_key_enum(Cuatrimestres)[args.cuatrimestre]
-    html = lee_horarios_anteriores(args.año_actual, args.cuatrimestre.lower())
-    salva_datos(html, args.año_actual, cuatrimestre_name)
+    html = lee_horarios_anteriores(args.año, args.cuatrimestre.lower())
+    salva_datos(html, args.año, cuatrimestre_name)
