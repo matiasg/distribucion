@@ -113,10 +113,9 @@ class LectorDeCsv:
         return materias, turnos
 
     @classmethod
-    def lee_cargas(cls):
+    def lee_docentes_ya_distribuidos(cls):
         return [{'docente': docente, 'turno': turno}
-                for _, _, _, _, docente, turno in cls.csv_reader('dictat.txt')
-                ]
+                for _, _, _, _, docente, turno in cls.csv_reader('dictat.txt')]
 
     @classmethod
     def lee_encuestas(cls):
@@ -210,7 +209,7 @@ def main():
                 Carga.objects.create(docente=docente_actual, cargo=cargo_ded.name,
                                      anno=anno, cuatrimestre=cuatrimestre.name)
 
-        for carga_fila in LectorDeCsv.lee_cargas():
+        for carga_fila in LectorDeCsv.lee_docentes_ya_distribuidos():
             doc_id = carga_fila['docente']
             docente_actual = docentes_nuestros[doc_id]
 
