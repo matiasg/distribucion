@@ -25,7 +25,8 @@ En cualquier caso, los pasos que siguen son
 $ make build
 
 Tal vez,
-$ docker-compose run --rm web sh tools/create_db"
+$ docker-compose run --rm web sh tools/create_db
+$ docker-compose run --rm bash python tools/dump_to_db.py
 $ make populate
 
 Y finalmente
