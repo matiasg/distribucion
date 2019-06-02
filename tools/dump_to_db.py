@@ -246,8 +246,9 @@ def main():
                 a_crear = datos['cargas'] - cargas_esperadas.count()
                 logger.warning("%s tiene %d carga(s) esperada(s) pero pide %d. Le agrego %d carga(s)",
                                docente, cargas_esperadas.count(), datos['cargas'], a_crear)
+                cargo = docente.cargos[0]
                 for _ in range(a_crear):
-                    Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre.name, docente=docente)
+                    Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre.name, docente=docente, cargo=cargo)
 
             OtrosDatos.objects.create(
                 docente=docente,
