@@ -93,6 +93,7 @@ def distribuir(request, anno, cuatrimestre, tipo, intento):
     cargas_a_distribuir = MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(tipo, anno_cuat, intento)
     sources = {str(c.id): 1 for c in cargas_a_distribuir}
 
+    # turnos para cubrir
     necesidades_no_cubiertas = MapeosDistribucion.necesidades_no_cubiertas(tipo, anno_cuat, intento)
     targets = {}
     hay_errores = False
@@ -114,6 +115,7 @@ def distribuir(request, anno, cuatrimestre, tipo, intento):
     logger.info('Hay que distribuir %d cargas docentes y hay %d necesidades.',
                 len(cargas_a_distribuir), sum(necesidades_no_cubiertas.values()))
 
+    # docentes a distribuir
     preferencias = Preferencia.objects.all()
     pesos = []
     for carga in cargas_a_distribuir:
