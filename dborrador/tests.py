@@ -185,3 +185,43 @@ class TestVerDistribucion(TestCase):
                                    'jose'),
                                   content, flags=re.DOTALL),
                         'No figuran los docentes que prefieren un turno sin docentes')
+
+
+class TestDistribuir(TestCase):
+
+    def setUp(self):
+        self.docente1 = Docente.objects.create(nombre='d1', email='d1@nada.org',
+                                               telefono='1234', cargos=[CargoDedicacion.TitSim.name])
+        self.docente2 = Docente.objects.create(nombre='d2', email='d2@nade.org',
+                                               telefono='1235', cargos=[CargoDedicacion.TitSim.name])
+        self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
+        self.turno1 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                           numero=1, tipo=TipoTurno.A.name,
+                                           necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        self.turno2 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                           numero=2, tipo=TipoTurno.A.name,
+                                           necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        self.carga1 = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitSim.name,
+                                           anno=2100, cuatrimestre=Cuatrimestres.P.name)
+        self.carga2 = Carga.objects.create(docente=self.docente2, cargo=CargoDedicacion.TitSim.name,
+                                           anno=2100, cuatrimestre=Cuatrimestres.P.name)
+
+        self.autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
+        permiso = Permission.objects.get(codename='add_asignacion')
+        self.autorizado.user_permissions.add(permiso)
+        self.client.login(username='autorizado', password='1234')
+
+    def test_no_distribuye_docentes_asignados_en_intento_0(self):
+        now = timezone.now()
+        p1 = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1, fecha_encuesta=now)
+        p2 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=3, fecha_encuesta=now)
+        Preferencia.objects.create(preferencia=p1, peso_normalizado=1)
+        Preferencia.objects.create(preferencia=p2, peso_normalizado=1)
+
+        asignacion1 = Asignacion.objects.create(carga=self.carga1, turno=self.turno1, intento=0)
+
+        self.client.get(reverse('dborrador:distribuir',
+                                args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
+
+        # chequamos que al docente1 se lo dejó donde estaba y no se distribuyó al docente2
+        self.assertEqual(set(Asignacion.objects.all()), {asignacion1})

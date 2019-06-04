@@ -19,6 +19,7 @@ services:
     image: distribucion
     volumes:
       - distribucion_pgdata:/var/lib/postgresql/data
+      - ${PWD}/../sitio_anterior:/sitio_anterior
     command: /bin/bash
     depends_on:
       - db

@@ -93,7 +93,8 @@ def distribuir(request, anno, cuatrimestre, tipo, intento):
     cargas_a_distribuir = MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(tipo, anno_cuat, intento)
     sources = {str(c.id): 1 for c in cargas_a_distribuir}
 
-    necesidades_no_cubiertas = MapeosDistribucion.necesidades_no_cubiertas(tipo, anno_cuat, intento)
+    # turnos para cubrir
+    necesidades_no_cubiertas = MapeosDistribucion.necesidades_tipo_no_cubiertas_en(tipo, anno_cuat, intento)
     targets = {}
     hay_errores = False
     for turno, necesidad in necesidades_no_cubiertas.items():
@@ -114,6 +115,7 @@ def distribuir(request, anno, cuatrimestre, tipo, intento):
     logger.info('Hay que distribuir %d cargas docentes y hay %d necesidades.',
                 len(cargas_a_distribuir), sum(necesidades_no_cubiertas.values()))
 
+    # docentes a distribuir
     preferencias = Preferencia.objects.all()
     pesos = []
     for carga in cargas_a_distribuir:
@@ -127,8 +129,8 @@ def distribuir(request, anno, cuatrimestre, tipo, intento):
                               'weight': preferencia.peso_normalizado
                               })
             else:
-                logger.debug('Tengo una preferencia de %s para %s pero no se está distribuyendo ese turno',
-                             preferencia.preferencia.docente, preferencia.preferencia.turno)
+                logger.debug('Tengo una preferencia de %s para %s pero ese turno no necesita docentes de tipo %s',
+                             preferencia.preferencia.docente, preferencia.preferencia.turno, tipo.value)
 
     wmap = allocating.ListWeightedMap(pesos)
     logger.info('Voy a hacer una distribución con %d cargas docentes y %d lugares en turnos',

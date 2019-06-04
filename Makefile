@@ -9,7 +9,8 @@ build:
 	docker-compose build
 	docker volume create --name=distribucion_pgdata
 	docker-compose up --no-start
-	echo -e "sugerencia: correr \n\ndocker-compose run --rm web sh tools/create_db"
+	echo -e "sugerencia 1: correr \n\ndocker-compose run --rm web sh tools/create_db"
+	echo -e "sugerencia 2: correr \n\ndocker-compose run --rm bash python tools/dump_to_db.py"
 
 rebuild:
 	docker build -t distribucion . --no-cache
@@ -22,9 +23,8 @@ terminar:
 	docker-compose down
 
 populate:
-	docker-compose run --rm web python tools/current_html_to_db.py V 2020
-	docker-compose run --rm web python tools/current_html_to_db.py 1 2020
-	docker-compose run --rm web python tools/current_html_to_db.py 2 2020
+	docker-compose run --rm web python tools/current_html_to_db.py V 2019
+	docker-compose run --rm web python tools/current_html_to_db.py 1 2019
 
 demo: build populate
 	docker-compose run --rm web python tools/inventar_encuestas.py -a 2019 -c S -d J

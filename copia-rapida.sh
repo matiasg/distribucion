@@ -1,5 +1,7 @@
 #!/bin/bash
 
+rm -rf dockerfiles
+
 BRANCH=master
 curl --fail --silent --show-error --location https://codeload.github.com/matiasg/distribucion/tar.gz/${BRANCH} | tar xvz -C . distribucion-${BRANCH}/Makefile distribucion-${BRANCH}/dockerfiles distribucion-${BRANCH}/docker-compose.yaml
 mv distribucion-${BRANCH}/* .
@@ -25,7 +27,8 @@ En cualquier caso, los pasos que siguen son
 $ make build
 
 Tal vez,
-$ docker-compose run --rm web sh tools/create_db"
+$ docker-compose run --rm web sh tools/create_db
+$ docker-compose run --rm bash python tools/dump_to_db.py
 $ make populate
 
 Y finalmente
