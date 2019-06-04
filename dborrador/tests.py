@@ -220,9 +220,8 @@ class TestDistribuir(TestCase):
 
         asignacion1 = Asignacion.objects.create(carga=self.carga1, turno=self.turno1, intento=0)
 
-        response = self.client.get(reverse('dborrador:distribuir',
-                                           args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)),
-                                   follow=True)
+        self.client.get(reverse('dborrador:distribuir',
+                                args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
 
         # chequamos que al docente1 se lo dejó donde estaba y no se distribuyó al docente2
         self.assertEqual(set(Asignacion.objects.all()), {asignacion1})
