@@ -19,7 +19,9 @@ django.setup()
 
 from materias.models import (Materia, Turno, Horario, Docente, Carga, Cuatrimestres, TipoMateria, TipoTurno,
                              Cargos, Dedicaciones, CargoDedicacion, Dias, get_key_enum)
+from materias.misc import TipoDocentes, Mapeos
 from encuestas.models import PreferenciasDocente, OtrosDatos
+from dborrador.models import Asignacion
 from tools.current_html_to_db import maymin, convierte_a_horarios
 
 logger = logging.getLogger()
@@ -29,9 +31,7 @@ coloredlogs.install(level='WARNING')
 path = Path('/sitio_anterior')
 anno = 2019
 cuatrimestre = Cuatrimestres.S
-
-#### TODO
-#  Agregar encuestas
+cargos_ya_distribuidos = TipoDocentes.P
 
 def borra_datos_de_anno_y_cuatrimestre():
     tb = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
@@ -55,7 +55,8 @@ class LectorDeCsv:
     }
 
     _a_dedicacion = {
-        '1': Dedicaciones.Exc,  # TODO: realmente es así el código?
+        '1': Dedicaciones.Exc,
+        '2': Dedicaciones.Smx,
         '3': Dedicaciones.Sim,
     }
 
@@ -229,9 +230,15 @@ def main():
                 # tomamos la primera carga que no tenga turno asignado
                 carga = cargas.first()
 
-            carga.turno = turnos_nuestros[carga_fila['turno']]
-            carga.save()
-            logger.info('Carga generada: %s', carga)
+            if Mapeos.tipos_de_cargo(cargo) >= cargos_ya_distribuidos:
+                carga.turno = turnos_nuestros[carga_fila['turno']]
+                carga.save()
+                logger.info('Carga generada: %s', carga)
+            else:
+                asignacion = Asignacion.objects.create(carga=carga,
+                                                       turno=turnos_nuestros[carga_fila['turno']],
+                                                       intento=0)
+                logger.info('Asigné un docente de manera fija: %s', asignacion)
 
         opciones, datos_docentes = LectorDeCsv.lee_encuestas()
 
