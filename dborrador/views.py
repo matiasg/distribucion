@@ -94,7 +94,7 @@ def distribuir(request, anno, cuatrimestre, tipo, intento):
     sources = {str(c.id): 1 for c in cargas_a_distribuir}
 
     # turnos para cubrir
-    necesidades_no_cubiertas = MapeosDistribucion.necesidades_no_cubiertas(tipo, anno_cuat, intento)
+    necesidades_no_cubiertas = MapeosDistribucion.necesidades_tipo_no_cubiertas_en(tipo, anno_cuat, intento)
     targets = {}
     hay_errores = False
     for turno, necesidad in necesidades_no_cubiertas.items():
