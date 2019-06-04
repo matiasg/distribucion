@@ -95,7 +95,7 @@ class MapeosDistribucion:
         TODO: verificar que la distribución que se está haciendo nunca se va a mezclar
         con distribuciones de otros TipoDocentes ni con lo que ya está publicado.
         Si hay alguna posibilidad de que sí se mezcle, se puede
-        * agregar a cada carga y/o asignación que TipoDocentes está cubriendo
+        * agregar a cada carga y/o asignación qué TipoDocentes está cubriendo
         * tocar las necesidades a mano (esto es feo porque puede romper cuatrimestres que siguen
             si se copian las necesidades de un año a otro).
         '''
