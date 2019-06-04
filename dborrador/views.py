@@ -129,8 +129,8 @@ def distribuir(request, anno, cuatrimestre, tipo, intento):
                               'weight': preferencia.peso_normalizado
                               })
             else:
-                logger.debug('Tengo una preferencia de %s para %s pero no se está distribuyendo ese turno',
-                             preferencia.preferencia.docente, preferencia.preferencia.turno)
+                logger.debug('Tengo una preferencia de %s para %s pero ese turno no necesita docentes de tipo %s',
+                             preferencia.preferencia.docente, preferencia.preferencia.turno, tipo.value)
 
     wmap = allocating.ListWeightedMap(pesos)
     logger.info('Voy a hacer una distribución con %d cargas docentes y %d lugares en turnos',
