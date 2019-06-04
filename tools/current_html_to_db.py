@@ -186,8 +186,6 @@ def salva_datos(html, anno, cuatrimestre):
                         logger.debug('Agregué un nuevo horario para %s: %s', turno, h)
 
 
-
-
 def parse():
     anno = datetime.datetime.now().year
     parser = ArgumentParser(description='utilitario para llenar materias en la db')
