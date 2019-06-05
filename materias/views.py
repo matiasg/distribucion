@@ -73,7 +73,7 @@ def filtra_materias(**kwargs):
     return materias
 
 @login_required
-@permission_required('materias.add_turno')
+@permission_required('dborrador.add_asignacion')
 def administrar(request):
     if 'turnos_alumnos' in request.POST:
         anno = int(request.POST['anno'])
