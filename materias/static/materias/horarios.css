@@ -151,6 +151,14 @@ td.pabellon
 
 .tabla_numeros_chicos table input
 {
-  width: 6em;
+  width: 5em;
   font-size: large;
+}
+
+.tabla_col_borde_izquierdo
+{
+  border-left-style: solid;
+  padding-left: 1em;
+  padding-right: 1em;
+  background-color: #ccc;
 }
