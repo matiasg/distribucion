@@ -73,7 +73,7 @@ def filtra_materias(**kwargs):
     return materias
 
 @login_required
-@permission_required('dborrador.add_asignacion')
+@permission_required('materias.view_docente')
 def administrar(request):
     if 'turnos_alumnos' in request.POST:
         anno = int(request.POST['anno'])
@@ -137,7 +137,7 @@ def administrar_alumnos(request, anno, cuatrimestre):
 
 
 @login_required
-@permission_required('materias.add_turno')
+@permission_required('dborrador.add_asignacion')
 def administrar_docentes(request, anno, cuatrimestre):
     key_to_field = {Turno: {'necesidadprof': ('necesidad_prof', int),
                             'necesidadjtp': ('necesidad_jtp', int),
