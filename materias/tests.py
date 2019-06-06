@@ -1,6 +1,7 @@
 from django.test import TestCase
 from unittest.mock import patch
 
+import re
 import datetime
 from django.utils import timezone
 
@@ -136,20 +137,22 @@ class TestPaginas(TestCase):
                                             numero=2, tipo=TipoTurno.T.name, **dict_nec)
 
         siete, ocho, nueve, diez = datetime.time(7), datetime.time(8), datetime.time(9), datetime.time(10)
-        self.horario111 = Horario.objects.create(turno=self.turno11, dia=Dias.Lu.name, comienzo=ocho, final=nueve)
-        self.horario112 = Horario.objects.create(turno=self.turno11, dia=Dias.Ju.name, comienzo=siete, final=ocho)
-        self.horario121 = Horario.objects.create(turno=self.turno12, dia=Dias.Lu.name, comienzo=siete, final=nueve)
-        self.horario122 = Horario.objects.create(turno=self.turno12, dia=Dias.Ju.name, comienzo=ocho, final=ocho)
+        aula_pab = {'aula': 'no', 'pabellon': 6}
+        self.horario111 = Horario.objects.create(turno=self.turno11, dia=Dias.Lu.name, comienzo=ocho, final=nueve, **aula_pab)
+        self.horario112 = Horario.objects.create(turno=self.turno11, dia=Dias.Ju.name, comienzo=siete, final=ocho, **aula_pab)
+        self.horario121 = Horario.objects.create(turno=self.turno12, dia=Dias.Lu.name, comienzo=siete, final=nueve, **aula_pab)
+        self.horario122 = Horario.objects.create(turno=self.turno12, dia=Dias.Ju.name, comienzo=ocho, final=ocho, **aula_pab)
 
-        self.horario131 = Horario.objects.create(turno=self.turno13, dia=Dias.Ju.name, comienzo=ocho, final=ocho)
-        self.horario141 = Horario.objects.create(turno=self.turno14, dia=Dias.Mi.name, comienzo=siete, final=ocho)
+        self.horario131 = Horario.objects.create(turno=self.turno13, dia=Dias.Ju.name, comienzo=ocho, final=ocho, **aula_pab)
+        self.horario141 = Horario.objects.create(turno=self.turno14, dia=Dias.Mi.name, comienzo=siete, final=ocho, **aula_pab)
 
         self.horario211 = Horario.objects.create(turno=self.turno21, dia=Dias.Vi.name, comienzo=diez, final=diez,
                                                  aula='3', pabellon=1)
         Usuario.objects.create_user(username='desautorizado', password='123')
         autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
-        permiso = Permission.objects.get(content_type__app_label='materias', codename='add_turno')
-        autorizado.user_permissions.add(permiso)
+        autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='materias', codename='add_turno'))
+        autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='dborrador', codename='add_asignacion'))
+        autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='materias', codename='view_docente'))
 
     def test_pagina_principal_con_y_sin_turnos(self):
         response = self.client.get('/materias/21001')
@@ -220,20 +223,25 @@ class TestPaginas(TestCase):
 
     def test_administrar_dirige_bien(self):
         self.client.login(username='autorizado', password='1234')
-        response = self.client.post('/materias/administrar',
-                                    {'turnos': True, 'anno': 2100, 'cuatrimestre': Cuatrimestres.P.name},
-                                    follow=True)
-        self.assertEqual(response.redirect_chain[-1],
-                         (f'/materias/administrar_turnos/2100/{Cuatrimestres.P.name}', 302),
-                         'No está redirigiendo bien a administrar_turnos')
+        botones_urls = {
+            'turnos_docentes': 'administrar_docentes',
+            'turnos_alumnos': 'administrar_alumnos',
+        }
+        for boton, url in botones_urls.items():
+            response = self.client.post('/materias/administrar',
+                                        {boton: True, 'anno': 2100, 'cuatrimestre': Cuatrimestres.P.name},
+                                        follow=True)
+            self.assertEqual(response.redirect_chain[-1],
+                             (f'/materias/{url}/2100/{Cuatrimestres.P.name}', 302),
+                             f'No está redirigiendo bien a {url}')
 
-    def test_administrar_turnos(self):
+    def test_administrar_docentes(self):
         self.client.login(username='autorizado', password='1234')
 
         self.turno11.dificil_de_cubrir = True
         self.turno11.save()
 
-        url = '/materias/administrar_turnos/2100/P'
+        url = '/materias/administrar_docentes/2100/P'
         response = self.client.get(url, follow=True)
         self.assertContains(response, f'name="dificil_{self.turno11.id}" checked')
 
@@ -256,3 +264,44 @@ class TestPaginas(TestCase):
         nturno12 = Turno.objects.get(pk=self.turno12.id)
         self.assertFalse(nturno11.dificil_de_cubrir)
         self.assertTrue(nturno12.dificil_de_cubrir)
+
+    def test_administrar_alumnos(self):
+        self.client.login(username='autorizado', password='1234')
+
+        self.turno11.alumnos = 7
+        self.turno11.save()
+
+        self.horario111.aula = 'EP1'
+        self.horario111.pabellon = 8
+        self.horario111.save()
+
+        url = '/materias/administrar_alumnos/2100/P'
+        response = self.client.get(url, follow=True)
+        self.assertTrue(re.search(f'name="alumnos_{self.turno11.id}".*value=7',
+                                  response.content.decode()))
+        self.assertTrue(re.search(f'name="aula_{self.horario111.id}".*value="EP1"',
+                                  response.content.decode()))
+        self.assertTrue(re.search(f'name="pabellon_{self.horario111.id}".*value="8"',
+                                  response.content.decode()))
+
+        model_to_ktf = {Turno: {'alumnos': ('alumnos', int)},
+                        Horario: {'aula': ('aula', str),
+                                  'pabellon': ('pabellon', int)}}
+
+        post = dict()
+        for model, key_to_field in model_to_ktf.items():
+            for k_field, (t_attr, _) in key_to_field.items():
+                for o in model.objects.all():
+                    post[f'{k_field}_{o.id}'] = getattr(o, t_attr)
+
+        post[f'alumnos_{self.turno12.id}'] = '13'
+        post[f'aula_{self.horario112.id}'] = 'xyz'
+        post[f'pabellon_{self.horario112.id}'] = '0'
+        post['cambiar'] = True
+        self.client.post(url, post)
+
+        nturno12 = Turno.objects.get(pk=self.turno12.id)
+        nhorario112 = Horario.objects.get(pk=self.horario112.id)
+        self.assertEqual(nturno12.alumnos, 13)
+        self.assertEqual(nhorario112.aula, 'xyz')
+        self.assertEqual(nhorario112.pabellon, 0)
