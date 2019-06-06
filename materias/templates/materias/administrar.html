@@ -10,21 +10,27 @@
 <form action="{% url 'materias:administrar' %}" method="post">
 {% csrf_token %}
 
+    Año: 
+    <select name="anno">
+        {% for a in annos %}
+        <option value="{{ a }}">{{ a }}</option>
+        {% endfor %}
+    </select>
+    Cuatrimestre: 
+    <select name="cuatrimestre">
+        {% for c in cuatrimestres %}
+        <option value="{{ c.name }}">{{ c.value }}</option>
+        {% endfor %}
+    </select>
+            
     <ul>
         <li>
-            <div class="subtitulo">Administrar turnos (alumnos y necesidades)</div> Año: 
-            <select name="anno">
-                {% for a in annos %}
-                <option value="{{ a }}">{{ a }}</option>
-                {% endfor %}
-            </select>
-            Cuatrimestre: 
-            <select name="cuatrimestre">
-                {% for c in cuatrimestres %}
-                <option value="{{ c.name }}">{{ c.value }}</option>
-                {% endfor %}
-            </select>
-            <input type="submit" name="turnos" value="administrar turnos">
+            <div class="subtitulo">Administrar turnos: alumnos, aulas y pabellones</div>
+            <input type="submit" name="turnos_alumnos" value="administrar">
+        </li>
+        <li>
+            <div class="subtitulo">Administrar turnos: necesidades docentes</div>
+            <input type="submit" name="turnos_docentes" value="administrar">
         </li>
     </ul>
 </body>

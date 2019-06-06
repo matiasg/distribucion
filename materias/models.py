@@ -108,11 +108,6 @@ class Turno(models.Model):
 
     def horarios_info(self):
 
-        def time_str(hms):
-            if hms.minute:
-                return f'{hms.hour}:{hms.minute:02d}'
-            return f'{hms.hour}'
-
         def join(lst):
             if len(set(lst)) == 1:
                 return lst[0]
@@ -122,7 +117,7 @@ class Turno(models.Model):
         tipoynumero = f'{tipo} {self.numero}' if self.numero else tipo
         horarios = sorted(self.horario_set.all())
         dias = join([h.dia for h in horarios])
-        horas = join([f'{time_str(h.comienzo)} a {time_str(h.final)}' for h in horarios])
+        horas = join([h.de_a() for h in horarios])
         aulas = join([f'{h.aula} (P.{h.pabellon})' for h in horarios])
         return TurnoInfo(tipoynumero, f'{dias}: {horas}', aulas)
 
@@ -170,6 +165,16 @@ class Horario(models.Model):
         if other.__class__ is self.__class__:
             return (Dias[self.dia], self.comienzo) < (Dias[other.dia], other.comienzo)
         return NotImplemented
+
+    def de_a(self):
+
+        def time_str(hms):
+            if hms.minute:
+                return f'{hms.hour}:{hms.minute:02d}'
+            return f'{hms.hour}'
+
+        return f'{time_str(self.comienzo)} a {time_str(self.final)}'
+
 
 
 class Docente(models.Model):

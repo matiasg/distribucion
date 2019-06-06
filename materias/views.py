@@ -5,6 +5,9 @@ from django.db import transaction
 from django.utils import timezone
 from django.contrib.auth.decorators import permission_required, login_required
 
+import logging
+logger = logging.getLogger(__name__)
+
 from .models import Materia, Turno, Horario, Cuatrimestres, TipoMateria
 
 
@@ -69,14 +72,17 @@ def filtra_materias(**kwargs):
 
     return materias
 
-
 @login_required
-@permission_required('materias.add_turno')
+@permission_required('materias.view_docente')
 def administrar(request):
-    if 'turnos' in request.POST:
+    if 'turnos_alumnos' in request.POST:
         anno = int(request.POST['anno'])
         cuatrimestre = request.POST['cuatrimestre']
-        return HttpResponseRedirect(reverse('materias:administrar_turnos', args=(anno, cuatrimestre)))
+        return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
+    elif 'turnos_docentes' in request.POST:
+        anno = int(request.POST['anno'])
+        cuatrimestre = request.POST['cuatrimestre']
+        return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
     else:
         anno_actual = timezone.now().year
         context = {
@@ -86,32 +92,58 @@ def administrar(request):
         return render(request, 'materias/administrar.html', context=context)
 
 
-@login_required
-@permission_required('materias.add_turno')
-def administrar_turnos(request, anno, cuatrimestre):
+def administrar_general(request, anno, cuatrimestre, key_to_field, url):
     if 'cambiar' in request.POST:
-        key_to_field = {'alumnos': ('alumnos', int),
-                        'necesidadprof': ('necesidad_prof', int),
-                        'necesidadjtp': ('necesidad_jtp', int),
-                        'necesidaday1': ('necesidad_ay1', int),
-                        'necesidaday2': ('necesidad_ay2', int),
-                        'dificil': ('dificil_de_cubrir', bool),
-                        }
-
         with transaction.atomic():
-            for turno in Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre):
-                for page_field, (field, _type) in key_to_field.items():
-                    page_field_turno = f'{page_field}_{turno.id}'
-                    if _type is int:
-                        v = _type(request.POST[page_field_turno])
-                    elif _type is bool:
-                        # checkbox aparece solo si está marcado
-                        v = page_field_turno in request.POST
-                    setattr(turno, field, v)
-                turno.save()
+
+            for modelo, modelo_key_to_field in key_to_field.items():
+
+                if modelo == Turno:
+                    objetos = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
+                elif  modelo == Horario:
+                    objetos = Horario.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre)
+                logger.info('modifico %d objetos tipo %s', objetos.count(), modelo)
+
+                for objeto in objetos:
+                    for page_field, (field, _type) in modelo_key_to_field.items():
+                        page_field_objeto = f'{page_field}_{objeto.id}'
+                        if _type in (int, str):
+                            v = _type(request.POST[page_field_objeto])
+                        elif _type is bool:
+                            # checkbox aparece solo si está marcado
+                            v = page_field_objeto in request.POST
+                        setattr(objeto, field, v)
+                        logger.debug('cambiando %s a obj. %s por %s', page_field, objeto, v)
+                    objeto.save()
+
+
         return HttpResponseRedirect(reverse('materias:administrar'))
 
     else:
         materias = filtra_materias(anno=anno, cuatrimestre=cuatrimestre)
         context = {'anno': anno, 'cuatrimestre': cuatrimestre, 'materias': materias}
-        return render(request, 'materias/administrar_turnos.html', context)
+        return render(request, url, context)
+
+
+@login_required
+@permission_required('materias.add_turno')
+def administrar_alumnos(request, anno, cuatrimestre):
+    key_to_field = {Turno: {'alumnos': ('alumnos', int)},
+                    Horario: {'aula': ('aula', str),
+                              'pabellon': ('pabellon', int)}
+                    }
+
+    return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_alumnos.html')
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def administrar_docentes(request, anno, cuatrimestre):
+    key_to_field = {Turno: {'necesidadprof': ('necesidad_prof', int),
+                            'necesidadjtp': ('necesidad_jtp', int),
+                            'necesidaday1': ('necesidad_ay1', int),
+                            'necesidaday2': ('necesidad_ay2', int),
+                            'dificil': ('dificil_de_cubrir', bool),
+                            }
+                    }
+    return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_docentes.html')
