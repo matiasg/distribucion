@@ -37,6 +37,7 @@ class Asignacion(models.Model):
     intentos = IntegerRangeField()
     carga = models.ForeignKey(Carga, on_delete=models.CASCADE)
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
+    cargo_que_ocupa = models.CharField(max_length=2, choices=choice_enum(TipoDocentes))
 
     def __str__(self):
         return f'Intento {self.intento}: {self.carga.docente} -> {self.turno} '
