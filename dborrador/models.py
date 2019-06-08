@@ -1,7 +1,28 @@
 from django.db import models
+from django.contrib.postgres.fields import IntegerRangeField
+
+from collections import namedtuple
 
 from encuestas.models import PreferenciasDocente
-from materias.models import Turno, Carga
+from materias.models import Turno, Carga, choice_enum
+from materias.misc import TipoDocentes
+
+
+class Intento(namedtuple('Intento', ['algoritmo', 'manual'])):
+    '''Modela una tupla de dos enteros entre 0 y (2 ** 16 - 1)'''
+
+    MAX_VALUE = 2 ** 32 - 1
+
+    @property
+    def value(self):
+        return self.algoritmo * 2 ** 16 + self.manual
+
+    @classmethod
+    def from_value(cls, value):
+        algoritmo = value // (2 ** 16)
+        manual = value % (2 ** 16)
+        return cls(algoritmo, manual)
+
 
 
 class Preferencia(models.Model):
@@ -13,12 +34,16 @@ class Preferencia(models.Model):
 
 
 class Asignacion(models.Model):
-    intento = models.IntegerField()
+    intentos = IntegerRangeField()
     carga = models.ForeignKey(Carga, on_delete=models.CASCADE)
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
 
     def __str__(self):
         return f'Intento {self.intento}: {self.carga.docente} -> {self.turno} '
+
+    @classmethod
+    def validas_en(cls, intento):
+        return cls.objects.filter(intentos__contains=intento.value)
 
     class Meta:
         verbose_name = 'asignación'

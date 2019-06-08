@@ -2,10 +2,11 @@ from django.test import TestCase, Client
 from django.utils import timezone
 from django.urls import reverse
 from django.contrib.auth.models import Permission
+from psycopg2.extras import NumericRange
 
 import re
 
-from dborrador.models import Preferencia, Asignacion
+from dborrador.models import Preferencia, Asignacion, Intento
 from materias.models import Docente, Materia, Turno, Cuatrimestres, Cargos, Carga, CargoDedicacion, TipoTurno, TipoMateria
 from materias.misc import TipoDocentes
 from encuestas.models import PreferenciasDocente
@@ -225,3 +226,29 @@ class TestDistribuir(TestCase):
 
         # chequamos que al docente1 se lo dejó donde estaba y no se distribuyó al docente2
         self.assertEqual(set(Asignacion.objects.all()), {asignacion1})
+
+
+class TestModel(TestCase):
+
+    def setUp(self):
+        self.docente = Docente.objects.create(nombre='d1', email='d1@nada.org',
+                                              telefono='1234', cargos=[CargoDedicacion.TitSim.name])
+        self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
+        self.turno = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                          numero=1, tipo=TipoTurno.A.name,
+                                          necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        self.carga = Carga.objects.create(docente=self.docente, cargo=CargoDedicacion.TitSim.name,
+                                          anno=2100, cuatrimestre=Cuatrimestres.P.name)
+
+    def test_intentos(self):
+        comienzo = Intento(2, 4)
+        final = Intento(3, 2)
+        asignacion = Asignacion.objects.create(intentos=(comienzo.value, final.value),
+                                               carga=self.carga, turno=self.turno)
+
+        self.assertEqual(set(Asignacion.validas_en(Intento(2, 5))), {asignacion})
+        self.assertEqual(set(Asignacion.validas_en(Intento(2, 2395))), {asignacion})
+        self.assertEqual(set(Asignacion.validas_en(Intento(3, 1))), {asignacion})
+        self.assertEqual(set(Asignacion.validas_en(Intento(2, 2))), set())
+        self.assertEqual(set(Asignacion.validas_en(Intento(3, 5))), set())
+        self.assertEqual(set(Asignacion.validas_en(Intento(3, 2))), set())
