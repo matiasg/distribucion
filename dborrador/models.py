@@ -11,8 +11,6 @@ from materias.misc import TipoDocentes
 class Intento(namedtuple('Intento', ['algoritmo', 'manual'])):
     '''Modela una tupla de dos enteros entre 0 y (2 ** 16 - 1)'''
 
-    MAX_VALUE = 2 ** 32 - 1
-
     @property
     def value(self):
         return self.algoritmo * 2 ** 16 + self.manual
