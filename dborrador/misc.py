@@ -87,15 +87,6 @@ class MapeosDistribucion:
         return necesidades - (fijas + para_intento)
 
     @staticmethod
-    def asignaciones(tipo, ac, intento):
-        '''TipoDocentes -> AnnoCuatrimestre -> intento -> [Asignacion]'''
-        cargas = Mapeos.cargas(tipo, ac)
-        asignaciones = Asignacion.objects.filter(turno__anno=ac.anno,
-                                                 turno__cuatrimestre=ac.cuatrimestre,
-                                                 intento=intento)
-        return [a for a in asignaciones if a.carga in cargas]
-
-    @staticmethod
     def docentes_y_asignaciones(tipo, ac, intento):
         '''TipoDocentes -> AnnoCuatrimestre -> intento -> {Docente: [Asignacion]}'''
         cargas = Mapeos.cargas(tipo, ac)

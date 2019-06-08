@@ -82,16 +82,6 @@ class TestMapeos(TestCase):
         turnos_jtp = Mapeos.encuesta_tipo_turno(TipoDocentes.J)
         self.assertEqual(set(turnos_jtp), {self.turno3})
 
-    def test_asignaciones(self):
-        asignaciones_p_1 = MapeosDistribucion.asignaciones(TipoDocentes.P, self.ac, 1)
-        asignaciones_p_3 = MapeosDistribucion.asignaciones(TipoDocentes.P, self.ac, 3)
-        asignaciones_j_3 = MapeosDistribucion.asignaciones(TipoDocentes.J, self.ac, 3)
-        asignaciones_a_3 = MapeosDistribucion.asignaciones(TipoDocentes.A1, self.ac, 3)
-        self.assertEqual(asignaciones_p_1, [])
-        self.assertEqual(set(asignaciones_p_3), {self.asignacion1, self.asignacion3})
-        self.assertEqual(asignaciones_j_3, [])
-        self.assertEqual(set(asignaciones_a_3), {self.asignacion2})
-
     def test_docentes_y_asignaciones(self):
         asignaciones_p_3 = MapeosDistribucion.docentes_y_asignaciones(TipoDocentes.P, self.ac, 3)
         asignaciones_j_3 = MapeosDistribucion.docentes_y_asignaciones(TipoDocentes.J, self.ac, 3)
