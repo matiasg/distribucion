@@ -87,20 +87,6 @@ class MapeosDistribucion:
         return necesidades - (fijas + para_intento)
 
     @staticmethod
-    def docentes_y_asignaciones(tipo, ac, intento):
-        '''TipoDocentes -> AnnoCuatrimestre -> intento -> {Docente: [Asignacion]}'''
-        cargas = Mapeos.cargas(tipo, ac)
-        # TODO: agregar intento 0
-        asignaciones = Asignacion.objects.filter(turno__anno=ac.anno,
-                                                 turno__cuatrimestre=ac.cuatrimestre,
-                                                 intento=intento)
-        ret = defaultdict(list)
-        for asignacion in asignaciones:
-            if asignacion.carga in cargas:
-                ret[asignacion.carga.docente].append(asignacion)
-        return ret
-
-    @staticmethod
     def chequeo(tipo, ac, intento, este_tipo_fijo, este_tipo):
         '''TipoDocentes -> AnnoCuatrimestre -> intento -> ([Carga], [Turno, necesidad])'''
         cargas_no_distribuidas = MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(tipo, ac, intento)
