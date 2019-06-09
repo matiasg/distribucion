@@ -13,8 +13,8 @@ import django
 django.setup()
 
 from materias.models import (Materia, Turno, Docente, Carga, Cuatrimestres, TipoTurno,
-                             CargoDedicacion, Cargos, choice_enum)
-from materias.misc import Mapeos, TipoDocentes
+                             CargoDedicacion, Cargos, TipoDocentes, choice_enum)
+from materias.misc import Mapeos
 from encuestas.models import PreferenciasDocente
 
 

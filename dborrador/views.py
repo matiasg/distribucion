@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict, namedtuple
+from time import monotonic
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -10,10 +11,11 @@ from django.db.models import Max
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required, login_required
 
-from .models import Preferencia, Asignacion, Comentario
-from .misc import MapeosDistribucion
-from materias.models import Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria, choice_enum
-from materias.misc import TipoDocentes, AnnoCuatrimestre, Mapeos
+from .models import Preferencia, Asignacion, Comentario, Intento
+from .misc import MapeosDistribucion, Distribucion
+from materias.models import (Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria,
+                             choice_enum, AnnoCuatrimestre, TipoDocentes,)
+from materias.misc import Mapeos
 from encuestas.models import PreferenciasDocente
 
 from allocation import allocating
@@ -84,7 +86,48 @@ def preparar(request, anno, cuatrimestre, tipo):
 
 @login_required
 @permission_required('dborrador.add_asignacion')
-def distribuir(request, anno, cuatrimestre, tipo, intento):
+def ver_distribucion(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_manual):
+    anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
+    tipo = TipoDocentes[tipo]
+    intento = Intento(intento_algoritmo, intento_manual)
+
+    context = {'anno': anno,
+               'cuatrimestre': cuatrimestre,
+               'tipo': tipo.name,
+               'intento': intento}
+
+    turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
+    obligatoriedades = {TipoMateria.B.name: 'Obligatorias',
+                        TipoMateria.R.name: 'Optativas regulares',
+                        TipoMateria.N.name: 'Optativas no regulares'}
+
+    asignaciones = Distribucion.asignaciones_por_cargo_ocupado(anno_cuat, intento)
+    cargas = Distribucion.ya_distribuidas_por_cargo(anno_cuat)
+
+    materias = []
+    for obligatoriedad, obligatoriedad_largo in obligatoriedades.items():
+        tmaterias = Materia.objects.filter(obligatoriedad=obligatoriedad)
+
+        ob_materias = []
+        for materia in tmaterias:
+            mat_turnos = []
+            for turno in sorted(turnos_ac.filter(materia=materia)):
+                turno.asignaciones = list(asignaciones[turno].items())
+                turno.cargas = list(cargas[turno].items())
+                mat_turnos.append(turno)
+
+            ob_materias.append([materia, mat_turnos])
+
+        materias.append((obligatoriedad_largo, ob_materias))
+    context['materias'] = materias
+
+    return render(request, 'dborrador/distribucion.html', context)
+
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_manual):
     logger.info('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s',
                 tipo, cuatrimestre, anno)
 

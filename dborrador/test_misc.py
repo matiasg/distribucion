@@ -3,10 +3,10 @@ from django.test import TestCase, Client
 from collections import Counter
 
 from materias.models import (Materia, Turno, TipoTurno, Cargos, Carga, CargoDedicacion,
-                             Docente, TipoMateria, Cuatrimestres)
-from materias.misc import Mapeos, TipoDocentes, AnnoCuatrimestre
-from dborrador.models import Asignacion
-from dborrador.misc import MapeosDistribucion
+                             Docente, TipoDocentes, TipoMateria, Cuatrimestres)
+from materias.misc import Mapeos, AnnoCuatrimestre
+from dborrador.models import Asignacion, Intento
+from dborrador.misc import MapeosDistribucion, Distribucion
 
 class TestMapeosDistribucion(TestCase):
 
@@ -42,62 +42,77 @@ class TestMapeosDistribucion(TestCase):
         self.cargas_turno_1 = genera_cargas([2, 3, 0, 0], [1, 1, 0, 0], self.m, self.turno1)
         self.cargas_turno_2 = genera_cargas([0, 2, 3, 4], [0, 1, 1, 1], self.n, self.turno2)
 
-        Asignacion.objects.create(intento=-1, carga=self.cargas_turno_1[TipoDocentes.P][1], turno=self.turno1)
-        Asignacion.objects.create(intento=-1, carga=self.cargas_turno_2[TipoDocentes.J][1], turno=self.turno2)
-        Asignacion.objects.create(intento=-1, carga=self.cargas_turno_2[TipoDocentes.A1][1], turno=self.turno2)
+        self.asignacion_1_1 = Asignacion.objects.create(intentos=(Intento(-1, 0).value, None),
+                                                        carga=self.cargas_turno_1[TipoDocentes.P][1], turno=self.turno1,
+                                                        cargo_que_ocupa=TipoDocentes.P.name)
+        Asignacion.objects.create(intentos=(Intento(-1, 0).value, None), carga=self.cargas_turno_2[TipoDocentes.J][1], turno=self.turno2,
+                                  cargo_que_ocupa=TipoDocentes.J.name)
+        Asignacion.objects.create(intentos=(Intento(-1, 0).value, None), carga=self.cargas_turno_2[TipoDocentes.A1][1], turno=self.turno2,
+                                  cargo_que_ocupa=TipoDocentes.A1.name)
 
-        Asignacion.objects.create(intento=0, carga=self.cargas_turno_1[TipoDocentes.J][1], turno=self.turno1)
-        Asignacion.objects.create(intento=0, carga=self.cargas_turno_2[TipoDocentes.A2][1], turno=self.turno2)
+        Asignacion.objects.create(intentos=(Intento(0, 0).value, None), carga=self.cargas_turno_1[TipoDocentes.J][1], turno=self.turno1,
+                                  cargo_que_ocupa=TipoDocentes.J.name)
+        Asignacion.objects.create(intentos=(Intento(0, 0).value, None), carga=self.cargas_turno_2[TipoDocentes.A2][1], turno=self.turno2,
+                                  cargo_que_ocupa=TipoDocentes.A2.name)
 
-        Asignacion.objects.create(intento=1, carga=self.cargas_turno_1[TipoDocentes.J][2], turno=self.turno1)
-        Asignacion.objects.create(intento=1, carga=self.cargas_turno_2[TipoDocentes.A2][2], turno=self.turno2)
+        Asignacion.objects.create(intentos=(Intento(1, 0).value, Intento(2, 0).value), carga=self.cargas_turno_1[TipoDocentes.J][2], turno=self.turno1,
+                                  cargo_que_ocupa=TipoDocentes.J.name)
+        Asignacion.objects.create(intentos=(Intento(1, 0).value, Intento(2, 0).value), carga=self.cargas_turno_2[TipoDocentes.A2][2], turno=self.turno2,
+                                  cargo_que_ocupa=TipoDocentes.A2.name)
         # T1 nec: (2300) pub: (1100) otro: (1000) fijo: (0100) int1: (0100)
         # T2 nec: (0234) pub: (0111) otro: (0110) fijo: (0001) int1: (0001)
 
-    def test_asignaciones_otro_tipo(self):
-        cargas = MapeosDistribucion.cargas_otro_tipo(self.ac)
-        self.assertEqual(cargas[self.turno1], [self.cargas_turno_1[TipoDocentes.P][1]])
-        self.assertEqual(set(cargas[self.turno2]),
-                         {self.cargas_turno_2[TipoDocentes.J][1], self.cargas_turno_2[TipoDocentes.A1][1]})
+    def test_asignaciones_por_cargo_ocupado(self):
+        asignaciones = Distribucion.asignaciones_por_cargo_ocupado(self.ac, Intento(1, 0))
+        print(asignaciones[self.turno1])
+        self.assertEqual(set(asignaciones[self.turno1][TipoDocentes.P.name]), {self.asignacion_1_1})
 
-    def test_asignaciones_fijas(self):
-        cargas = MapeosDistribucion.cargas_de_asignaciones_fijas(self.ac)
-        self.assertEqual(cargas[self.turno1], [self.cargas_turno_1[TipoDocentes.J][1]])
-        self.assertEqual(cargas[self.turno2], [self.cargas_turno_2[TipoDocentes.A2][1]])
 
-    def test_asignaciones_intento(self):
-        cargas = MapeosDistribucion.cargas_de_asignaciones_para_intento(self.ac, 1)
-        self.assertEqual(cargas[self.turno1], [self.cargas_turno_1[TipoDocentes.J][2]])
-        self.assertEqual(cargas[self.turno2], [self.cargas_turno_2[TipoDocentes.A2][2]])
+    # def test_asignaciones_otro_tipo(self):
+    #     cargas = MapeosDistribucion.cargas_otro_tipo(self.ac)
+    #     self.assertEqual(cargas[self.turno1], [self.cargas_turno_1[TipoDocentes.P][1]])
+    #     self.assertEqual(set(cargas[self.turno2]),
+    #                      {self.cargas_turno_2[TipoDocentes.J][1], self.cargas_turno_2[TipoDocentes.A1][1]})
 
-    def test_cargas_tipo_ge_a_distribuir_en(self):
-        self.assertEqual(MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(TipoDocentes.P, self.ac, 1), [])
-        self.assertEqual(MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(TipoDocentes.P, self.ac, 2), [])
-        self.assertEqual(MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(TipoDocentes.J, self.ac, 1), [])
-        self.assertEqual(MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(TipoDocentes.J, self.ac, 2), [self.cargas_turno_1[TipoDocentes.J][2]])
+    # def test_asignaciones_fijas(self):
+    #     cargas = MapeosDistribucion.cargas_de_asignaciones_fijas(self.ac)
+    #     self.assertEqual(cargas[self.turno1], [self.cargas_turno_1[TipoDocentes.J][1]])
+    #     self.assertEqual(cargas[self.turno2], [self.cargas_turno_2[TipoDocentes.A2][1]])
 
-        self.assertEqual(set(MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(TipoDocentes.A1, self.ac, 1)),
-                         {self.cargas_turno_2[TipoDocentes.A1][2]})
-        self.assertEqual(set(MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(TipoDocentes.A1, self.ac, 2)),
-                         {self.cargas_turno_1[TipoDocentes.J][2], self.cargas_turno_2[TipoDocentes.A1][2]})
+    # def test_asignaciones_intento(self):
+    #     cargas = MapeosDistribucion.cargas_de_asignaciones_para_intento(self.ac, 1)
+    #     self.assertEqual(cargas[self.turno1], [self.cargas_turno_1[TipoDocentes.J][2]])
+    #     self.assertEqual(cargas[self.turno2], [self.cargas_turno_2[TipoDocentes.A2][2]])
 
-    def test_necesidades_no_cubiertas(self):
-        # En este test se mezclan distribuciones de distinto TipoDocentes. Los resultados
-        # no son los "intuitivos" y eso corresponde al diseño hecho. Mirar el docstring de
-        # MapeosDistribucion.necesidades_tipo_no_cubiertas_en
-        self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.P, self.ac, 1),
-                         Counter())
-        self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.J, self.ac, 1),
-                         Counter([self.turno1]))
-        self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.A1, self.ac, 1),
-                         Counter([self.turno2]))
-        self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.A2, self.ac, 1),
-                         Counter([self.turno2, self.turno2]))
-        self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.P, self.ac, 2),
-                         Counter([self.turno1]))
-        self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.J, self.ac, 2),
-                         Counter([self.turno1, self.turno1, self.turno2]))
-        self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.A1, self.ac, 2),
-                         Counter([self.turno2, self.turno2]))
-        self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.A2, self.ac, 2),
-                         Counter([self.turno2, self.turno2, self.turno2]))
+    # def test_cargas_tipo_ge_a_distribuir_en(self):
+    #     self.assertEqual(MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(TipoDocentes.P, self.ac, 1), [])
+    #     self.assertEqual(MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(TipoDocentes.P, self.ac, 2), [])
+    #     self.assertEqual(MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(TipoDocentes.J, self.ac, 1), [])
+    #     self.assertEqual(MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(TipoDocentes.J, self.ac, 2), [self.cargas_turno_1[TipoDocentes.J][2]])
+
+    #     self.assertEqual(set(MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(TipoDocentes.A1, self.ac, 1)),
+    #                      {self.cargas_turno_2[TipoDocentes.A1][2]})
+    #     self.assertEqual(set(MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(TipoDocentes.A1, self.ac, 2)),
+    #                      {self.cargas_turno_1[TipoDocentes.J][2], self.cargas_turno_2[TipoDocentes.A1][2]})
+
+    # def test_necesidades_no_cubiertas(self):
+    #     # En este test se mezclan distribuciones de distinto TipoDocentes. Los resultados
+    #     # no son los "intuitivos" y eso corresponde al diseño hecho. Mirar el docstring de
+    #     # MapeosDistribucion.necesidades_tipo_no_cubiertas_en
+    #     self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.P, self.ac, 1),
+    #                      Counter())
+    #     self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.J, self.ac, 1),
+    #                      Counter([self.turno1]))
+    #     self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.A1, self.ac, 1),
+    #                      Counter([self.turno2]))
+    #     self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.A2, self.ac, 1),
+    #                      Counter([self.turno2, self.turno2]))
+    #     self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.P, self.ac, 2),
+    #                      Counter([self.turno1]))
+    #     self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.J, self.ac, 2),
+    #                      Counter([self.turno1, self.turno1, self.turno2]))
+    #     self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.A1, self.ac, 2),
+    #                      Counter([self.turno2, self.turno2]))
+    #     self.assertEqual(MapeosDistribucion.necesidades_tipo_no_cubiertas_en(TipoDocentes.A2, self.ac, 2),
+    #                      Counter([self.turno2, self.turno2, self.turno2]))
+

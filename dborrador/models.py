@@ -4,8 +4,7 @@ from django.contrib.postgres.fields import IntegerRangeField
 from collections import namedtuple
 
 from encuestas.models import PreferenciasDocente
-from materias.models import Turno, Carga, choice_enum
-from materias.misc import TipoDocentes
+from materias.models import Turno, Carga, choice_enum, TipoDocentes
 
 
 class Intento(namedtuple('Intento', ['algoritmo', 'manual'])):
@@ -38,7 +37,7 @@ class Asignacion(models.Model):
     cargo_que_ocupa = models.CharField(max_length=2, choices=choice_enum(TipoDocentes))
 
     def __str__(self):
-        return f'Intento {self.intento}: {self.carga.docente} -> {self.turno} '
+        return f'{self.carga.docente} -> {self.turno}'
 
     @classmethod
     def validas_en(cls, intento):

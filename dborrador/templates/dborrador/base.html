@@ -12,8 +12,8 @@
     {% if anno %}
     <ul>
         <li> <a href="{% url 'dborrador:preparar' anno cuatrimestre tipo %}">copiar encuestas</a></li>
-        <li> <a href="{% url 'dborrador:distribuir' anno cuatrimestre tipo intento %}">hacer una distribución</a></li>
-        <li> <a href="{% url 'dborrador:fijar' anno cuatrimestre tipo intento %}">Fijar docentes en una distribución</a></li>
+        <li> <a href="{% url 'dborrador:distribuir' anno cuatrimestre tipo intento.algoritmo intento.manual %}">hacer una distribución</a></li>
+        <li> <a href="{% url 'dborrador:fijar' anno cuatrimestre tipo intento.algoritmo intento.manual %}">Fijar docentes en una distribución</a></li>
     </ul>
 
     <p> Año: {{ anno }} <input type="hidden" name="anno" value="{{ anno }}"> </p>

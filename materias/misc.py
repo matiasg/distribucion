@@ -1,37 +1,37 @@
 from enum import Enum
 from collections import namedtuple, defaultdict
 
-from materias.models import Docente, Turno, Carga, TipoTurno, Cargos, CargoDedicacion
-
-
-AnnoCuatrimestre = namedtuple('AC', 'anno cuatrimestre')
-
-
-class TipoDocentes(Enum):
-
-    P = 'Profesor'
-    J = 'JTP'
-    A1 = 'Ay1'
-    A2 = 'Ay2'
-
-    def __ge__(self, otro):
-        ordenados = [TipoDocentes.A2, TipoDocentes.A1, TipoDocentes.J, TipoDocentes.P]
-        return ordenados.index(self) >= ordenados.index(otro)
+from materias.models import Docente, Turno, Carga, TipoTurno, Cargos, CargoDedicacion, TipoDocentes, AnnoCuatrimestre
 
 
 class Mapeos:
     '''Esta clase resuelve distintos tipos de mapeos'''
 
+    tipo_a_cargos = {TipoDocentes.P: [Cargos.Tit, Cargos.Aso, Cargos.Adj],
+                     TipoDocentes.J: [Cargos.JTP],
+                     TipoDocentes.A1: [Cargos.Ay1],
+                     TipoDocentes.A2: [Cargos.Ay2],
+                     }
+
+    cargos_a_tipo = {
+        Cargos.Tit: TipoDocentes.P,
+        Cargos.Aso: TipoDocentes.P,
+        Cargos.Adj: TipoDocentes.P,
+        Cargos.JTP: TipoDocentes.J,
+        Cargos.Ay1: TipoDocentes.A1,
+        Cargos.Ay2: TipoDocentes.A2,
+    }
+
+    @staticmethod
+    def cargas_de_tipo(cargas, tipo):
+        '''[Carga] -> TipoDocentes -> [Carga]'''
+        return [carga for carga in cargas if Cargos[carga.cargo[:3]] in Mapeos.tipo_a_cargos[tipo]]
+
     @staticmethod
     def cargos_de_tipos(tipo):
         '''TipoDocentes -> [CargoDedicacion]'''
-        el_mapa = {TipoDocentes.P: [Cargos.Tit, Cargos.Aso, Cargos.Adj],
-                   TipoDocentes.J: [Cargos.JTP],
-                   TipoDocentes.A1: [Cargos.Ay1],
-                   TipoDocentes.A2: [Cargos.Ay2],
-                   }
         cardeds = [cd
-                   for cargo in el_mapa[tipo]
+                   for cargo in Mapeos.tipo_a_cargos[tipo]
                    for cd in CargoDedicacion.con_cargo(cargo)]
         return cardeds
 
@@ -104,10 +104,8 @@ class Mapeos:
     def cargas_asignadas_en(ac):
         '''AnnoCuatrimestre -> {Turno: [Carga]}'''
         ret = defaultdict(list)
-        for carga in Carga.objects.filter(anno=ac.anno, cuatrimestre=ac.cuatrimestre):
-            turno = carga.turno
-            if turno is not None:
-                ret[turno].append(carga)
+        for carga in Carga.objects.filter(anno=ac.anno, cuatrimestre=ac.cuatrimestre, turno__isnull=False):
+            ret[carga.turno].append(carga)
         return ret
 
     @staticmethod

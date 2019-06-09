@@ -18,8 +18,8 @@ import django
 django.setup()
 
 from materias.models import (Materia, Turno, Horario, Docente, Carga, Cuatrimestres, TipoMateria, TipoTurno,
-                             Cargos, Dedicaciones, CargoDedicacion, Dias, get_key_enum)
-from materias.misc import TipoDocentes, Mapeos
+                             Cargos, Dedicaciones, CargoDedicacion, Dias, TipoDocentes, get_key_enum)
+from materias.misc import Mapeos
 from encuestas.models import PreferenciasDocente, OtrosDatos
 from dborrador.models import Asignacion
 from tools.current_html_to_db import maymin, convierte_a_horarios
