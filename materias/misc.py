@@ -36,6 +36,10 @@ class Mapeos:
         return cardeds
 
     @staticmethod
+    def tipo_de_carga(carga):
+        return Mapeos.cargos_a_tipo[Cargos[carga.cargo[:3]]]
+
+    @staticmethod
     def tipos_de_cargo(cargodedicacion):
         '''CargoDedicacion -> TipoDocentes'''
         el_mapa = {Cargos.Tit.name: TipoDocentes.P,

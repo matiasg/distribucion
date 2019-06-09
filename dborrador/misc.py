@@ -2,7 +2,7 @@ from collections import Counter, namedtuple, defaultdict
 
 from .models import Asignacion, Preferencia
 from materias.misc import Mapeos
-from materias.models import TipoDocentes, Turno, Cargos
+from materias.models import TipoDocentes, Turno, Cargos, Carga
 
 
 Problemas = namedtuple('Problemas', ['cargas_no_distribuidas', 'necesidades_no_cubiertas', 'recargas'])
@@ -132,7 +132,7 @@ class Distribucion:
         ret = {t: defaultdict(list) for t in turnos}
         for asignacion in Asignacion.validas_en(intento):
             tipo = TipoDocentes[asignacion.cargo_que_ocupa]
-            ret[asignacion.turno][tipo.name].append(asignacion)
+            ret[asignacion.turno][tipo].append(asignacion)
         return ret
 
     @classmethod
@@ -141,6 +141,15 @@ class Distribucion:
         for turno in Turno.objects.filter(anno=ac.anno, cuatrimestre=ac.cuatrimestre):
             ret[turno] = defaultdict(list)
             for carga in turno.carga_set.all():
-                tipo = Mapeos.cargos_a_tipo[Cargos[carga.cargo[:3]]]
-                ret[turno][tipo.name].append(carga)
+                tipo = Mapeos.tipo_de_carga(carga)
+                ret[turno][tipo].append(carga)
+        return ret
+
+    @classmethod
+    def no_distribuidas_por_cargo(cls, ac):
+        ret = defaultdict(list)
+        cargas = Carga.objects.filter(anno=ac.anno, cuatrimestre=ac.cuatrimestre, turno__isnull=True)
+        for carga in cargas:
+            tipo = Mapeos.tipo_de_carga(carga)
+            ret[tipo].append(carga)
         return ret
