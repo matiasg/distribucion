@@ -7,7 +7,8 @@ from psycopg2.extras import NumericRange
 import re
 
 from dborrador.models import Preferencia, Asignacion, Intento
-from materias.models import Docente, Materia, Turno, Cuatrimestres, Cargos, Carga, CargoDedicacion, TipoTurno, TipoMateria
+from dborrador.views import hacer_distribucion
+from materias.models import Docente, Materia, Turno, Cuatrimestres, Cargos, Carga, CargoDedicacion, TipoTurno, TipoMateria, AnnoCuatrimestre
 from materias.misc import TipoDocentes
 from encuestas.models import PreferenciasDocente
 from usuarios.models import Usuario
@@ -191,21 +192,22 @@ class TestVerDistribucion(TestCase):
 class TestDistribuir(TestCase):
 
     def setUp(self):
+        self.ac = AnnoCuatrimestre(2100, Cuatrimestres.P.name)
         self.docente1 = Docente.objects.create(nombre='d1', email='d1@nada.org',
                                                telefono='1234', cargos=[CargoDedicacion.TitSim.name])
         self.docente2 = Docente.objects.create(nombre='d2', email='d2@nade.org',
                                                telefono='1235', cargos=[CargoDedicacion.TitSim.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
-        self.turno1 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+        self.turno1 = Turno.objects.create(materia=self.materia, anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre,
                                            numero=1, tipo=TipoTurno.A.name,
                                            necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        self.turno2 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+        self.turno2 = Turno.objects.create(materia=self.materia, anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre,
                                            numero=2, tipo=TipoTurno.A.name,
                                            necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
         self.carga1 = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitSim.name,
-                                           anno=2100, cuatrimestre=Cuatrimestres.P.name)
+                                           anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre)
         self.carga2 = Carga.objects.create(docente=self.docente2, cargo=CargoDedicacion.TitSim.name,
-                                           anno=2100, cuatrimestre=Cuatrimestres.P.name)
+                                           anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre)
 
         self.autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
         permiso = Permission.objects.get(codename='add_asignacion')
@@ -219,13 +221,26 @@ class TestDistribuir(TestCase):
         Preferencia.objects.create(preferencia=p1, peso_normalizado=1)
         Preferencia.objects.create(preferencia=p2, peso_normalizado=1)
 
-        asignacion1 = Asignacion.objects.create(carga=self.carga1, turno=self.turno1, intento=0)
+        asignacion1 = Asignacion.objects.create(carga=self.carga1, turno=self.turno1, intentos=(0, None))
 
         self.client.get(reverse('dborrador:distribuir',
-                                args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
+                                args=(self.ac.anno, self.ac.cuatrimestre, TipoDocentes.P.name, 1)))
 
         # chequamos que al docente1 se lo dejó donde estaba y no se distribuyó al docente2
         self.assertEqual(set(Asignacion.objects.all()), {asignacion1})
+
+    def test_distribuye(self):
+        now = timezone.now()
+        p1 = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1, fecha_encuesta=now)
+        p2 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=3, fecha_encuesta=now)
+        Preferencia.objects.create(preferencia=p1, peso_normalizado=1)
+        Preferencia.objects.create(preferencia=p2, peso_normalizado=1)
+
+        hacer_distribucion(self.ac, TipoDocentes.P, 1)
+        self.assertEqual(Asignacion.objects.count(), 2)
+        for asignacion in Asignacion.objects.all():
+            self.assertEqual(asignacion.intentos, NumericRange(Intento.de_algoritmo(1).valor, Intento.de_algoritmo(2).valor))
+
 
 
 class TestModel(TestCase):
@@ -243,7 +258,7 @@ class TestModel(TestCase):
     def test_intentos(self):
         comienzo = Intento(2, 4)
         final = Intento(3, 2)
-        asignacion = Asignacion.objects.create(intentos=(comienzo.value, final.value),
+        asignacion = Asignacion.objects.create(intentos=(comienzo.valor, final.valor),
                                                carga=self.carga, turno=self.turno)
 
         self.assertEqual(set(Asignacion.validas_en(Intento(2, 5))), {asignacion})

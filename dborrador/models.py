@@ -11,14 +11,18 @@ class Intento(namedtuple('Intento', ['algoritmo', 'manual'])):
     '''Modela una tupla de dos enteros entre 0 y (2 ** 16 - 1)'''
 
     @property
-    def value(self):
+    def valor(self):
         return self.algoritmo * 2 ** 16 + self.manual
 
     @classmethod
-    def from_value(cls, value):
-        algoritmo = value // (2 ** 16)
-        manual = value % (2 ** 16)
+    def de_valor(cls, valor):
+        algoritmo = valor // (2 ** 16)
+        manual = valor % (2 ** 16)
         return cls(algoritmo, manual)
+
+    @classmethod
+    def de_algoritmo(cls, algoritmo):
+        return cls(algoritmo, 0)
 
 
 
@@ -41,7 +45,7 @@ class Asignacion(models.Model):
 
     @classmethod
     def validas_en(cls, intento):
-        return cls.objects.filter(intentos__contains=intento.value)
+        return cls.objects.filter(intentos__contains=intento.valor)
 
     class Meta:
         verbose_name = 'asignación'
