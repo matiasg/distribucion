@@ -27,9 +27,15 @@ Fijar docentes a intento {{ intento }}
                         <td rowspan=2 class="diayhora">{{ turno.horarios_info.diayhora }}</td>
                         <td class="datosdoc">
                             <div class="cargas_fijas">
-                                {% for tipo, cargas_turno in turno.cargas %}
-                                {{ tipo.value }}: {% for carga in cargas_turno %} {{ carga.docente.nombre }} {% endfor %}
-                                {% endfor %}
+                                <ul>
+                                    {% for tipo, cargas_turno in turno.cargas %}
+                                    {% if cargas_turno %}
+                                    <li>
+                                        {{ tipo.value }}: {% for carga in cargas_turno %} {{ carga.docente.nombre }} {% endfor %}
+                                    </li>
+                                    {% endif %}
+                                    {% endfor %}
+                                </ul>
                             </div>
 
                             {% comment %}<div class="este_tipo">{% for carga in turno.datos.asignaciones_este_tipo %}{% endcomment %}
@@ -59,9 +65,15 @@ Fijar docentes a intento {{ intento }}
                     <tr>
                         <td class="datosdoc">
                             <div class="cargas_en_distribucion">
-                                {% for tipo, asignaciones_turno in turno.asignaciones %}
-                                {{ tipo.value }}: {% for asignacion in asignaciones_turno %} {{ asignacion.carga.docente }}{% endfor %}
-                                {% endfor %}
+                                <ul>
+                                    {% for tipo, asignaciones_turno in turno.asignaciones %}
+                                    {% if asignaciones_turno %}
+                                    <li>
+                                        {{ tipo.value }}: {% for asignacion in asignaciones_turno %} {{ asignacion.carga.docente }}{% endfor %}
+                                    </li>
+                                    {% endif %}
+                                    {% endfor %}
+                                </ul>
                             </div>
                         </td>
                     </tr>
