@@ -23,44 +23,49 @@ Fijar docentes a intento {{ intento }}
                     {% for turno in turnos %}
                     <tr>
 
-                        <td class="fondo{{ turno.tipo }}">{{ turno.horarios_info.tipoynumero }}</td>
-                        <td class="diayhora">{{ turno.horarios_info.diayhora }}</td>
+                        <td rowspan=2 class="fondo{{ turno.tipo }}">{{ turno.horarios_info.tipoynumero }}</td>
+                        <td rowspan=2 class="diayhora">{{ turno.horarios_info.diayhora }}</td>
                         <td class="datosdoc">
-
                             <div class="cargas_fijas">
                                 {% for tipo, cargas_turno in turno.cargas %}
-                                {{ tipo }}: {% for carga in cargas_turno %} {{ carga.docente.nombre }} {% endfor %}
-                                {% endfor %}</div>
-
-                            <div class="cargas_fijas">
-                                {% for tipo, asignaciones_turno in turno.asignaciones %}
-                                {% for asignacion in asignaciones_turno %} {{ asignacion }} ({{ tipo }}) {% endfor %}
-                                {% endfor %}</div>
-
-                            <div class="este_tipo">{% for carga in turno.datos.asignaciones_este_tipo %}
-                                <select name="cambioen_{{ turno.id }}_{{ carga.id }}">
-                                    <option value=-1>------</option>
-                                    <option value={{ carga.id }} selected>{{ carga.docente.nombre }}</option>
-                                </select>
-                                {% endfor %}</div>
-
-                            {% if turno.datos.necesidades_no_cubiertas %}
-                            {% for i in 0|rjust:turno.datos.necesidades_no_cubiertas %}
-                            <div class="no_cubiertas">
-                                <select name="fijoen_{{ turno.id }}_{{ forloop.counter }}">
-                                    <option value=-1 selected>------</option>
-                                    {% for nueva_carga in cargas_a_distribuir %}
-                                    <option value={{ nueva_carga.id }}>{{ nueva_carga.docente.nombre }}</option>
-                                    {% endfor %}
-                                </select>
+                                {{ tipo.value }}: {% for carga in cargas_turno %} {{ carga.docente.nombre }} {% endfor %}
+                                {% endfor %}
                             </div>
-                            {% endfor %}
-                            {% endif %}
+
+                            {% comment %}<div class="este_tipo">{% for carga in turno.datos.asignaciones_este_tipo %}{% endcomment %}
+                            {% comment %}    <select name="cambioen_{{ turno.id }}_{{ carga.id }}">{% endcomment %}
+                            {% comment %}        <option value=-1>------</option>{% endcomment %}
+                            {% comment %}        <option value={{ carga.id }} selected>{{ carga.docente.nombre }}</option>{% endcomment %}
+                            {% comment %}    </select>{% endcomment %}
+                            {% comment %}    {% endfor %}</div>{% endcomment %}
+
+                            {% comment %}{% if turno.datos.necesidades_no_cubiertas %}{% endcomment %}
+                            {% comment %}{% for i in 0|rjust:turno.datos.necesidades_no_cubiertas %}{% endcomment %}
+                            {% comment %}<div class="no_cubiertas">{% endcomment %}
+                            {% comment %}    <select name="fijoen_{{ turno.id }}_{{ forloop.counter }}">{% endcomment %}
+                            {% comment %}        <option value=-1 selected>------</option>{% endcomment %}
+                            {% comment %}        {% for nueva_carga in cargas_a_distribuir %}{% endcomment %}
+                            {% comment %}        <option value={{ nueva_carga.id }}>{{ nueva_carga.docente.nombre }}</option>{% endcomment %}
+                            {% comment %}        {% endfor %}{% endcomment %}
+                            {% comment %}    </select>{% endcomment %}
+                            {% comment %}</div>{% endcomment %}
+                            {% comment %}{% endfor %}{% endcomment %}
+                            {% comment %}{% endif %}{% endcomment %}
 
                             <div class="otro_tipo">{% for carga in turno.datos.asignaciones_otro_tipo %}{{ carga.docente.nombre }}{% endfor %}</div>
                         </td>
-                        <td class="comentarios"><textarea name="comentarios_{{ turno.id }}" cols=60 rows=2>{{ turno.datos.comentarios }}</textarea></td>
+                        <td rowspan=2 class="comentarios"><textarea name="comentarios_{{ turno.id }}" cols=60 rows=2>{{ turno.datos.comentarios }}</textarea></td>
                     </tr>
+                    <tr>
+                        <td>
+                            <div class="cargas_en_distribucion">
+                                {% for tipo, asignaciones_turno in turno.asignaciones %}
+                                {{ tipo.value }}: {% for asignacion in asignaciones_turno %} {{ asignacion.carga.docente }}{% endfor %}
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+
                     {% endfor %}
                 </tbody>
             </table>
