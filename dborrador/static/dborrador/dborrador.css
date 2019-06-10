@@ -51,3 +51,11 @@
 .tooltip .tooltiptext .titulo {
   text-decoration: underline; 
 }
+
+td.datosdoc .cargas_fijas {
+  background-color: #8f8;
+}
+
+td.datosdoc .cargas_en_distribucion {
+  background-color: #ff8;
+}

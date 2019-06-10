@@ -57,7 +57,7 @@ Fijar docentes a intento {{ intento }}
                         <td rowspan=2 class="comentarios"><textarea name="comentarios_{{ turno.id }}" cols=60 rows=2>{{ turno.datos.comentarios }}</textarea></td>
                     </tr>
                     <tr>
-                        <td>
+                        <td class="datosdoc">
                             <div class="cargas_en_distribucion">
                                 {% for tipo, asignaciones_turno in turno.asignaciones %}
                                 {{ tipo.value }}: {% for asignacion in asignaciones_turno %} {{ asignacion.carga.docente }}{% endfor %}
