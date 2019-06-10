@@ -37,9 +37,11 @@ def borra_datos_de_anno_y_cuatrimestre():
     tb = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
     cb = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
     eb = PreferenciasDocente.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre.name).delete()
+    ob = OtrosDatos.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre.name).delete()
     logger.info('Borré datos de turnos: %s', tb)
     logger.info('Borré datos de cargas: %s', cb)
     logger.info('Borré datos de preferencias: %s', eb)
+    logger.info('Borré otros datos de encuestas: %s', ob)
 
 
 class LectorDeCsv:
