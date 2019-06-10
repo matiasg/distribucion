@@ -17,7 +17,7 @@ class PreferenciasDocente(models.Model):
 
 telefono_validator = RegexValidator(regex=r'^\+?[0-9 -]{9,15}$',
                                     message=("El teléfono debe contener +, -, números, espacios "
-                                             "y tener longitud de teléfono"))
+                                             "y tener entre 9 y 15 caracteres"))
 
 class OtrosDatos(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
