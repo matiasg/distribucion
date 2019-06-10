@@ -197,7 +197,7 @@ def hacer_distribucion(anno_cuat, tipo, intento_algoritmo):
         para_extender = Asignacion.objects.filter(intentos__endswith=intento.valor).exclude(cargo_que_ocupa=tipo.name)
         logger.info('Voy a extender %d asignaciones de otros tipos', para_extender.count())
         for asignacion in para_extender.all():
-            asignacion.intentos = (asignacion.intentos[0], intento_hasta.valor)
+            asignacion.intentos = (asignacion.intentos.lower, intento_hasta.valor)
             asignacion.save()
 
 
