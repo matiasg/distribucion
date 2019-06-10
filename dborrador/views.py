@@ -124,44 +124,39 @@ def ver_distribucion(request, anno, cuatrimestre, tipo, intento_algoritmo, inten
     return render(request, 'dborrador/distribucion.html', context)
 
 
+def hacer_distribucion(anno_cuat, tipo, intento_algoritmo):
+    intento = Intento.de_algoritmo(intento_algoritmo)
 
-@login_required
-@permission_required('dborrador.add_asignacion')
-def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_manual):
-    logger.info('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s',
-                tipo, cuatrimestre, anno)
+    def _como_conjunto(turno_tipo_objs):
+        return {obj
+                for para_turno in turno_tipo_objs.values()
+                for obj in para_turno[tipo]}
 
-    tipo = TipoDocentes[tipo]
-    anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
-    cargas_a_distribuir = MapeosDistribucion.cargas_tipo_ge_a_distribuir_en(tipo, anno_cuat, intento)
-    sources = {str(c.id): 1 for c in cargas_a_distribuir}
+    cargas_distribuidas = Distribucion.ya_distribuidas_por_cargo(anno_cuat)
+    cargas_asignadas = Distribucion.asignaciones_por_cargo_ocupado(anno_cuat, intento)
 
-    # turnos para cubrir
-    necesidades_no_cubiertas = MapeosDistribucion.necesidades_tipo_no_cubiertas_en(tipo, anno_cuat, intento)
+    cargas_asignadas_conjunto = {asignacion.carga for asignacion in _como_conjunto(cargas_asignadas)}
+    cargas_a_distribuir = set(Distribucion.no_distribuidas_por_cargo(anno_cuat)[tipo])
+    todavia_sin_distribuir = cargas_a_distribuir - cargas_asignadas_conjunto
+
+    sources = {str(c.id): 1 for c in todavia_sin_distribuir}
+
+    necesidades = Mapeos.turno_y_necesidad(tipo, anno_cuat)
     targets = {}
-    hay_errores = False
-    for turno, necesidad in necesidades_no_cubiertas.items():
-        if necesidad > 0:
-            targets[str(turno.id)] = necesidad
-        elif necesidad < 0:
-            messages.error(request, f'Hay demasiados docentes asignados al turno {turno}')
-            hay_errores = True
+    for turno, necesidad in necesidades.items():
+        cubiertas = len(cargas_distribuidas[turno][tipo]) + len(cargas_asignadas[turno][tipo])
 
-    if hay_errores:
-        context = {
-                'annos': [anno],
-                'cuatrimestres': [Cuatrimestres[cuatrimestre]],
-                'tipos': tipo,
-                'intento': intento}
-        return render(request, 'dborrador/distribuir.html', context)
+        if cubiertas > necesidad:
+            logger.error('Muchos docentes asignados a %s. Están asignados %s y la necesidad es %s',
+                         turno, cargas_distribuidas[turno][tipo] + cargas_asignadas[turno][tipo], necesidad)
+        elif cubiertas < necesidad:
+            targets[str(turno.id)] = necesidad - cubiertas
 
-    logger.info('Hay que distribuir %d cargas docentes y hay %d necesidades.',
-                len(cargas_a_distribuir), sum(necesidades_no_cubiertas.values()))
 
     # docentes a distribuir
     preferencias = Preferencia.objects.all()
     pesos = []
-    for carga in cargas_a_distribuir:
+    for carga in todavia_sin_distribuir:
         doc_pref = preferencias.filter(preferencia__docente=carga.docente)
         for preferencia in doc_pref:
             carga_id = str(carga.id)
@@ -182,17 +177,51 @@ def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_man
     # llamamos al distribuidor
     allocator = allocating.Allocator(sources, wmap, targets, limit_denominator=100)
     distribucion = allocator.get_best()
-    logger.info('distribución obtenida (con ids): %s', distribucion)
+    logger.debug('distribución obtenida (con ids): %s', distribucion)
 
-    for carga_id, turno_id in distribucion:
-        if carga_id is None or turno_id is None:
-            continue
+    with transaction.atomic():
 
-        carga = Carga.objects.get(pk=int(carga_id))
-        turno = Turno.objects.get(pk=int(turno_id))
-        asignacion, _ = Asignacion.objects.get_or_create(intento=intento, carga=carga, turno=turno)
+        logger.info('Voy a poner asignaciones para %s cargas de %s', len(distribucion), tipo.value)
+        intento_hasta = Intento.de_algoritmo(intento_algoritmo + 1)
+        intentos_para_distribuidos = (intento.valor, intento_hasta.valor)
+        for carga_id, turno_id in distribucion:
+            if carga_id is None or turno_id is None:
+                continue
 
-    distribucion_url = reverse('dborrador:fijar', args=(anno, cuatrimestre, tipo.name, intento))
+            carga = Carga.objects.get(pk=int(carga_id))
+            turno = Turno.objects.get(pk=int(turno_id))
+            asignacion, _ = Asignacion.objects.get_or_create(intentos=intentos_para_distribuidos,
+                                                             carga=carga, turno=turno,
+                                                             cargo_que_ocupa=tipo.name)
+
+        para_extender = Asignacion.objects.filter(intentos__endswith=intento.valor).exclude(cargo_que_ocupa=tipo.name)
+        logger.info('Voy a extender %d asignaciones de otros tipos', para_extender.count())
+        for asignacion in para_extender.all():
+            asignacion.intentos = (asignacion.intentos[0], intento_hasta.valor)
+            asignacion.save()
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo):
+    logger.info('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s',
+                tipo, cuatrimestre, anno)
+
+    tipo = TipoDocentes[tipo]
+    anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
+
+    hacer_distribucion(anno_cuat, tipo, intento_algoritmo)
+
+    # if hay_errores:
+    #     context = {
+    #             'annos': [anno],
+    #             'cuatrimestres': [Cuatrimestres[cuatrimestre]],
+    #             'tipos': tipo,
+    #             'intento': intento}
+    #     return render(request, 'dborrador/distribuir.html', context)
+
+
+    distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo.name, intento_algoritmo, 0))
     return HttpResponseRedirect(distribucion_url)
 
 
