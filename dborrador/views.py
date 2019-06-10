@@ -16,7 +16,7 @@ from .misc import MapeosDistribucion, Distribucion
 from materias.models import (Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria,
                              choice_enum, AnnoCuatrimestre, TipoDocentes,)
 from materias.misc import Mapeos
-from encuestas.models import PreferenciasDocente
+from encuestas.models import PreferenciasDocente, OtrosDatos
 
 from allocation import allocating
 
@@ -24,13 +24,14 @@ from allocation import allocating
 logger = logging.getLogger(__name__)
 
 
-def copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo):
+def copiar_anno_y_cuatrimestre(anno, cuatrimestre):
     '''devuelve: (prefs copiadas, prefs ya existentes) '''
     copiadas = 0
     existentes, _ = Preferencia.objects.filter(preferencia__turno__anno=anno,
                                                preferencia__turno__cuatrimestre=cuatrimestre).delete()
 
-    for docente in Mapeos.docentes_de_tipo(tipo):
+    docentes_con_encuesta = {od.docente for od in OtrosDatos.objects.all()}
+    for docente in docentes_con_encuesta:
         prefs = PreferenciasDocente.objects.filter(turno__anno=anno,
                                                    turno__cuatrimestre=cuatrimestre,
                                                    docente=docente)
@@ -73,14 +74,13 @@ def index(request):
 
 @login_required
 @permission_required('dborrador.add_asignacion')
-def preparar(request, anno, cuatrimestre, tipo):
-    tipo = TipoDocentes[tipo]
-    logger.info('copiando %s y %s para docents tipo %s', anno, cuatrimestre, tipo)
+def preparar(request, anno, cuatrimestre):
+    logger.info('copiando preferencias para %s, cuatrimestre %s', anno, Cuatrimestres[cuatrimestre].value)
 
-    copiadas, existentes = copiar_anno_y_cuatrimestre(anno, cuatrimestre, tipo)
+    copiadas, existentes = copiar_anno_y_cuatrimestre(anno, cuatrimestre)
     context = {'copiadas': copiadas, 'existentes': existentes,
-               'anno': anno, 'cuatrimestre': cuatrimestre, 'tipo': tipo.name,
-               'intento': 1}
+               'anno': anno, 'cuatrimestre': cuatrimestre,
+               'intento': Intento.de_algoritmo(1), 'tipo': TipoDocentes.P.name}
     return render(request, 'dborrador/despues_de_preparar.html', context)
 
 
