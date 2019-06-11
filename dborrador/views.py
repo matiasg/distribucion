@@ -76,12 +76,10 @@ def index(request):
 @permission_required('dborrador.add_asignacion')
 def preparar(request, anno, cuatrimestre):
     logger.info('copiando preferencias para %s, cuatrimestre %s', anno, Cuatrimestres[cuatrimestre].value)
-
     copiadas, existentes = copiar_anno_y_cuatrimestre(anno, cuatrimestre)
-    context = {'copiadas': copiadas, 'existentes': existentes,
-               'anno': anno, 'cuatrimestre': cuatrimestre,
-               'intento': Intento.de_algoritmo(1), 'tipo': TipoDocentes.P.name}
-    return render(request, 'dborrador/despues_de_preparar.html', context)
+    intento = Intento.de_algoritmo(0)
+    distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento.algoritmo, intento.manual))
+    return HttpResponseRedirect(distribucion_url)
 
 
 def _turno_tipo_obj_a_tipo_fun_obj(d, fun=lambda x: x):
@@ -140,6 +138,15 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     context['sin_distribuir'] = list(cargas_sin_asignar.items())
 
     return render(request, 'dborrador/distribucion.html', context)
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def empezar_a_distribuir(request):
+    anno = int(request.POST['anno'])
+    cuatrimestre = request.POST['cuatrimestre']
+    distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0))
+    return HttpResponseRedirect(distribucion_url)
 
 
 def hacer_distribucion(anno_cuat, tipo, intento_algoritmo):

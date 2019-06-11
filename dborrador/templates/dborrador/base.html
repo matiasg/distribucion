@@ -35,33 +35,26 @@
 
     {% else %}
 
-    <form action="{% url 'dborrador:index' %}" method="post">
+    <form action="{% url 'dborrador:empezar' %}" method="post">
         {% csrf_token %}
-        <p> Año: 
-        <select name="anno">
-            {% for a in annos %}
-            <option value="{{ a }}">{{ a }}</option>
-            {% endfor %}
-        </select></p>
+        <ul style="list-style-type:none;">
+            <li> Año: 
+                <select name="anno">
+                    {% for a in annos %}
+                    <option value="{{ a }}">{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </li>
 
-        <p> Cuatrimestre: 
-        <select name="cuatrimestre">
-            {% for c in cuatrimestres %}
-            <option value="{{ c.name }}">{{ c.value }}</option>
-            {% endfor %}
-        </select></p>
-
-        <p> Tipo de docentes: 
-        <select name="tipo">
-            {% for t in tipos %}
-            <option value="{{ t.name }}">{{ t.value }}</option>
-            {% endfor %}
-        </select></p>
-
-        <p> Intento:
-        <input type="number" name="intento" value=0>
-        </p>
-        <input type="submit" name="distribuir" value="Distribuir">
+            <li> Cuatrimestre: 
+                <select name="cuatrimestre">
+                    {% for c in cuatrimestres %}
+                    <option value="{{ c.name }}">{{ c.value }}</option>
+                    {% endfor %}
+                </select>
+            </li>
+            <input type="submit" name="distribuir" value="Comenzar a distribuir">
+        </ul>
     </form>
 
     {% endif %}
