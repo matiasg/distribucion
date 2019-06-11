@@ -130,7 +130,8 @@ def ver_distribucion(request, anno, cuatrimestre, tipo, intento_algoritmo, inten
 
     cargas_sin_distribuir = Distribucion.no_distribuidas_por_cargo(anno_cuat)
     asignaciones_moviles_por_tipo = _turno_tipo_obj_a_tipo_fun_obj(asignaciones_moviles, fun=lambda asignacion: asignacion.carga)
-    cargas_sin_asignar = {tipo: set(cargas_sin_distribuir[tipo]) - asignaciones_moviles_por_tipo[tipo] for tipo in TipoDocentes}
+    cargas_sin_asignar = {tipo: sorted(set(cargas_sin_distribuir[tipo]) - asignaciones_moviles_por_tipo[tipo], key=lambda c: c.docente.nombre)
+                          for tipo in TipoDocentes}
     context['sin_distribuir'] = list(cargas_sin_asignar.items())
 
     return render(request, 'dborrador/distribucion.html', context)
