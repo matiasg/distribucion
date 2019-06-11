@@ -93,15 +93,20 @@ def _turno_tipo_obj_a_tipo_fun_obj(d, fun=lambda x: x):
 
 @login_required
 @permission_required('dborrador.add_asignacion')
-def ver_distribucion(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_manual):
+def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
     anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
-    tipo = TipoDocentes[tipo]
-    intento = Intento(intento_algoritmo, intento_manual)
+    if 'distribucion' in request.POST:
+        intento = Intento(int(request.POST['intento_algoritmo']), int(request.POST['intento_manual']))
+    else:
+        intento = Intento(intento_algoritmo, intento_manual)
+
+    max_intento = Intento.de_valor(max(a.intentos.upper for a in Asignacion.objects.all()) - 1)  # -1 porque los rangos son [)
 
     context = {'anno': anno,
                'cuatrimestre': cuatrimestre,
-               'tipo': tipo.name,
-               'intento': intento}
+               'intento_algoritmo': intento.algoritmo,
+               'intento_manual': intento.manual,
+               'max_intento_algoritmo': max_intento.algoritmo}
 
     turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
     obligatoriedades = {TipoMateria.B.name: 'Obligatorias',

@@ -10,7 +10,7 @@ from . import views
 app_name = 'dborrador'
 urlpatterns = [
     path('', views.index, name='index'),
-    path('distribucion/<int:anno>/<str:cuatrimestre>/<str:tipo>/<int:intento_algoritmo>/<int:intento_manual>',
+    path('distribucion/<int:anno>/<str:cuatrimestre>/<int:intento_algoritmo>/<int:intento_manual>',
          views.ver_distribucion, name='distribucion'),
     path('preparar/<int:anno>/<str:cuatrimestre>',
          views.preparar, name='preparar'),
