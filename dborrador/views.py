@@ -84,6 +84,13 @@ def preparar(request, anno, cuatrimestre):
     return render(request, 'dborrador/despues_de_preparar.html', context)
 
 
+def _turno_tipo_obj_a_tipo_fun_obj(d, fun=lambda x: x):
+    ret = defaultdict(set)
+    for tipo_objs in d.values():
+        for tipo, turno_objs in tipo_objs.items():
+            ret[tipo].update({fun(o) for o in turno_objs})
+    return ret
+
 @login_required
 @permission_required('dborrador.add_asignacion')
 def ver_distribucion(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_manual):
@@ -101,8 +108,8 @@ def ver_distribucion(request, anno, cuatrimestre, tipo, intento_algoritmo, inten
                         TipoMateria.R.name: 'Optativas regulares',
                         TipoMateria.N.name: 'Optativas no regulares'}
 
-    asignaciones = Distribucion.asignaciones_por_cargo_ocupado(anno_cuat, intento)
-    cargas = Distribucion.ya_distribuidas_por_cargo(anno_cuat)
+    asignaciones_moviles = Distribucion.asignaciones_por_cargo_ocupado(anno_cuat, intento)
+    asignaciones_fijas = Distribucion.ya_distribuidas_por_cargo(anno_cuat)
 
     materias = []
     for obligatoriedad, obligatoriedad_largo in obligatoriedades.items():
@@ -112,14 +119,19 @@ def ver_distribucion(request, anno, cuatrimestre, tipo, intento_algoritmo, inten
         for materia in tmaterias:
             mat_turnos = []
             for turno in sorted(turnos_ac.filter(materia=materia)):
-                turno.asignaciones = list(asignaciones[turno].items())
-                turno.cargas = list(cargas[turno].items())
+                turno.asignaciones = list(asignaciones_moviles[turno].items())
+                turno.cargas = list(asignaciones_fijas[turno].items())
                 mat_turnos.append(turno)
 
             ob_materias.append([materia, mat_turnos])
 
         materias.append((obligatoriedad_largo, ob_materias))
     context['materias'] = materias
+
+    cargas_sin_distribuir = Distribucion.no_distribuidas_por_cargo(anno_cuat)
+    asignaciones_moviles_por_tipo = _turno_tipo_obj_a_tipo_fun_obj(asignaciones_moviles, fun=lambda asignacion: asignacion.carga)
+    cargas_sin_asignar = {tipo: set(cargas_sin_distribuir[tipo]) - asignaciones_moviles_por_tipo[tipo] for tipo in TipoDocentes}
+    context['sin_distribuir'] = list(cargas_sin_asignar.items())
 
     return render(request, 'dborrador/distribucion.html', context)
 
@@ -211,15 +223,6 @@ def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo):
     anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
 
     hacer_distribucion(anno_cuat, tipo, intento_algoritmo)
-
-    # if hay_errores:
-    #     context = {
-    #             'annos': [anno],
-    #             'cuatrimestres': [Cuatrimestres[cuatrimestre]],
-    #             'tipos': tipo,
-    #             'intento': intento}
-    #     return render(request, 'dborrador/distribuir.html', context)
-
 
     distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo.name, intento_algoritmo, 0))
     return HttpResponseRedirect(distribucion_url)
