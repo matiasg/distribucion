@@ -128,6 +128,7 @@ class Distribucion:
 
     @classmethod
     def asignaciones_por_cargo_ocupado(cls, ac, intento):
+        '''AnnoCuatrimestre -> Intento -> {Turno -> TipoDocentes -> [Asignacion]}'''
         turnos = Turno.objects.filter(anno=ac.anno, cuatrimestre=ac.cuatrimestre)
         ret = {t: defaultdict(list) for t in turnos}
         for asignacion in Asignacion.validas_en(intento):
@@ -137,6 +138,7 @@ class Distribucion:
 
     @classmethod
     def ya_distribuidas_por_cargo(cls, ac):
+        '''AnnoCuatrimestre -> {Turno -> TipoDocentes -> [Asignacion]}'''
         ret = {}
         for turno in Turno.objects.filter(anno=ac.anno, cuatrimestre=ac.cuatrimestre):
             ret[turno] = defaultdict(list)
@@ -147,6 +149,7 @@ class Distribucion:
 
     @classmethod
     def no_distribuidas_por_cargo(cls, ac):
+        '''AnnoCuatrimestre -> {TipoDocentes -> [Carga]}'''
         ret = defaultdict(list)
         cargas = Carga.objects.filter(anno=ac.anno, cuatrimestre=ac.cuatrimestre, turno__isnull=True)
         for carga in cargas:
