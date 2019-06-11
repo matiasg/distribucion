@@ -12,14 +12,16 @@ Fijar docentes a intento {{ intento }}
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 
     <div class="subseccion"><div id="titulo">Docentes no distribuidos</div>
-    <button>Mostrar/esconder docentes sin distribuir</button>
+        <button>Mostrar/esconder docentes sin distribuir</button>
         <table id="escondible">
-            <thead> {% for tipo, lista in sin_distribuir %} <td> {{ tipo.value }} </td> {% endfor %} </thead>
-            <tbody> <tr>
+            <thead class="encabezado"> {% for tipo, lista in sin_distribuir %} <td> {{ tipo.value }} </td> {% endfor %} </thead>
+            <tbody class="cuerpo">
+                <tr>
                     {% for tipo, lista in sin_distribuir %}
                     <td> <ul> {% for carga in lista %} <li>{{ carga.docente }}</li> {% endfor %} </ul> </td>
                     {% endfor %}
-                </tr> </tbody>
+                </tr>
+            </tbody>
         </table>
     </div>
 

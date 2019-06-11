@@ -59,3 +59,17 @@ td.datosdoc .cargas_fijas {
 td.datosdoc .cargas_en_distribucion {
   background-color: #ff8;
 }
+
+table .encabezado {
+  background-color: #148;
+  color: #eee;
+  text-align: center;
+  font-size: large;
+}
+
+table .cuerpo tr td {
+  vertical-align: top;
+  margin: 1px;
+  border-left: 1px solid #777;
+  padding: 0em 1em 0em 1em;
+}
