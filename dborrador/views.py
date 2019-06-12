@@ -135,7 +135,13 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     asignaciones_moviles_por_tipo = _turno_tipo_obj_a_tipo_fun_obj(asignaciones_moviles, fun=lambda asignacion: asignacion.carga)
     cargas_sin_asignar = {tipo: sorted(set(cargas_sin_distribuir[tipo]) - asignaciones_moviles_por_tipo[tipo], key=lambda c: c.docente.nombre)
                           for tipo in TipoDocentes}
-    context['sin_distribuir'] = list(cargas_sin_asignar.items())
+    # agrego preferencias al dict
+    preferencias = Preferencia.objects.all()
+    cargas_sin_asignar_anotadas = {tipo: [(carga, preferencias.filter(preferencia__docente=carga.docente).all())
+                                          for carga in cargas]
+                                   for tipo, cargas in cargas_sin_asignar.items()}
+
+    context['sin_distribuir'] = cargas_sin_asignar_anotadas
 
     return render(request, 'dborrador/distribucion.html', context)
 
