@@ -114,7 +114,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     asignaciones_moviles = Distribucion.asignaciones_por_cargo_ocupado(anno_cuat, intento)
     asignaciones_fijas = Distribucion.ya_distribuidas_por_cargo(anno_cuat)
 
-    preferencias = Preferencia.objects.all()
+    preferencias = Preferencia.objects.order_by('peso_normalizado')
     preferencias_por_turno = {turno: preferencias.filter(preferencia__turno=turno).all() for turno in turnos_ac.all()}
 
     materias = []
