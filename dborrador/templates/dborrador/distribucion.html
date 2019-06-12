@@ -51,7 +51,17 @@ Fijar docentes a intento {{ intento }}
                     {% for turno in turnos %}
                     <tr>
 
-                        <td class="fondo{{ turno.tipo }}">{{ turno.horarios_info.tipoynumero }}</td>
+                        <td class="fondo{{ turno.tipo }}">
+                            <div class="tooltip">{{ turno.horarios_info.tipoynumero }}
+                                <span class="tooltiptext">
+                                    <span class="titulo">Docentes que lo pidieron:</span>
+                                    <ul>{% for preferencia in turno.preferencias %}
+                                        <li>{{ preferencia.preferencia.docente }} ({{preferencia.peso_normalizado|floatformat:4}})</li>
+                                        {% endfor %}
+                                    </ul>
+                                </span>
+                            </div>
+                        </td>
                         <td class="diayhora">{{ turno.horarios_info.diayhora }}</td>
                         <td class="datosdoc">
                             <div class="cargas_fijas">

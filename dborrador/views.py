@@ -114,6 +114,9 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     asignaciones_moviles = Distribucion.asignaciones_por_cargo_ocupado(anno_cuat, intento)
     asignaciones_fijas = Distribucion.ya_distribuidas_por_cargo(anno_cuat)
 
+    preferencias = Preferencia.objects.all()
+    preferencias_por_turno = {turno: preferencias.filter(preferencia__turno=turno).all() for turno in turnos_ac.all()}
+
     materias = []
     for obligatoriedad, obligatoriedad_largo in obligatoriedades.items():
         tmaterias = Materia.objects.filter(obligatoriedad=obligatoriedad)
@@ -124,6 +127,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
             for turno in sorted(turnos_ac.filter(materia=materia)):
                 turno.asignaciones = list(asignaciones_moviles[turno].items())
                 turno.cargas = list(asignaciones_fijas[turno].items())
+                turno.preferencias = list(preferencias_por_turno[turno])
                 mat_turnos.append(turno)
 
             ob_materias.append([materia, mat_turnos])
@@ -136,7 +140,6 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     cargas_sin_asignar = {tipo: sorted(set(cargas_sin_distribuir[tipo]) - asignaciones_moviles_por_tipo[tipo], key=lambda c: c.docente.nombre)
                           for tipo in TipoDocentes}
     # agrego preferencias al dict
-    preferencias = Preferencia.objects.all()
     cargas_sin_asignar_anotadas = {tipo: [(carga, preferencias.filter(preferencia__docente=carga.docente).all())
                                           for carga in cargas]
                                    for tipo, cargas in cargas_sin_asignar.items()}
