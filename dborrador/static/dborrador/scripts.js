@@ -1,5 +1,5 @@
 $(document).ready(function(){
-  $("button").click(function(){
+  $("button#esconder").click(function(){
     $("#escondible").toggle();
   });
 });
