@@ -101,16 +101,17 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     else:
         intento = Intento(intento_algoritmo, intento_manual)
 
-    max_intento = Intento.de_valor(max(a.intentos.upper
-                                       for a in Asignacion.objects.all()
-                                       if a.intentos.upper is not None)
-                                   - 1)  # -1 porque los rangos son [)
+    intentos = {a.intentos.upper for a in Asignacion.objects.all()} - {None}
+    intentos = {Intento.de_valor(v) for v in intentos}
+    max_intento_algoritmo = max(i.algoritmo for i in intentos)
+    max_intento_manual = max(i.manual for i in intentos)
 
     context = {'anno': anno,
                'cuatrimestre': cuatrimestre,
                'intento_algoritmo': intento.algoritmo,
                'intento_manual': intento.manual,
-               'max_intento_algoritmo': max_intento.algoritmo}
+               'max_intento_algoritmo': max_intento_algoritmo,
+               'max_intento_manual': max_intento_manual}
 
     turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
     obligatoriedades = {TipoMateria.B.name: 'Obligatorias',

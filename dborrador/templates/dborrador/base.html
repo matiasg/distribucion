@@ -21,8 +21,8 @@
         <li>Año: {{ anno }} <input type="hidden" name="anno" value="{{ anno }}"></li>
         <li>Cuatrimestre: {{ cuatrimestre }} <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre }}"></li>
         <li>Intento: <input type="number" name="intento_algoritmo" min="0" max="{{ max_intento_algoritmo }}" value="{{ intento_algoritmo }}" style="width:2em">
+        <input type="range" name="intento_manual" min="0" max="{{ max_intento_manual }}" value="{{ intento_manual }}" style="width:12em">
             <input type="submit" name="distribucion" value="mirar">
-            <input type="hidden" name="intento_manual" value="{{ intento_manual }}"></li>
     </ul>
     </form>
 
