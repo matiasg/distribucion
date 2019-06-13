@@ -94,7 +94,10 @@ def _turno_tipo_obj_a_tipo_fun_obj(d, fun=lambda x: x):
 def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
     anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
     if 'distribucion' in request.POST:
-        intento = Intento(int(request.POST['intento_algoritmo']), int(request.POST['intento_manual']))
+        distribucion_url = reverse('dborrador:distribucion',
+                                   args=(anno, cuatrimestre,
+                                         int(request.POST['intento_algoritmo']), int(request.POST['intento_manual'])))
+        return HttpResponseRedirect(distribucion_url)
     else:
         intento = Intento(intento_algoritmo, intento_manual)
 
