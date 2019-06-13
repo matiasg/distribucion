@@ -20,11 +20,18 @@ Cambiar a {{ carga.docente }} de turno
 
         <div id="titulo">Cambiar a</div>
         <select name="cambio_a">
-            {% for turno in turnos %}
-            <option value="{{ turno.id }}" {% if turno.id == asignado.id %}selected{% endif %}>{{ turno }}</option>
+            {% for turno, preferido in turnos %}
+            <option value="{{ turno.id }}" {% if turno.id == asignado.id %}selected{% endif %} {% if not preferido %}disabled{% endif%}>{{ turno }}</option>
             {% endfor %}
         </select>
 
+        <p> <div id="titulo">Preferencias:</div> 
+            <ul>
+            {% for preferencia in preferencias %}
+            <li> {{ preferencia.preferencia.turno }} ({{ preferencia.peso_normalizado|floatformat:4 }})</li>
+            {% endfor %}
+            </ul>
+            </p>
 
         <p> <div id="titulo">Cargo:</div> {{ cargo.value }} </p>
 

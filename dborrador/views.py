@@ -300,8 +300,12 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
         return HttpResponseRedirect(distribucion_url)
 
     else:
-        turnos_ac = [NoTurno()] + sorted(Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all(),
-                                         key=lambda t: strxfrm(t.materia.nombre))
+        preferencias = Preferencia.objects.filter(preferencia__docente=carga.docente).order_by('peso_normalizado')
+        turnos_preferidos = {p.preferencia.turno for p in preferencias}
+        turnos_ac = sorted(Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all(),
+                           key=lambda t: strxfrm(t.materia.nombre))
+        turnos = [(NoTurno(), True)] + [(t, t in turnos_preferidos) for t in turnos_ac]
+
         if asignaciones.count() == 1:
             asignado = asignaciones.first().turno
         elif asignaciones.count() == 0:
@@ -312,9 +316,10 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
         context = {'carga': carga,
                    'cargos': list(TipoDocentes),
                    'cargo': Mapeos.tipos_de_cargo(carga.cargo),
-                   'turnos': turnos_ac,
+                   'turnos': turnos,
                    'anno': anno,
                    'cuatrimestre': cuatrimestre,
+                   'preferencias': preferencias,
                    'intento_algoritmo': intento_algoritmo,
                    'intento_manual': intento_manual,
                    'asignado': asignado,
