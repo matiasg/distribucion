@@ -138,13 +138,16 @@ class Turno(models.Model):
 
     def __lt__(self, other):
         if other.__class__ is self.__class__:
-            horarios_self = sorted(self.horario_set.all())
-            if not horarios_self:
-                return True
-            horarios_other = sorted(other.horario_set.all())
-            if not horarios_other:
-                return False
-            return horarios_self[0] < horarios_other[0]
+            if other.materia == self.materia:
+                horarios_self = sorted(self.horario_set.all())
+                if not horarios_self:
+                    return True
+                horarios_other = sorted(other.horario_set.all())
+                if not horarios_other:
+                    return False
+                return horarios_self[0] < horarios_other[0]
+            else:
+                return self.materia.nombre < other.materia.nombre
         return NotImplemented
 
     def docentes(self):

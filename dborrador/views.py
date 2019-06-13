@@ -1,6 +1,7 @@
 import logging
 from collections import defaultdict, namedtuple
 from time import monotonic
+from locale import strxfrm
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -10,6 +11,7 @@ from django.db import transaction
 from django.db.models import Max
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required, login_required
+
 
 from .models import Preferencia, Asignacion, Comentario, Intento
 from .misc import MapeosDistribucion, Distribucion
@@ -298,7 +300,8 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
         return HttpResponseRedirect(distribucion_url)
 
     else:
-        turnos_ac = [NoTurno()] + list(Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all())
+        turnos_ac = [NoTurno()] + sorted(Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all(),
+                                         key=lambda t: strxfrm(t.materia.nombre))
         if asignaciones.count() == 1:
             asignado = asignaciones.first().turno
         elif asignaciones.count() == 0:
