@@ -83,7 +83,10 @@ Fijar docentes a intento {{ intento }}
                                     {% for tipo, asignaciones_turno in turno.asignaciones %}
                                     {% if asignaciones_turno %}
                                     <li>
-                                        {{ tipo.value }}: {% for asignacion in asignaciones_turno %} {{ asignacion.carga.docente }}{% endfor %}
+                                        {{ tipo.value }}:
+                                        {% for asignacion in asignaciones_turno %}
+                                        <a href="{{ cambiar_docente_url }}{{ asignacion.carga.id }}">{{ asignacion.carga.docente }}</a>
+                                        {% endfor %}
                                     </li>
                                     {% endif %}
                                     {% endfor %}
