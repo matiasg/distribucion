@@ -14,6 +14,10 @@ urlpatterns = [
          views.ver_distribucion, name='distribucion'),
     path('empezar',
          views.empezar_a_distribuir, name='empezar'),
+    path('cambiar_docente/<int:anno>/<str:cuatrimestre>/<int:intento_algoritmo>/<int:intento_manual>/<int:carga_id>',
+         views.cambiar_docente, name='cambiar_docente'),
+
+
     path('preparar/<int:anno>/<str:cuatrimestre>',
          views.preparar, name='preparar'),
     path('distribuir/<int:anno>/<str:cuatrimestre>/<str:tipo>/<int:intento_algoritmo>',

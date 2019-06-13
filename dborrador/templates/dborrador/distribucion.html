@@ -20,7 +20,10 @@ Fijar docentes a intento {{ intento }}
                     {% for tipo, lista in sin_distribuir.items %}
                     <td> <ul> {% for carga, preferencias in lista %}
                             <li>
-                                <div class="tooltip">{{ carga.docente }}
+                                <div class="tooltip">
+                                    <a href="{{ cambiar_docente_url }}{{ carga.id }}">
+                                        {{ carga.docente }}
+                                    </a>
                                     <span class="tooltiptext">
                                         <span class="titulo">Encuesta de {{ carga.docente }}:</span>
                                         <ul>{% for preferencia in preferencias %}

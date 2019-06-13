@@ -101,7 +101,10 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     else:
         intento = Intento(intento_algoritmo, intento_manual)
 
-    max_intento = Intento.de_valor(max(a.intentos.upper for a in Asignacion.objects.all()) - 1)  # -1 porque los rangos son [)
+    max_intento = Intento.de_valor(max(a.intentos.upper
+                                       for a in Asignacion.objects.all()
+                                       if a.intentos.upper is not None)
+                                   - 1)  # -1 porque los rangos son [)
 
     context = {'anno': anno,
                'cuatrimestre': cuatrimestre,
@@ -139,8 +142,8 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     context['materias'] = materias
 
     cargas_sin_distribuir = Distribucion.no_distribuidas_por_cargo(anno_cuat)
-    asignaciones_moviles_por_tipo = _turno_tipo_obj_a_tipo_fun_obj(asignaciones_moviles, fun=lambda asignacion: asignacion.carga)
-    cargas_sin_asignar = {tipo: sorted(set(cargas_sin_distribuir[tipo]) - asignaciones_moviles_por_tipo[tipo], key=lambda c: c.docente.nombre)
+    cargas_de_asignaciones_moviles = {a.carga for a in Asignacion.validas_en(intento)}
+    cargas_sin_asignar = {tipo: sorted(set(cargas_sin_distribuir[tipo]) - cargas_de_asignaciones_moviles, key=lambda c: c.docente.nombre)
                           for tipo in TipoDocentes}
     # agrego preferencias al dict
     cargas_sin_asignar_anotadas = {tipo: [(carga, preferencias.filter(preferencia__docente=carga.docente).all())
@@ -148,6 +151,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
                                    for tipo, cargas in cargas_sin_asignar.items()}
 
     context['sin_distribuir'] = cargas_sin_asignar_anotadas
+    context['cambiar_docente_url'] = reverse('dborrador:cambiar_docente', args=(anno, cuatrimestre, intento.algoritmo, intento.manual, 0))[:-1]
 
     return render(request, 'dborrador/distribucion.html', context)
 
@@ -253,6 +257,75 @@ def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo):
     return HttpResponseRedirect(distribucion_url)
 
 
+class NoTurno:
+    def __init__(self, _id=-1, **kwargs):
+        self.__dict__.update(kwargs)
+        self.id = _id
+
+    def __str__(self):
+        return '_____ ningún turno _____'
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manual, carga_id):
+    intento = Intento(intento_algoritmo, intento_manual)
+    carga = Carga.objects.get(pk=carga_id)
+    asignaciones = Asignacion.validas_en(intento).filter(carga=carga)
+
+    if 'cambiar' in request.POST:
+        nuevo_intento = Intento(intento.algoritmo, intento.manual + 1)
+
+        if asignaciones.count():
+            asignacion = asignaciones.first()
+            asignacion.intentos = (asignacion.intentos.lower, nuevo_intento.valor)
+            asignacion.save()
+
+        nuevo_turno_id = int(request.POST['cambio_a'])
+        nuevo_turno = Turno.objects.get(pk=nuevo_turno_id) if nuevo_turno_id >= 0 else None
+        cargo_que_ocupa = TipoDocentes[request.POST['cargo_que_ocupa']]
+        Asignacion.objects.create(carga=carga,
+                                  turno=nuevo_turno,
+                                  intentos=(intento.valor, None),
+                                  cargo_que_ocupa=cargo_que_ocupa.name)
+
+        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, nuevo_intento.algoritmo, nuevo_intento.manual))
+        return HttpResponseRedirect(distribucion_url)
+
+    elif 'cancelar' in request.POST:
+        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento.algoritmo, intento.manual))
+        return HttpResponseRedirect(distribucion_url)
+
+    else:
+        turnos_ac = [NoTurno()] + list(Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all())
+        if asignaciones.count() == 1:
+            asignado = asignaciones.first().turno
+        elif asignaciones.count() == 0:
+            asignado = NoTurno()
+        else:
+            raise RuntimeError('La carga %d tiene más de una asignación en %s', carga, intento)
+
+        context = {'carga': carga,
+                   'cargos': list(TipoDocentes),
+                   'cargo': Mapeos.tipos_de_cargo(carga.cargo),
+                   'turnos': turnos_ac,
+                   'anno': anno,
+                   'cuatrimestre': cuatrimestre,
+                   'intento_algoritmo': intento_algoritmo,
+                   'intento_manual': intento_manual,
+                   'asignado': asignado,
+                   }
+
+        return render(request, 'dborrador/cambiar_docente.html', context)
+
+
+
+
+
+
+
+
+######## TODO borrar lo que no se usa más de acá abajo ###########
 def materias_distribuidas_dict(anno, cuatrimestre, intento, tipo):
     return {'materias': filtra_materias(anno=anno, cuatrimestre=cuatrimestre, intento=intento, tipo=tipo),
             'anno': anno,
