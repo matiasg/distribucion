@@ -1,0 +1,38 @@
+{% extends "dborrador/base.html" %}
+
+{% load static %}
+
+{% block subtitulo %}
+Hacer una distribución
+{% endblock subtitulo %}
+
+
+{% block cuerpo %}
+
+
+<form action="{% url 'dborrador:seleccion_tipo_distribuir' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
+    {% csrf_token %}
+
+    <div class="subseccion">
+
+        <div id="titulo">Tipo de docentes a distribuir</div>
+        <ul><select name="tipo">
+                {% for tipo in tipos %}
+                <option value={{ tipo.name }}>{{ tipo.value }}</option>
+                {% endfor %}
+            </select>
+        </ul>
+
+        <div id="titulo">Intento</div>
+        <ul><select name="nuevo_intento_algoritmo">
+                {% for intento in intentos_algoritmo %}
+                <option value={{ intento }}>{{ intento }}</option>
+                {% endfor %}
+            </select>
+        </ul>
+
+        <input type="submit" name="distribuir" value="hacer la distribucion">
+
+    </div>
+</form>
+{% endblock cuerpo %}
