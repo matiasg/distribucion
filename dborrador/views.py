@@ -316,12 +316,13 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
             asignacion.save()
 
         nuevo_turno_id = int(request.POST['cambio_a'])
-        nuevo_turno = Turno.objects.get(pk=nuevo_turno_id) if nuevo_turno_id >= 0 else None
-        cargo_que_ocupa = TipoDocentes[request.POST['cargo_que_ocupa']]
-        Asignacion.objects.create(carga=carga,
-                                  turno=nuevo_turno,
-                                  intentos=(intento.valor, None),
-                                  cargo_que_ocupa=cargo_que_ocupa.name)
+        if nuevo_turno_id >= 0:
+            nuevo_turno = Turno.objects.get(pk=nuevo_turno_id)
+            cargo_que_ocupa = TipoDocentes[request.POST['cargo_que_ocupa']]
+            Asignacion.objects.create(carga=carga,
+                                      turno=nuevo_turno,
+                                      intentos=(intento.valor, None),
+                                      cargo_que_ocupa=cargo_que_ocupa.name)
 
         distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, nuevo_intento.algoritmo, nuevo_intento.manual))
         return HttpResponseRedirect(distribucion_url)
