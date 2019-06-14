@@ -91,6 +91,14 @@ def _turno_tipo_obj_a_tipo_fun_obj(d, fun=lambda x: x):
             ret[tipo].update({fun(o) for o in turno_objs})
     return ret
 
+
+def _todos_los_intentos():
+    intentos = {a.intentos.upper for a in Asignacion.objects.all()} - {None}
+    intentos = {Intento.de_valor(v) for v in intentos}
+    max_intento_algoritmo = max(i.algoritmo for i in intentos)
+    max_intento_manual = max(i.manual for i in intentos)
+    return intentos, max_intento_algoritmo, max_intento_manual
+
 @login_required
 @permission_required('dborrador.add_asignacion')
 def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
@@ -103,17 +111,15 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     else:
         intento = Intento(intento_algoritmo, intento_manual)
 
-    intentos = {a.intentos.upper for a in Asignacion.objects.all()} - {None}
-    intentos = {Intento.de_valor(v) for v in intentos}
-    max_intento_algoritmo = max(i.algoritmo for i in intentos)
-    max_intento_manual = max(i.manual for i in intentos)
+    intentos, max_intento_algoritmo, max_intento_manual = _todos_los_intentos()
 
     context = {'anno': anno,
                'cuatrimestre': cuatrimestre,
                'intento_algoritmo': intento.algoritmo,
                'intento_manual': intento.manual,
                'max_intento_algoritmo': max_intento_algoritmo,
-               'max_intento_manual': max_intento_manual}
+               'max_intento_manual': max_intento_manual,
+               }
 
     turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
     obligatoriedades = {TipoMateria.B.name: 'Obligatorias',
@@ -251,14 +257,39 @@ def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo):
     logger.info('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s',
                 tipo, cuatrimestre, anno)
 
+    ####
+    #### TODO XXX Borrar asignaciones posteriores y poner un cartel
+    ####
     tipo = TipoDocentes[tipo]
     anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
 
     hacer_distribucion(anno_cuat, tipo, intento_algoritmo)
 
-    distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, tipo.name, intento_algoritmo, 0))
+    distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento_algoritmo, 0))
     return HttpResponseRedirect(distribucion_url)
 
+@login_required
+@permission_required('dborrador.add_asignacion')
+def seleccion_tipo_distribuir(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
+    if 'distribuir' in request.POST:
+        nuevo_intento_algoritmo = int(request.POST['nuevo_intento_algoritmo'])
+        tipo = TipoDocentes[request.POST['tipo']]
+        distribuir_url = reverse('dborrador:distribuir', args=(anno, cuatrimestre, tipo.name, nuevo_intento_algoritmo))
+        return HttpResponseRedirect(distribuir_url)
+
+    else:
+        intentos, max_intento_algoritmo, max_intento_manual = _todos_los_intentos()
+        context = {
+            'anno': anno,
+            'cuatrimestre': cuatrimestre,
+            'tipos': list(TipoDocentes),
+            'intento_algoritmo': intento_algoritmo,
+            'intento_manual': intento_manual,
+            'max_intento_algoritmo': max_intento_algoritmo,
+            'max_intento_manual': max_intento_manual,
+            'intentos_algoritmo': sorted(set(i.algoritmo for i in intentos)) + [max_intento_algoritmo + 1],
+        }
+        return render(request, 'dborrador/seleccion_tipo_e_intento.html', context)
 
 class NoTurno:
     def __init__(self, _id=-1, **kwargs):

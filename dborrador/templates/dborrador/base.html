@@ -28,8 +28,7 @@
 
     <ul>
         <li> <a href="{% url 'dborrador:preparar' anno cuatrimestre %}">copiar encuestas</a></li>
-        {% comment %}<li> <a href="{% url 'dborrador:distribuir' anno cuatrimestre tipo intento.algoritmo %}">hacer una distribución</a></li>{% endcomment %}
-        {% comment %}<li> <a href="{% url 'dborrador:fijar' anno cuatrimestre tipo intento.algoritmo intento.manual %}">Fijar docentes en una distribución</a></li>{% endcomment %}
+        <li> <a href="{% url 'dborrador:seleccion_tipo_distribuir' anno cuatrimestre intento_algoritmo intento_manual %}">correr el algoritmo</a></li>
     </ul>
 
 
