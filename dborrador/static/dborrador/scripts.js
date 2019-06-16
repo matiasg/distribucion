@@ -1,5 +1,14 @@
 $(document).ready(function(){
   $("button#esconder").click(function(){
-    $("#escondible").toggle();
+    $("#escondible").toggle("blind");
   });
+});
+
+$(document).ready(function(){
+    $( "#preguntas_distribucion_algoritmo" ).dialog({ autoOpen: false });
+});
+$(document).ready(function(){
+    $( ".base_opciones #distribuir" ).click(function() {
+        $( "#preguntas_distribucion_algoritmo" ).dialog( "open" );
+    });
 });

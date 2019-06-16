@@ -3,7 +3,9 @@
 <link rel="stylesheet" type="text/css" href="{% static 'dborrador/dborrador.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dborrador/indice.css' %}">
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script src="{% static 'dborrador/scripts.js' %}"></script>
 
 <head>
@@ -26,10 +28,25 @@
     </ul>
     </form>
 
+    <div class="base_opciones">
     <ul>
         <li> <a href="{% url 'dborrador:preparar' anno cuatrimestre %}">copiar encuestas</a></li>
-        <li> <a href="{% url 'dborrador:seleccion_tipo_distribuir' anno cuatrimestre intento_algoritmo intento_manual %}">correr el algoritmo</a></li>
+        <button id="distribuir">Correr el algoritmo</button>
+
+        <div id="preguntas_distribucion_algoritmo" title="Elegí tipo de docente">¿Realmente querés?
+            <form action="{% url 'dborrador:seleccion_tipo_distribuir' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
+            {% csrf_token %}
+                <select name="tipo">
+                    {% for t in tipos %}
+                    <option value="{{ t.name }}">{{ t.value }}</option>
+                    {% endfor %}
+                </select>
+                <input type="submit" name="hacer_distribucion" value="Sí, quiero distribuir">
+            </form>
+        </div>
+
     </ul>
+    </div>
 
 
     {% else %}
