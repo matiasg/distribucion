@@ -52,6 +52,10 @@ class Asignacion(models.Model):
     def validas_en(cls, intento):
         return cls.objects.filter(intentos__contains=intento.valor)
 
+    @property
+    def es_manual(self):
+        return not Intento.es_de_algoritmo(self.intentos.lower)
+
     class Meta:
         verbose_name = 'asignación'
         verbose_name_plural = 'asignaciones'

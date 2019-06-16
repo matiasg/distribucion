@@ -56,8 +56,14 @@ td.datosdoc .cargas_fijas {
   background-color: #8f8;
 }
 
-td.datosdoc .cargas_en_distribucion {
-  background-color: #ff8;
+td.datosdoc .cargas_en_distribucion #automatica {
+  background: #f89;
+  margin-left: 0.5em; 
+}
+
+td.datosdoc .cargas_en_distribucion #manual {
+  background: #bf9;
+  margin-left: 0.5em; 
 }
 
 table .encabezado {
