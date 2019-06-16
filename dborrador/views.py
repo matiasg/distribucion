@@ -27,9 +27,9 @@ logger = logging.getLogger(__name__)
 
 
 def copiar_anno_y_cuatrimestre(anno, cuatrimestre):
-    '''devuelve: (prefs copiadas, prefs ya existentes) '''
+    '''devuelve: (prefs copiadas, prefs borradas) '''
     copiadas = 0
-    existentes, _ = Preferencia.objects.filter(preferencia__turno__anno=anno,
+    borradas, _ = Preferencia.objects.filter(preferencia__turno__anno=anno,
                                                preferencia__turno__cuatrimestre=cuatrimestre).delete()
 
     docentes_con_encuesta = {od.docente for od in OtrosDatos.objects.all()}
@@ -46,7 +46,7 @@ def copiar_anno_y_cuatrimestre(anno, cuatrimestre):
             pref_copia = Preferencia.objects.create(preferencia=pref,
                                                     peso_normalizado=peso_normalizado)
             copiadas += 1
-    return copiadas, existentes
+    return copiadas, borradas
 
 def _anno_cuat_tipos_context():
     anno_actual = timezone.now().year
@@ -78,7 +78,8 @@ def index(request):
 @permission_required('dborrador.add_asignacion')
 def preparar(request, anno, cuatrimestre):
     logger.info('copiando preferencias para %s, cuatrimestre %s', anno, Cuatrimestres[cuatrimestre].value)
-    copiadas, existentes = copiar_anno_y_cuatrimestre(anno, cuatrimestre)
+    copiadas, borradas = copiar_anno_y_cuatrimestre(anno, cuatrimestre)
+    logger.info('copiadas: %d, borradas: %d', copiadas, borradas)
     intento = Intento.de_algoritmo(0)
     distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento.algoritmo, intento.manual))
     return HttpResponseRedirect(distribucion_url)

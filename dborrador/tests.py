@@ -10,7 +10,7 @@ from dborrador.models import Preferencia, Asignacion, Intento
 from dborrador.views import hacer_distribucion
 from materias.models import Docente, Materia, Turno, Cuatrimestres, Cargos, Carga, CargoDedicacion, TipoTurno, TipoMateria, AnnoCuatrimestre
 from materias.misc import TipoDocentes
-from encuestas.models import PreferenciasDocente
+from encuestas.models import PreferenciasDocente, OtrosDatos
 from usuarios.models import Usuario
 
 class TestPreparar(TestCase):
@@ -35,36 +35,25 @@ class TestPreparar(TestCase):
         now = timezone.now()
         self.pref1 = PreferenciasDocente.objects.create(docente=self.docente, turno=self.turno1, peso=1, fecha_encuesta=now)
         self.pref2 = PreferenciasDocente.objects.create(docente=self.docente, turno=self.turno2, peso=3, fecha_encuesta=now)
+        OtrosDatos.objects.create(docente=self.docente, fecha_encuesta=now, comentario='',
+                                  cargas=1, email='', telefono='')
 
     def test_no_falla_si_no_hay_preferencias(self):
-        response = self.client.get('/dborrador/preparar/2100/P/P')
+        response = self.client.get('/dborrador/preparar/2100/P', follow=True)
         self.assertEqual(response.status_code, 200)
 
-        response = self.client.post('/dborrador/preparar/2100/P/P')
+        response = self.client.post('/dborrador/preparar/2100/P', follow=True)
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
 
-        self.assertTrue(re.search('Copiadas:[^0-9]*0[^0-9]*\n', content),
-                        'La página deberia decir que se copiaron 0 preferencias')
-        self.assertTrue(re.search('Borradas:[^0-9]*0[^0-9]*\n', content),
-                        'La página deberia decir que se borraron 0 preferencias')
-        self.assertTrue('Preferencias copiadas' in response.content.decode(),
-                        'La página debería decir "Preferencias copiadas" y dice {}'.format(
-                            response.content.decode()))
-
-    def test_copia_preferencias(self):
+    def test_copia_preferencias_redirige_a_distribucion(self):
         self._agrega_preferencias()
-        response = self.client.post('/dborrador/preparar/2100/P/P')
-        content = response.content.decode()
+        response = self.client.post('/dborrador/preparar/2100/P', follow=True)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(re.search('Copiadas:[^0-9]*2[^0-9]*\n', content),
-                        'La página deberia decir que se copiaron 2 preferencias')
-        self.assertTrue(re.search('Borradas:[^0-9]*0[^0-9]*\n', content),
-                        'La página deberia decir que se borraron 0 preferencias')
-        self.assertEqual(Preferencia.objects.all().count(), 2, 'Debería haber dos preferencias copiadas')
+        self.assertContains(response, 'Docentes no distribuidos')
 
-    def test_borro_preferencias_correctas(self):
+    def test_copio_preferencias_correctas(self):
         self._agrega_preferencias()
         turno_otro_anno = Turno.objects.create(materia=self.materia, anno=2345, cuatrimestre=Cuatrimestres.P.name,
                                                numero=1, tipo=TipoTurno.A.name,
@@ -76,16 +65,23 @@ class TestPreparar(TestCase):
 
         pref = Preferencia.objects.create(preferencia=self.pref1, peso_normalizado=1)
 
-        pref_doc_otro_anno = PreferenciasDocente.objects.create(docente=self.docente, turno=turno_otro_anno, peso=3, fecha_encuesta=now)
-        pref_otro_anno = Preferencia.objects.create(preferencia=pref_doc_otro_anno, peso_normalizado=1)
+        pref_doc_otro_anno = PreferenciasDocente.objects.create(docente=self.docente,
+                                                                turno=turno_otro_anno, peso=3,
+                                                                fecha_encuesta=now)
+        pref_otro_anno = Preferencia.objects.create(preferencia=pref_doc_otro_anno,
+                                                    peso_normalizado=1)
 
-        pref_doc_otro_cuatri = PreferenciasDocente.objects.create(docente=self.docente, turno=turno_otro_cuatri, peso=3, fecha_encuesta=now)
-        pref_otro_cuatri = Preferencia.objects.create(preferencia=pref_doc_otro_cuatri, peso_normalizado=1)
+        pref_doc_otro_cuatri = PreferenciasDocente.objects.create(docente=self.docente,
+                                                                  turno=turno_otro_cuatri, peso=3,
+                                                                  fecha_encuesta=now)
+        pref_otro_cuatri = Preferencia.objects.create(preferencia=pref_doc_otro_cuatri,
+                                                      peso_normalizado=1)
 
-        response = self.client.get('/dborrador/preparar/2100/P/P')
+        response = self.client.get('/dborrador/preparar/2100/P', follow=True)
         self.assertEqual(response.status_code, 200)
 
-        copiadas = Preferencia.objects.filter(preferencia__turno__anno=2100, preferencia__turno__cuatrimestre=Cuatrimestres.P.name)
+        copiadas = Preferencia.objects.filter(preferencia__turno__anno=2100,
+                                              preferencia__turno__cuatrimestre=Cuatrimestres.P.name)
         self.assertEqual(copiadas.count(), 2)
         self.assertTrue(pref not in copiadas)
 
