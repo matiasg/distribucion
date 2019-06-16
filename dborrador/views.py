@@ -98,17 +98,24 @@ def _todos_los_intentos():
     intentos_fin = {a.intentos.upper for a in asignaciones} - {None}
     intentos_fin = {Intento.de_valor(v) for v in intentos_fin}
 
-    if not intentos_fin:
-        return {}, {}, 0, 0, 0
-
-    max_intento = max(i.valor for i in intentos_fin)
-    max_intento_algoritmo = max(i.algoritmo for i in intentos_fin)
-    max_intento_manual = max(i.manual for i in intentos_fin)
-
     intentos_comienzo = {a.intentos.lower for a in asignaciones} - {None}
     intentos_comienzo = {Intento.de_valor(v) for v in intentos_comienzo}
 
-    return intentos_fin, intentos_comienzo, max_intento, max_intento_algoritmo, max_intento_manual
+    if intentos_comienzo:
+        max_intento = max(i.valor for i in intentos_comienzo)
+        max_intento_algoritmo = max(i.algoritmo for i in intentos_comienzo)
+        max_intento_manual = max(i.manual for i in intentos_comienzo)
+    else:
+        max_intento, max_intento_algoritmo, max_intento_manual = 0, 0, 0
+
+    return {
+        'intentos_fin': intentos_fin,
+        'intentos_comienzo': intentos_comienzo,
+        'max_intento': max_intento,
+        'max_intento_algoritmo': max_intento_algoritmo,
+        'max_intento_manual': max_intento_manual,
+    }
+
 
 @login_required
 @permission_required('dborrador.add_asignacion')
@@ -125,8 +132,6 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     else:
         intento = Intento(intento_algoritmo, intento_manual)
 
-    intentos, _, max_intento, max_intento_algoritmo, max_intento_manual = _todos_los_intentos()
-
     if 'hacer_distribucion' in request.POST:
         return None
 
@@ -134,10 +139,8 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
                'cuatrimestre': cuatrimestre,
                'intento_algoritmo': intento.algoritmo,
                'intento_manual': intento.manual,
-               'max_intento': max_intento,
-               'max_intento_algoritmo': max_intento_algoritmo,
-               'max_intento_manual': max_intento_manual,
                'tipos': list(TipoDocentes),
+               **_todos_los_intentos(),
                }
 
     turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
@@ -385,7 +388,6 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
         else:
             raise RuntimeError('La carga %d tiene más de una asignación en %s', carga, intento)
 
-        _, _, max_intento, max_intento_algoritmo, max_intento_manual = _todos_los_intentos()
         context = {'carga': carga,
                    'cargos': list(TipoDocentes),
                    'cargo': Mapeos.tipos_de_cargo(carga.cargo),
@@ -395,10 +397,8 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
                    'preferencias': preferencias,
                    'intento_algoritmo': intento_algoritmo,
                    'intento_manual': intento_manual,
-                   'max_intento': max_intento,
-                   'max_intento_algoritmo': max_intento_algoritmo,
-                   'max_intento_manual': max_intento_manual,
                    'asignado': asignado,
+                   **_todos_los_intentos(),
                    }
 
         return render(request, 'dborrador/cambiar_docente.html', context)
