@@ -33,14 +33,23 @@
         <li> <a href="{% url 'dborrador:preparar' anno cuatrimestre %}">copiar encuestas</a></li>
         <button id="distribuir">Correr el algoritmo</button>
 
-        <div id="preguntas_distribucion_algoritmo" title="Elegí tipo de docente">¿Realmente querés?
+        <div id="preguntas_distribucion_algoritmo" title="Correr el algoritmo">
             <form action="{% url 'dborrador:seleccion_tipo_distribuir' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
             {% csrf_token %}
+
+                {% if intento_algoritmo < max_intento_algoritmo %}
+                <div class="subseccion"><div id="titulo">Cuidado</div></div>
+                El intento en el que vas a distribuir, {{ intento_algoritmo }}, no es el último.
+                Vas a borrar lo que hayas hecho después de este intento.
+                {% endif %}
+
+                <p> Elegí el tipo de docente </p>
                 <select name="tipo">
                     {% for t in tipos %}
                     <option value="{{ t.name }}">{{ t.value }}</option>
                     {% endfor %}
                 </select>
+
                 <input type="submit" name="hacer_distribucion" value="Sí, quiero distribuir">
             </form>
         </div>
