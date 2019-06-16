@@ -105,18 +105,7 @@ class TestPaginaPrincipal(TestCase):
         response = self.client.get('/dborrador/')
         self.assertContains(response, '<select name="anno">')
         self.assertContains(response, '<select name="cuatrimestre">')
-        self.assertContains(response, '<select name="tipo">')
 
-    def test_hay_pagina_principal_con_datos(self):
-        response = self.client.post('/dborrador/', {'anno': 2100, 'cuatrimestre': 'P', 'tipo': 'P', 'intento': 0},
-                                    follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(re.search('<a href="/dborrador/preparar/2100/P/P">', response.content.decode()),
-                        'La página redirigida no contiene un link a /dborrador/preparar')
-        self.assertTrue(re.search('<a href="/dborrador/distribuir/2100/P/P/0">', response.content.decode()),
-                        'La página redirigida no contiene un link a /dborrador/distribuir')
-        self.assertTrue(re.search(r'<a href="/dborrador/fijar/2100/P/P/0">', response.content.decode()),
-                        'La página redirigida no contiene un botón de post a /dborrador/')
 
 
 class TestVerDistribucion(TestCase):
@@ -144,29 +133,37 @@ class TestVerDistribucion(TestCase):
         self.now = timezone.now()
 
     def test_figuran_docentes_no_distribuidos(self):
-        Asignacion.objects.create(intento=1, carga=self.carga1, turno=self.turno1)
-        response = self.client.get(reverse('dborrador:fijar', args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
+        Asignacion.objects.create(intentos=(Intento(1, 0).valor, Intento(2, 0).valor),
+                                  carga=self.carga1, turno=self.turno1,
+                                  cargo_que_ocupa=TipoDocentes.P.name)
+        response = self.client.get(reverse('dborrador:distribucion',
+                                           args=(2100, Cuatrimestres.P.name, 1, 0)))
         content = response.content.decode()
 
-        self.assertTrue(re.search('Cargas docentes sin distribución(<div [^>]*>|</div>|<ul>|<li>|\s)*jose',
-                                  content, flags=re.DOTALL),
+        self.assertContains(response, 'Docentes no distribuidos')
+        self.assertTrue(re.search((f'<a href="/dborrador/cambiar_docente/2100/P/1/0/{self.docente2.id}">'
+                                   f'\s*{self.docente2.nombre}'), content, flags=re.DOTALL),
                         'No figura un docente no distribuido')
         self.assertTrue(re.search('Turnos con necesidades insatisfechas.*epistemologia.*Teórico-Práctica 2',
                                   content, flags=re.DOTALL),
                         'No figura un turno no cubierto')
 
     def test_figuran_pedidos_de_docentes_no_distribuidos(self):
-        Asignacion.objects.create(intento=1, carga=self.carga1, turno=self.turno1)
+        Asignacion.objects.create(intentos=(Intento(1, 0).valor, Intento(2, 0).valor),
+                                  carga=self.carga1, turno=self.turno1,
+                                  cargo_que_ocupa=TipoDocentes.P.name)
         now = timezone.now()
         pd1 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1, fecha_encuesta=now)
         pd2 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno2, peso=1, fecha_encuesta=now)
         Preferencia.objects.create(preferencia=pd1, peso_normalizado=0.5)
         Preferencia.objects.create(preferencia=pd2, peso_normalizado=0.5)
 
-        response = self.client.get(reverse('dborrador:fijar',
-                                           args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
+        response = self.client.get(reverse('dborrador:distribucion',
+                                           args=(2100, Cuatrimestres.P.name, 1, 0)))
         content = response.content.decode()
-        self.assertTrue(re.search(f'jose(<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*{self.materia.nombre}',
+        self.assertTrue(re.search((f'Encuesta de jose:'
+                                   f'(<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*'
+                                   f'{self.materia.nombre}'),
                                   content, flags=re.DOTALL),
                         'No figuran las preferencias de un docente no distribuido')
 
@@ -174,12 +171,12 @@ class TestVerDistribucion(TestCase):
         now = timezone.now()
         pd = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1, fecha_encuesta=now)
         Preferencia.objects.create(preferencia=pd, peso_normalizado=1)
-        response = self.client.get(reverse('dborrador:fijar',
-                                           args=(2100, Cuatrimestres.P.name, TipoDocentes.P.name, 1)))
+        response = self.client.get(reverse('dborrador:distribucion',
+                                           args=(2100, Cuatrimestres.P.name, 1, 0)))
 
         content = response.content.decode()
-        self.assertTrue(re.search(('epistemologia.*necesita.*docente\(s\)'
-                                   '(<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*'
+        self.assertTrue(re.search(('<div class="tooltip">Teórico-Práctica 1'
+                                   '(Docentes que lo pidieron:|<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*'
                                    'jose'),
                                   content, flags=re.DOTALL),
                         'No figuran los docentes que prefieren un turno sin docentes')

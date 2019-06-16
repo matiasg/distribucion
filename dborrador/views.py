@@ -66,13 +66,7 @@ def _anno_cuat_tipo_de_request(request):
 @login_required
 @permission_required('dborrador.add_asignacion')
 def index(request):
-    try:
-        anno, cuatrimestre, tipo = _anno_cuat_tipo_de_request(request)
-        intento = request.POST['intento']
-        fijar_url = reverse('dborrador:fijar', args=(anno, cuatrimestre, tipo.name, intento))
-        return HttpResponseRedirect(fijar_url)
-    except KeyError:
-        return render(request, 'dborrador/base.html', _anno_cuat_tipos_context())
+    return render(request, 'dborrador/base.html', _anno_cuat_tipos_context())
 
 @login_required
 @permission_required('dborrador.add_asignacion')
