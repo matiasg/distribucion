@@ -24,6 +24,11 @@ class Intento(namedtuple('Intento', ['algoritmo', 'manual'])):
     def de_algoritmo(cls, algoritmo):
         return cls(algoritmo, 0)
 
+    @classmethod
+    def es_de_algoritmo(cls, valor):
+        i = cls.de_valor(valor)
+        return i.manual == 0
+
 
 
 class Preferencia(models.Model):

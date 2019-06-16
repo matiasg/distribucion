@@ -97,17 +97,25 @@ def _todos_los_intentos():
 
     intentos_fin = {a.intentos.upper for a in asignaciones} - {None}
     intentos_fin = {Intento.de_valor(v) for v in intentos_fin}
+
+    if not intentos_fin:
+        return {}, {}, 0, 0, 0
+
+    max_intento = max(i.valor for i in intentos_fin)
     max_intento_algoritmo = max(i.algoritmo for i in intentos_fin)
     max_intento_manual = max(i.manual for i in intentos_fin)
 
     intentos_comienzo = {a.intentos.lower for a in asignaciones} - {None}
     intentos_comienzo = {Intento.de_valor(v) for v in intentos_comienzo}
 
-    return intentos_fin, intentos_comienzo, max_intento_algoritmo, max_intento_manual
+    return intentos_fin, intentos_comienzo, max_intento, max_intento_algoritmo, max_intento_manual
 
 @login_required
 @permission_required('dborrador.add_asignacion')
 def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
+    ### TODO:
+    ## agregar posibilidad de fijar varios cargos a la vez donde están distribuidos
+    ## (salvarlos con intentos=(i, i+1) y con intentos=(i+1, None)
     anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
     if 'distribucion' in request.POST:
         distribucion_url = reverse('dborrador:distribucion',
@@ -117,7 +125,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     else:
         intento = Intento(intento_algoritmo, intento_manual)
 
-    intentos, _, max_intento_algoritmo, max_intento_manual = _todos_los_intentos()
+    intentos, _, max_intento, max_intento_algoritmo, max_intento_manual = _todos_los_intentos()
 
     if 'hacer_distribucion' in request.POST:
         return None
@@ -126,6 +134,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
                'cuatrimestre': cuatrimestre,
                'intento_algoritmo': intento.algoritmo,
                'intento_manual': intento.manual,
+               'max_intento': max_intento,
                'max_intento_algoritmo': max_intento_algoritmo,
                'max_intento_manual': max_intento_manual,
                'tipos': list(TipoDocentes),
@@ -185,6 +194,7 @@ def empezar_a_distribuir(request):
 
 
 def hacer_distribucion(anno_cuat, tipo, intento_algoritmo):
+    logger.info('Comienzo una distribución automática para el intento %d', intento_algoritmo)
     intento = Intento.de_algoritmo(intento_algoritmo)
 
     def _como_conjunto(turno_tipo_objs):
@@ -254,11 +264,11 @@ def hacer_distribucion(anno_cuat, tipo, intento_algoritmo):
                                                              carga=carga, turno=turno,
                                                              cargo_que_ocupa=tipo.name)
 
-        para_extender = Asignacion.objects.filter(intentos__endswith=intento.valor).exclude(cargo_que_ocupa=tipo.name)
-        logger.info('Voy a extender %d asignaciones de otros tipos', para_extender.count())
-        for asignacion in para_extender.all():
-            asignacion.intentos = (asignacion.intentos.lower, intento_hasta.valor)
-            asignacion.save()
+        # para_extender = Asignacion.objects.filter(intentos__endswith=intento.valor).exclude(cargo_que_ocupa=tipo.name)
+        # logger.info('Voy a extender %d asignaciones de otros tipos', para_extender.count())
+        # for asignacion in para_extender.all():
+        #     asignacion.intentos = (asignacion.intentos.lower, intento_hasta.valor)
+        #     asignacion.save()
 
 
 @login_required
@@ -267,15 +277,49 @@ def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_man
     logger.info('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s',
                 tipo, cuatrimestre, anno)
 
-    ####
-    #### TODO XXX Borrar asignaciones posteriores y poner un cartel
-    ####
-    tipo = TipoDocentes[tipo]
-    anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
+    ##   Distribuimos a partir de I = Intento(a, m), generamos Intento(a+1, 0)
+    ##
+    ##   a. borrar todas las asignaciones que empiezan después de I
+    ##   b. asignaciones "activas" que empiezan en (a', n) con n > 0, quitarles fin (fin = None)
+    ##   c. Para asignaciones de otros tipos
+    ##      si empiezan en (a', 0), ponerles fin en (a+2, 0)
+    ##   d. Para asignaciones de tipo = tipo
+    ##      si empiezan en (a', 0) ponerles fin en (a+1, 0) ==> estas van a distribución
 
-    hacer_distribucion(anno_cuat, tipo, intento_algoritmo)
+    with transaction.atomic():
+        intento = Intento(intento_algoritmo, intento_manual)
+        para_borrar = Asignacion.objects.filter(intentos__startswith__gt=intento.valor)
+        logger.warning('Borro %d asignaciones', para_borrar.count())
+        para_borrar.delete()
 
-    distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento_algoritmo, 0))
+        asignaciones = Asignacion.validas_en(intento).all()
+        para_extender = [a for a in asignaciones if not Intento.es_de_algoritmo(a.intentos.lower)]
+        for a in para_extender:
+            a.intentos = (a.intentos.lower, None)
+            a.save()
+        logger.info('Extendí %d asignaciones manuales', len(para_extender))
+
+        proximo_intento_algoritmo = intento_algoritmo + 1
+        tipo = TipoDocentes[tipo]
+        for t in TipoDocentes:
+            asignaciones_tipo_t = [a
+                                   for a in asignaciones.filter(cargo_que_ocupa=t.name)
+                                   if Intento.es_de_algoritmo(a.intentos.lower)]
+            if t == tipo:
+                for a in asignaciones_tipo_t:
+                    a.intentos = (a.intentos.lower, Intento(proximo_intento_algoritmo, 0).valor)
+                    a.save()
+            else:
+                for a in asignaciones_tipo_t:
+                    a.intentos = (a.intentos.lower, Intento(proximo_intento_algoritmo + 1, 0).valor)
+                    a.save()
+            logger.info('Extendí %d asignaciones automáticas de tipo %s', len(asignaciones_tipo_t), t.value)
+
+        anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
+        hacer_distribucion(anno_cuat, tipo, proximo_intento_algoritmo)
+        logger.info('hice una distribucion automática en intento %d', proximo_intento_algoritmo)
+
+    distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, proximo_intento_algoritmo, 0))
     return HttpResponseRedirect(distribucion_url)
 
 @login_required
@@ -315,14 +359,16 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
             cargo_que_ocupa = TipoDocentes[request.POST['cargo_que_ocupa']]
             Asignacion.objects.create(carga=carga,
                                       turno=nuevo_turno,
-                                      intentos=(intento.valor, None),
+                                      intentos=(nuevo_intento.valor, None),
                                       cargo_que_ocupa=cargo_que_ocupa.name)
 
-        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, nuevo_intento.algoritmo, nuevo_intento.manual))
+        distribucion_url = reverse('dborrador:distribucion',
+                                   args=(anno, cuatrimestre, nuevo_intento.algoritmo, nuevo_intento.manual))
         return HttpResponseRedirect(distribucion_url)
 
     elif 'cancelar' in request.POST:
-        distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento.algoritmo, intento.manual))
+        distribucion_url = reverse('dborrador:distribucion',
+                                   args=(anno, cuatrimestre, intento.algoritmo, intento.manual))
         return HttpResponseRedirect(distribucion_url)
 
     else:
@@ -339,6 +385,7 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
         else:
             raise RuntimeError('La carga %d tiene más de una asignación en %s', carga, intento)
 
+        _, _, max_intento, max_intento_algoritmo, max_intento_manual = _todos_los_intentos()
         context = {'carga': carga,
                    'cargos': list(TipoDocentes),
                    'cargo': Mapeos.tipos_de_cargo(carga.cargo),
@@ -348,6 +395,9 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
                    'preferencias': preferencias,
                    'intento_algoritmo': intento_algoritmo,
                    'intento_manual': intento_manual,
+                   'max_intento': max_intento,
+                   'max_intento_algoritmo': max_intento_algoritmo,
+                   'max_intento_manual': max_intento_manual,
                    'asignado': asignado,
                    }
 

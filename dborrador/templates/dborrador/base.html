@@ -37,7 +37,7 @@
             <form action="{% url 'dborrador:seleccion_tipo_distribuir' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
             {% csrf_token %}
 
-                {% if intento_algoritmo < max_intento_algoritmo %}
+                {% if intento < max_intento %}
                 <div class="subseccion"><div id="titulo">Cuidado</div></div>
                 El intento en el que vas a distribuir, {{ intento_algoritmo }}, no es el último.
                 Vas a borrar lo que hayas hecho después de este intento.
