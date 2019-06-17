@@ -117,7 +117,7 @@ def _todos_los_intentos():
 def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
     ### TODO:
     ## agregar posibilidad de fijar varios cargos a la vez donde están distribuidos
-    ## (salvarlos con intentos=(i, i+1) y con intentos=(i+1, None)
+    ## (salvarlos con intentos=(i.valor, i.valor+1) y con intentos=(i.valor+1, None)
     anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
     if 'distribucion' in request.POST:
         distribucion_url = reverse('dborrador:distribucion',
@@ -134,6 +134,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
                'cuatrimestre': cuatrimestre,
                'intento_algoritmo': intento.algoritmo,
                'intento_manual': intento.manual,
+               'intento': intento.valor,
                'tipos': list(TipoDocentes),
                **_todos_los_intentos(),
                }
@@ -262,12 +263,6 @@ def hacer_distribucion(anno_cuat, tipo, intento_algoritmo):
                                                              carga=carga, turno=turno,
                                                              cargo_que_ocupa=tipo.name)
 
-        # para_extender = Asignacion.objects.filter(intentos__endswith=intento.valor).exclude(cargo_que_ocupa=tipo.name)
-        # logger.info('Voy a extender %d asignaciones de otros tipos', para_extender.count())
-        # for asignacion in para_extender.all():
-        #     asignacion.intentos = (asignacion.intentos.lower, intento_hasta.valor)
-        #     asignacion.save()
-
 
 @login_required
 @permission_required('dborrador.add_asignacion')
@@ -276,9 +271,9 @@ def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_man
                 tipo, cuatrimestre, anno)
 
     ##   Distribuimos a partir de I = Intento(a, m), generamos Intento(a+1, 0)
-    ##
+    ##   Lo que hacemos es:
     ##   a. borrar todas las asignaciones que empiezan después de I
-    ##   b. asignaciones "activas" que empiezan en (a', n) con n > 0, quitarles fin (fin = None)
+    ##   b. a las asignaciones "activas" que empiezan en (a', n) con n > 0, quitarles fin (fin = None)
     ##   c. Para asignaciones de otros tipos
     ##      si empiezan en (a', 0), ponerles fin en (a+2, 0)
     ##   d. Para asignaciones de tipo = tipo
