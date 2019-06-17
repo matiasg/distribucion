@@ -79,3 +79,12 @@ table .cuerpo tr td {
   border-left: 1px solid #777;
   padding: 0em 1em 0em 1em;
 }
+
+table.contentbold {
+  border: 0px;
+}
+
+table.contentbold tr td {
+  padding: 5px;
+  border: 1px black solid;
+}

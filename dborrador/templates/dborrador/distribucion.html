@@ -9,8 +9,6 @@ Fijar docentes a intento {{ intento }}
 
 {% block cuerpo %}
 
-<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
-
 <div class="subseccion"><div id="titulo">Docentes no distribuidos</div>
   <button id="esconder">Mostrar/esconder docentes sin distribuir</button>
   <table id="escondible">
@@ -48,8 +46,8 @@ Fijar docentes a intento {{ intento }}
 {% for materia, turnos in lista %}
 
 {% if turnos %}
-<table class="contentbold" border="1" cellspacing="0" cellpadding="5" frame="hsides">
-  <thead><div class="nombremateria">{{ materia.nombre.upper }}</div></thead>
+<table class="contentbold">
+  <thead><tr><th colspan=4><div class="nombremateria">{{ materia.nombre.upper }}</div></th></tr></thead>
   <tbody>
     {% for turno in turnos %}
     <tr>
