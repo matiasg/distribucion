@@ -18,44 +18,52 @@
     <h2>Qué hacer</h2>
     {% if anno %}
 
+    {% comment %}<ul style="list-style-type:none;">{% endcomment %}
+    <ul class="sin_puntos">
     <form action="{% url 'dborrador:distribucion' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
     {% csrf_token %}
-    <ul style="list-style-type:none;">
         <li>Año: {{ anno }} <input type="hidden" name="anno" value="{{ anno }}"></li>
         <li>Cuatrimestre: {{ cuatrimestre }} <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre }}"></li>
         <li>Intento: <input type="number" name="intento_algoritmo" min="0" max="{{ max_intento_algoritmo }}" value="{{ intento_algoritmo }}" style="width:2em">
         <input type="range" name="intento_manual" min="0" max="{{ max_intento_manual }}" value="{{ intento_manual }}" style="width:12em">
             <input type="submit" name="distribucion" value="mirar">
-    </ul>
     </form>
 
     <div class="base_opciones">
-    <ul>
-        <li> <a href="{% url 'dborrador:preparar' anno cuatrimestre %}">copiar encuestas</a></li>
-        <button id="distribuir">Correr el algoritmo</button>
-
-        <div id="preguntas_distribucion_algoritmo" title="Correr el algoritmo">
-            <form action="{% url 'dborrador:seleccion_tipo_distribuir' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
+        <li>
+          <form action="{% url 'dborrador:preparar' anno cuatrimestre %}" method="post">
             {% csrf_token %}
+            <button name="paso_siguiente" value="copiar encuestas">Copiar encuestas</button>
+          </form>
+        </li>
+        <li>
+          <button id="distribuir">Correr el algoritmo</button>
 
-                {% if intento < max_intento %}
-                <div class="subseccion"><div id="titulo">Cuidado</div></div>
-                El intento en el que vas a distribuir, {{ intento_algoritmo }}, no es el último.
-                Vas a borrar lo que hayas hecho después de este intento.
-                {% endif %}
+          <div id="preguntas_distribucion_algoritmo" title="Correr el algoritmo">
+            <form action="{% url 'dborrador:seleccion_tipo_distribuir' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
+              {% csrf_token %}
 
-                <p> Elegí el tipo de docente </p>
+              {% if intento < max_intento %}
+              <div class="subseccion"><div id="titulo">Cuidado</div></div>
+              El intento en el que vas a distribuir, {{ intento_algoritmo }}, no es el último.
+              Vas a borrar lo que hayas hecho después de este intento.
+              {% endif %}
+
+              <p> Elegí el tipo de docente
                 <select name="tipo">
-                    {% for t in tipos %}
-                    <option value="{{ t.name }}">{{ t.value }}</option>
-                    {% endfor %}
+                  {% for t in tipos %}
+                  <option value="{{ t.name }}">{{ t.value }}</option>
+                  {% endfor %}
                 </select>
-
-                <input type="submit" name="hacer_distribucion" value="Sí, quiero distribuir">
+              </p>
+              <p>
+                <input type="submit" name="hacer_distribucion" value="Hacer la distribución">
+              </p>
             </form>
-        </div>
+          </div>
+        </li>
 
-    </ul>
+      </ul>
     </div>
 
 

@@ -10,6 +10,17 @@
   font-weight: bold;
 }
 
+ul.sin_puntos {
+  list-style-type: none;
+  padding: 0px 15px 0px 4px;
+}
+
+ul.sin_puntos li {
+  margin: 15px 0px 10px 0px;
+  border: 2px grey solid;
+  padding: 15px 0px 15px 4px;
+}
+
 .subseccion #problema
 {
   font-size: 18px;
