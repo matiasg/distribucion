@@ -21,6 +21,28 @@ ul.sin_puntos li {
   padding: 15px 0px 15px 4px;
 }
 
+td.necesidades {
+  width: 6em;
+}
+
+td.necesidades span#bien {
+  background: #8d8;
+  margin: 3px;
+  opacity: 0.5;
+}
+
+td.necesidades span#maso {
+  background: #ff4;
+  margin: 3px;
+  opacity: 0.7;
+}
+
+td.necesidades span#mal {
+  background: #f44;
+  margin: 3px;
+  opacity: 0.9;
+}
+
 .subseccion #problema
 {
   font-size: 18px;

@@ -127,9 +127,6 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     else:
         intento = Intento(intento_algoritmo, intento_manual)
 
-    if 'hacer_distribucion' in request.POST:
-        return None
-
     context = {'anno': anno,
                'cuatrimestre': cuatrimestre,
                'intento_algoritmo': intento.algoritmo,
@@ -146,6 +143,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
 
     asignaciones_moviles = Distribucion.asignaciones_por_cargo_ocupado(anno_cuat, intento)
     asignaciones_fijas = Distribucion.ya_distribuidas_por_cargo(anno_cuat)
+    necesidades_por_turno = Mapeos.necesidades_por_turno_y_tipo(anno_cuat)
 
     preferencias = Preferencia.objects.order_by('preferencia__cargo', 'peso_normalizado', 'preferencia__docente__nombre')
     preferencias_por_turno = {turno: preferencias.filter(preferencia__turno=turno).all()
@@ -161,6 +159,10 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
             for turno in sorted(turnos_ac.filter(materia=materia)):
                 turno.asignaciones = list(asignaciones_moviles[turno].items())
                 turno.cargas = list(asignaciones_fijas[turno].items())
+                turno.necesidades_insatisfechas = {tipo: necesidades_por_turno[turno][tipo] \
+                                                         - len(asignaciones_moviles[turno][tipo]) \
+                                                         - len(asignaciones_fijas[turno][tipo])
+                                                   for tipo in TipoDocentes}
                 turno.preferencias = list(preferencias_por_turno[turno])
                 mat_turnos.append(turno)
 
@@ -180,7 +182,8 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
                                    for tipo, cargas in cargas_sin_asignar.items()}
 
     context['sin_distribuir'] = cargas_sin_asignar_anotadas
-    context['cambiar_docente_url'] = reverse('dborrador:cambiar_docente', args=(anno, cuatrimestre, intento.algoritmo, intento.manual, 0))[:-1]
+    context['cambiar_docente_url'] = reverse('dborrador:cambiar_docente',
+                                             args=(anno, cuatrimestre, intento.algoritmo, intento.manual, 0))[:-1]
 
     return render(request, 'dborrador/distribucion.html', context)
 

@@ -78,6 +78,13 @@ class Mapeos:
                 for turno in Mapeos.turnos_de_tipo_y_ac(tipo, ac)}
 
     @staticmethod
+    def necesidades_por_turno_y_tipo(ac):
+        '''AnnoCuatrimestre -> {Turno -> TipoDocentes -> int}'''
+        return {turno: {tipo: Mapeos.necesidades(turno, tipo)
+                        for tipo in TipoDocentes}
+                for turno in Turno.objects.filter(anno=ac.anno, cuatrimestre=ac.cuatrimestre)}
+
+    @staticmethod
     def encuesta_tipo_turno(tipo_docente):
         '''
         Para profesores: teóricas y teórico-prácticas.

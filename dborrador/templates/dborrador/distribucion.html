@@ -93,6 +93,12 @@ Fijar docentes a intento {{ intento }}
           </ul>
         </div>
       </td>
+      <td class="necesidades">{% for tipo, necesidad in turno.necesidades_insatisfechas.items %}
+        <span id="{% if necesidad > 0 %}mal{% elif necesidad == 0 %}bien{% else %}maso{% endif %}">
+          <div class="tooltip">{{ necesidad }}<span class="tooltiptext">{{ tipo.value }}</span></div>
+        </span>
+        {% endfor %}
+      </td>
       <td class="comentarios"><textarea name="comentarios_{{ turno.id }}" cols=60 rows=2>{{ turno.datos.comentarios }}</textarea></td>
     </tr>
 
