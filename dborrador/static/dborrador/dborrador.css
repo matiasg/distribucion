@@ -25,22 +25,37 @@ td.necesidades {
   width: 6em;
 }
 
-td.necesidades span#bien {
+td.necesidades mark {
+  display: table-cell;
+  padding: 4px;
+}
+
+td.necesidades mark#bien {
   background: #8d8;
-  margin: 3px;
   opacity: 0.5;
 }
 
-td.necesidades span#maso {
+td.necesidades mark#maso {
   background: #ff4;
-  margin: 3px;
   opacity: 0.7;
 }
 
-td.necesidades span#mal {
+td.necesidades mark#mal {
   background: #f44;
-  margin: 3px;
   opacity: 0.9;
+}
+
+.comentarios
+{
+  font-size: small;
+  width: 240px;
+  height: 56px;
+}
+
+.comentarios textarea
+{
+  width: 98%;
+  height: 100%;
 }
 
 .subseccion #problema
