@@ -40,7 +40,7 @@
 {% block indice %}
     <h2>Qué hacer</h2>
     {% if anno %}
-
+    
     <ul class="sin_puntos">
       <form action="{% url 'dborrador:distribucion' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
         {% csrf_token %}

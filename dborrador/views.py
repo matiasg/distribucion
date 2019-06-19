@@ -127,18 +127,12 @@ def espiar_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_
                **_todos_los_intentos(intento.algoritmo),
                }
 
-    turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
     obligatoriedades = {TipoMateria.B.name: 'Obligatorias',
                         TipoMateria.R.name: 'Optativas regulares',
                         TipoMateria.N.name: 'Optativas no regulares'}
 
     asignaciones_moviles = Distribucion.asignaciones_por_cargo_ocupado(anno_cuat, intento)
     asignaciones_fijas = Distribucion.ya_distribuidas_por_cargo(anno_cuat)
-    necesidades_por_turno = Mapeos.necesidades_por_turno_y_tipo(anno_cuat)
-
-    preferencias = Preferencia.objects.order_by('preferencia__cargo', 'peso_normalizado', 'preferencia__docente__nombre')
-    preferencias_por_turno = {turno: preferencias.filter(preferencia__turno=turno).all()
-                              for turno in turnos_ac.all()}
 
     materias = []
     for obligatoriedad, obligatoriedad_largo in obligatoriedades.items():
@@ -147,14 +141,9 @@ def espiar_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_
         ob_materias = []
         for materia in tmaterias:
             mat_turnos = []
-            for turno in sorted(turnos_ac.filter(materia=materia)):
+            for turno in sorted(materia.turno_set.filter(anno=anno, cuatrimestre=cuatrimestre)):
                 turno.asignaciones = list(asignaciones_moviles[turno].items())
                 turno.cargas = list(asignaciones_fijas[turno].items())
-                turno.necesidades_insatisfechas = {tipo: necesidades_por_turno[turno][tipo] \
-                                                         - len(asignaciones_moviles[turno][tipo]) \
-                                                         - len(asignaciones_fijas[turno][tipo])
-                                                   for tipo in TipoDocentes}
-                turno.preferencias = list(preferencias_por_turno[turno])
                 mat_turnos.append(turno)
 
             ob_materias.append([materia, mat_turnos])
@@ -172,13 +161,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     ## (salvarlos con intentos=(i.valor, i.valor+1) y con intentos=(i.valor+1, None)
     anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
     intento = Intento(intento_algoritmo, intento_manual)
-    # if 'distribucion' in request.POST:
-    #     distribucion_url = reverse('dborrador:distribucion',
-    #                                args=(anno, cuatrimestre,
-    #                                      int(request.POST['intento_algoritmo']), int(request.POST['intento_manual'])))
-    #     return HttpResponseRedirect(distribucion_url)
-    # else:
-    #     intento = Intento(intento_algoritmo, intento_manual)
+    logger.info('intento: %d, %d', intento_algoritmo, intento_manual)
 
     context = {'anno': anno,
                'cuatrimestre': cuatrimestre,
@@ -188,6 +171,21 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
                'tipos': list(TipoDocentes),
                **_todos_los_intentos(intento.algoritmo),
                }
+
+    ### TODO:
+    ## copiar este comportamiento a espiar_distribucion
+    redirect = None
+    if intento_algoritmo < 0:
+        redirect = reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, intento_manual))
+    elif intento_algoritmo > context['max_intento_algoritmo']:
+        redirect = reverse('dborrador:distribucion', args=(anno, cuatrimestre, context['max_intento_algoritmo'], intento_manual))
+    elif intento_manual < 0:
+        redirect = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento_algoritmo, 0))
+    elif intento_manual > context['max_intento_manual']:
+        redirect = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento_algoritmo, context['max_intento_manual']))
+    if redirect is not None:
+        return HttpResponseRedirect(redirect)
+
 
     turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
     obligatoriedades = {TipoMateria.B.name: 'Obligatorias',
