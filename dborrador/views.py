@@ -87,7 +87,7 @@ def _turno_tipo_obj_a_tipo_fun_obj(d, fun=lambda x: x):
     return ret
 
 
-def _todos_los_intentos():
+def _todos_los_intentos(intento_algoritmo):
     asignaciones = Asignacion.objects.all()
 
     intentos_fin = {a.intentos.upper for a in asignaciones} - {None}
@@ -99,7 +99,7 @@ def _todos_los_intentos():
     if intentos_comienzo:
         max_intento = max(i.valor for i in intentos_comienzo)
         max_intento_algoritmo = max(i.algoritmo for i in intentos_comienzo)
-        max_intento_manual = max(i.manual for i in intentos_comienzo)
+        max_intento_manual = max(i.manual for i in intentos_comienzo if i.algoritmo == intento_algoritmo)
     else:
         max_intento, max_intento_algoritmo, max_intento_manual = 0, 0, 0
 
@@ -123,7 +123,7 @@ def espiar_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_
                'intento_manual': intento.manual,
                'intento': intento.valor,
                'tipos': list(TipoDocentes),
-               **_todos_los_intentos(),
+               **_todos_los_intentos(intento.algoritmo),
                }
 
     turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
@@ -184,7 +184,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
                'intento_manual': intento.manual,
                'intento': intento.valor,
                'tipos': list(TipoDocentes),
-               **_todos_los_intentos(),
+               **_todos_los_intentos(intento.algoritmo),
                }
 
     turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
@@ -444,7 +444,7 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
                    'intento_algoritmo': intento_algoritmo,
                    'intento_manual': intento_manual,
                    'asignado': asignado,
-                   **_todos_los_intentos(),
+                   **_todos_los_intentos(intento_algoritmo),
                    }
 
         return render(request, 'dborrador/cambiar_docente.html', context)
