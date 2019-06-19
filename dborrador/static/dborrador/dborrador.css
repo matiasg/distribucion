@@ -21,6 +21,10 @@ ul.sin_puntos li {
   padding: 15px 0px 15px 4px;
 }
 
+div#selector_intento_manual.ui-slider {
+  text-align: right;
+}
+
 td.necesidades {
   width: 6em;
 }

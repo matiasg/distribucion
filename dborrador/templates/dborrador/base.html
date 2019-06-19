@@ -4,13 +4,9 @@
 <link rel="stylesheet" type="text/css" href="{% static 'dborrador/dborrador.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dborrador/indice.css' %}">
 
-{% comment %}<link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">{% endcomment %}
-{% comment %}<script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>{% endcomment %}
-{% comment %}<script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>{% endcomment %}
-
-  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
+<script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
+<script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
 
 <script src="{% static 'dborrador/scripts.js' %}"></script>
 <script>
@@ -24,7 +20,9 @@
     selector_intento.spinner("value", {{ intento_algoritmo }} );
     selector_intento.on("spin", function(event, ui) {
       var url = "{% url 'dborrador:espiar_distribucion' anno cuatrimestre 31415926535 intento_manual %}";
-      $(location).attr('href', url.replace('31415926535', ui.value));
+      if ({{ intento_algoritmo }} != ui.value) {
+        $(location).attr('href', url.replace('31415926535', ui.value));
+      }
     });
 
     selector_intento_manual.on("slide", function(event, ui) {
@@ -44,15 +42,16 @@
     {% if anno %}
 
     <ul class="sin_puntos">
-    <form action="{% url 'dborrador:distribucion' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
-    {% csrf_token %}
+      <form action="{% url 'dborrador:distribucion' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
+        {% csrf_token %}
         <li>Año: {{ anno }} <input type="hidden" name="anno" value="{{ anno }}"></li>
         <li>Cuatrimestre: {{ cuatrimestre }} <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre }}"></li>
         <li>Intento:
-            <input id="selector_intento" name="intento_algoritmo">
-            <div id="selector_intento_manual" name="intento_manual"></div>
-            <button>Ver la distribución completa</button>
-    </form>
+        <br><input id="selector_intento" name="intento_algoritmo" min=0 max={{max_intento_algoritmo}}>
+        <br><div id="selector_intento_manual" name="intento_manual"> {{ max_intento_manual }}</div>
+        <br><button>Ver la distribución completa</button>
+        </li>
+      </form>
 
     <div class="base_opciones">
         <li>

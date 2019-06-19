@@ -99,7 +99,8 @@ def _todos_los_intentos(intento_algoritmo):
     if intentos_comienzo:
         max_intento = max(i.valor for i in intentos_comienzo)
         max_intento_algoritmo = max(i.algoritmo for i in intentos_comienzo)
-        max_intento_manual = max(i.manual for i in intentos_comienzo if i.algoritmo == intento_algoritmo)
+        intentos_manuales = {i.manual for i in intentos_comienzo if i.algoritmo == intento_algoritmo}
+        max_intento_manual = max(intentos_manuales) if intentos_manuales else 0
     else:
         max_intento, max_intento_algoritmo, max_intento_manual = 0, 0, 0
 
@@ -170,13 +171,14 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     ## agregar posibilidad de fijar varios cargos a la vez donde están distribuidos
     ## (salvarlos con intentos=(i.valor, i.valor+1) y con intentos=(i.valor+1, None)
     anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
-    if 'distribucion' in request.POST:
-        distribucion_url = reverse('dborrador:distribucion',
-                                   args=(anno, cuatrimestre,
-                                         int(request.POST['intento_algoritmo']), int(request.POST['intento_manual'])))
-        return HttpResponseRedirect(distribucion_url)
-    else:
-        intento = Intento(intento_algoritmo, intento_manual)
+    intento = Intento(intento_algoritmo, intento_manual)
+    # if 'distribucion' in request.POST:
+    #     distribucion_url = reverse('dborrador:distribucion',
+    #                                args=(anno, cuatrimestre,
+    #                                      int(request.POST['intento_algoritmo']), int(request.POST['intento_manual'])))
+    #     return HttpResponseRedirect(distribucion_url)
+    # else:
+    #     intento = Intento(intento_algoritmo, intento_manual)
 
     context = {'anno': anno,
                'cuatrimestre': cuatrimestre,
