@@ -4,34 +4,6 @@
 <link rel="stylesheet" type="text/css" href="{% static 'dborrador/dborrador.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dborrador/indice.css' %}">
 
-<link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
-<script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
-<script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
-
-<script src="{% static 'dborrador/scripts.js' %}"></script>
-<script>
-  $(function() {
-    var selector_intento = $("#selector_intento").spinner();
-    var selector_intento_manual = $("#selector_intento_manual").slider();
-    selector_intento_manual.slider(
-      {min: 0, max: {{ max_intento_manual }}, value: {{ intento_manual }} });
-
-    selector_intento.spinner({min: 0, max: {{ max_intento_algoritmo }}});
-    selector_intento.spinner("value", {{ intento_algoritmo }} );
-    selector_intento.on("spin", function(event, ui) {
-      var url = "{% url 'dborrador:espiar_distribucion' anno cuatrimestre 31415926535 intento_manual %}";
-      if ({{ intento_algoritmo }} != ui.value) {
-        $(location).attr('href', url.replace('31415926535', ui.value));
-      }
-    });
-
-    selector_intento_manual.on("slide", function(event, ui) {
-      var url = "{% url 'dborrador:espiar_distribucion' anno cuatrimestre intento_algoritmo 31415926535 %}";
-      $(location).attr('href', url.replace('31415926535', ui.value));
-    });
-  })
-</script>
-
 <head>
     <title>Zona de borrador de distribución</title>
 </head>
@@ -41,6 +13,33 @@
     <h2>Qué hacer</h2>
     {% if anno %}
     
+        <link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
+        <script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
+        <script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
+        <script src="{% static 'dborrador/scripts.js' %}"></script>
+        <script>
+          $(function() {
+            var selector_intento = $("#selector_intento").spinner();
+            var selector_intento_manual = $("#selector_intento_manual").slider();
+            selector_intento_manual.slider(
+              {min: 0, max: {{ max_intento_manual }}, value: {{ intento_manual }} });
+
+            selector_intento.spinner({min: 0, max: {{ max_intento_algoritmo }}});
+            selector_intento.spinner("value", {{ intento_algoritmo }} );
+            selector_intento.on("spin", function(event, ui) {
+              var url = "{% url 'dborrador:espiar_distribucion' anno cuatrimestre 31415926535 intento_manual %}";
+              if ({{ intento_algoritmo }} != ui.value) {
+                $(location).attr('href', url.replace('31415926535', ui.value));
+              }
+            });
+
+            selector_intento_manual.on("slide", function(event, ui) {
+              var url = "{% url 'dborrador:espiar_distribucion' anno cuatrimestre intento_algoritmo 31415926535 %}";
+              $(location).attr('href', url.replace('31415926535', ui.value));
+            });
+          })
+        </script>
+
     <ul class="sin_puntos">
       <form action="{% url 'dborrador:distribucion' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
         {% csrf_token %}
