@@ -35,9 +35,9 @@ class TestMapeos(TestCase):
                                            anno=anno, cuatrimestre=cuatrimestre)
         self.carga3 = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.AsoSim.name,
                                            anno=anno, cuatrimestre=cuatrimestre)
-        self.asignacion1 = Asignacion.objects.create(intento=3, carga=self.carga1, turno=self.turno1)
-        self.asignacion2 = Asignacion.objects.create(intento=3, carga=self.carga2, turno=self.turno3)
-        self.asignacion3 = Asignacion.objects.create(intento=3, carga=self.carga3, turno=self.turno2)
+        self.asignacion1 = Asignacion.objects.create(intentos=(1, 3), carga=self.carga1, turno=self.turno1)
+        self.asignacion2 = Asignacion.objects.create(intentos=(1, 3), carga=self.carga2, turno=self.turno3)
+        self.asignacion3 = Asignacion.objects.create(intentos=(1, 3), carga=self.carga3, turno=self.turno2)
 
     def test_cargos_de_tipos(self):
         cardeds = Mapeos.cargos_de_tipos(TipoDocentes.P)
