@@ -70,8 +70,7 @@ class TestMapeosDistribucion(TestCase):
 
     def test_asignaciones_por_cargo_ocupado(self):
         asignaciones = Distribucion.asignaciones_por_cargo_ocupado(self.ac, Intento.de_algoritmo(1))
-        print(asignaciones[self.turno1])
-        self.assertEqual(set(asignaciones[self.turno1][TipoDocentes.P.name]), {self.asignacion_1_1})
+        self.assertEqual(set(asignaciones[self.turno1][TipoDocentes.P]), {self.asignacion_1_1})
 
 
     # def test_asignaciones_otro_tipo(self):

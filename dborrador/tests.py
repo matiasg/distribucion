@@ -141,12 +141,9 @@ class TestVerDistribucion(TestCase):
         content = response.content.decode()
 
         self.assertContains(response, 'Docentes no distribuidos')
-        self.assertTrue(re.search((f'<a href="/dborrador/cambiar_docente/2100/P/1/0/{self.docente2.id}">'
+        self.assertTrue(re.search((f'<a href="/dborrador/cambiar_docente/2100/P/1/0/{self.carga2.id}">'
                                    f'\s*{self.docente2.nombre}'), content, flags=re.DOTALL),
                         'No figura un docente no distribuido')
-        self.assertTrue(re.search('Turnos con necesidades insatisfechas.*epistemologia.*Teórico-Práctica 2',
-                                  content, flags=re.DOTALL),
-                        'No figura un turno no cubierto')
 
     def test_figuran_pedidos_de_docentes_no_distribuidos(self):
         Asignacion.objects.create(intentos=(Intento(1, 0).valor, Intento(2, 0).valor),
@@ -169,15 +166,16 @@ class TestVerDistribucion(TestCase):
 
     def test_figuran_interesados_en_turnos_sin_docentes(self):
         now = timezone.now()
-        pd = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1, fecha_encuesta=now)
+        pd = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1, fecha_encuesta=now,
+                                                cargo=Cargos.Tit.name)
         Preferencia.objects.create(preferencia=pd, peso_normalizado=1)
-        response = self.client.get(reverse('dborrador:distribucion',
-                                           args=(2100, Cuatrimestres.P.name, 1, 0)))
+        response = self.client.get(reverse('dborrador:distribucion', args=(2100, Cuatrimestres.P.name, 1, 0)),
+                                   follow=True)
 
         content = response.content.decode()
         self.assertTrue(re.search(('<div class="tooltip">Teórico-Práctica 1'
                                    '(Docentes que lo pidieron:|<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*'
-                                   'jose'),
+                                   'Tit: jose'),
                                   content, flags=re.DOTALL),
                         'No figuran los docentes que prefieren un turno sin docentes')
 
@@ -206,21 +204,6 @@ class TestDistribuir(TestCase):
         permiso = Permission.objects.get(codename='add_asignacion')
         self.autorizado.user_permissions.add(permiso)
         self.client.login(username='autorizado', password='1234')
-
-    def test_no_distribuye_docentes_asignados_en_intento_0(self):
-        now = timezone.now()
-        p1 = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1, fecha_encuesta=now)
-        p2 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=3, fecha_encuesta=now)
-        Preferencia.objects.create(preferencia=p1, peso_normalizado=1)
-        Preferencia.objects.create(preferencia=p2, peso_normalizado=1)
-
-        asignacion1 = Asignacion.objects.create(carga=self.carga1, turno=self.turno1, intentos=(0, None))
-
-        self.client.get(reverse('dborrador:distribuir',
-                                args=(self.ac.anno, self.ac.cuatrimestre, TipoDocentes.P.name, 1)))
-
-        # chequamos que al docente1 se lo dejó donde estaba y no se distribuyó al docente2
-        self.assertEqual(set(Asignacion.objects.all()), {asignacion1})
 
     def test_distribuye(self):
         now = timezone.now()
