@@ -8,6 +8,9 @@ from simple_history.models import HistoricalRecords
 from enum import Enum
 
 
+AnnoCuatrimestre = namedtuple('AC', 'anno cuatrimestre')
+
+
 @total_ordering
 class Dias(Enum):
     Lu = ('Lunes', 1)
@@ -46,6 +49,18 @@ class CargoDedicacion(Enum):
     def con_cargo(cls, cargo):
         '''Devuelve una lista de CargoDedicacion cuyo cargo es el parámetro :cargo:'''
         return [f'{cargo.name}{ded.name}' for ded in Dedicaciones]
+
+
+class TipoDocentes(Enum):
+
+    P = 'Profesor'
+    J = 'JTP'
+    A1 = 'Ay1'
+    A2 = 'Ay2'
+
+    def __ge__(self, otro):
+        ordenados = [TipoDocentes.A2, TipoDocentes.A1, TipoDocentes.J, TipoDocentes.P]
+        return ordenados.index(self) >= ordenados.index(otro)
 
 
 class TipoTurno(Enum):
@@ -123,13 +138,16 @@ class Turno(models.Model):
 
     def __lt__(self, other):
         if other.__class__ is self.__class__:
-            horarios_self = sorted(self.horario_set.all())
-            if not horarios_self:
-                return True
-            horarios_other = sorted(other.horario_set.all())
-            if not horarios_other:
-                return False
-            return horarios_self[0] < horarios_other[0]
+            if other.materia == self.materia:
+                horarios_self = sorted(self.horario_set.all())
+                if not horarios_self:
+                    return True
+                horarios_other = sorted(other.horario_set.all())
+                if not horarios_other:
+                    return False
+                return horarios_self[0] < horarios_other[0]
+            else:
+                return self.materia.nombre < other.materia.nombre
         return NotImplemented
 
     def docentes(self):
@@ -207,3 +225,11 @@ class Carga(models.Model):
 
     def __str__(self):
         return f'{self.docente} -> {self.turno}'
+
+    # def cargo_es_de_tipo(self, tipodocente):
+    #     return Cargos[self.cargo[:3]] in Mapeos.tipo_a_cargos(tipodocente)
+
+    @classmethod
+    def para_ac(cls, ac):
+        ''' AnnoCuatrimestre -> [Carga] '''
+        return cls.objects.filter(anno=ac.anno, cuatrimestre=ac.cuatrimestre)

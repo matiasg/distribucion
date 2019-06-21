@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 {% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dborrador/dborrador.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dborrador/indice.css' %}">
+
 <head>
     <title>Zona de borrador de distribución</title>
 </head>
@@ -10,47 +12,118 @@
 {% block indice %}
     <h2>Qué hacer</h2>
     {% if anno %}
-    <ul>
-        <li> <a href="{% url 'dborrador:preparar' anno cuatrimestre tipo %}">copiar encuestas</a></li>
-        <li> <a href="{% url 'dborrador:distribuir' anno cuatrimestre tipo intento %}">hacer una distribución</a></li>
-        <li> <a href="{% url 'dborrador:fijar' anno cuatrimestre tipo intento %}">Fijar docentes en una distribución</a></li>
-    </ul>
+    
+        <link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
+        <script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
+        <script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
+        <script src="{% static 'dborrador/scripts.js' %}"></script>
+        <script>
+          $(function() {
+            var selector_intento = $("#selector_intento").spinner();
+            var selector_intento_manual = $("#selector_intento_manual").slider();
+            selector_intento_manual.slider(
+              {min: 0, max: {{ max_intento_manual }}, value: {{ intento_manual }} });
 
-    <p> Año: {{ anno }} <input type="hidden" name="anno" value="{{ anno }}"> </p>
-    <p> Cuatrimestre: {{ cuatrimestre }}
-        <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre }}"> </p>
-    <p> Tipo: {{ tipo }}
-        <input type="hidden" name="tipo" value="{{ tipo }}"> </p>
+            selector_intento.spinner({min: 0, max: {{ max_intento_algoritmo }}});
+            selector_intento.spinner("value", {{ intento_algoritmo }} );
+            selector_intento.on("spin", function(event, ui) {
+              var url = "{% url 'dborrador:espiar_distribucion' anno cuatrimestre 31415926535 intento_manual %}";
+              if ({{ intento_algoritmo }} != ui.value) {
+                $(location).attr('href', url.replace('31415926535', ui.value));
+              }
+            });
+
+            selector_intento_manual.on("slide", function(event, ui) {
+              var url = "{% url 'dborrador:espiar_distribucion' anno cuatrimestre intento_algoritmo 31415926535 %}";
+              $(location).attr('href', url.replace('31415926535', ui.value));
+            });
+          })
+        </script>
+
+    <ul class="sin_puntos">
+      <form action="{% url 'dborrador:distribucion' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
+        {% csrf_token %}
+        <li>Año: {{ anno }} <input type="hidden" name="anno" value="{{ anno }}"></li>
+        <li>Cuatrimestre: {{ cuatrimestre }} <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre }}"></li>
+        <li>Intento:
+        <br><input id="selector_intento" name="intento_algoritmo" min=0 max={{max_intento_algoritmo}}>
+        <br><div id="selector_intento_manual" name="intento_manual"> {{ max_intento_manual }}</div>
+        <br><button>Ver la distribución completa</button>
+        </li>
+      </form>
+
+    <div class="base_opciones">
+        <li>
+          <form action="{% url 'dborrador:preparar' anno cuatrimestre %}" method="post">
+            {% csrf_token %}
+            <button name="paso_siguiente" value="copiar encuestas">Copiar encuestas</button>
+          </form>
+        </li>
+        <li>
+          <button id="distribuir">Correr el algoritmo</button>
+
+          <div id="preguntas_distribucion_algoritmo" title="Correr el algoritmo">
+            <form action="{% url 'dborrador:seleccion_tipo_distribuir' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
+              {% csrf_token %}
+
+              {% if intento < max_intento %}
+              <div class="subseccion"><div id="titulo">Cuidado</div></div>
+              El intento en el que vas a distribuir, {{ intento_algoritmo }}, no es el último.
+              Vas a borrar lo que hayas hecho después de este intento.
+              {% endif %}
+
+              <p> Elegí el tipo de docente
+                <select name="tipo">
+                  {% for t in tipos %}
+                  <option value="{{ t.name }}">{{ t.value }}</option>
+                  {% endfor %}
+                </select>
+              </p>
+              <p>
+                <input type="submit" name="hacer_distribucion" value="Hacer la distribución">
+              </p>
+            </form>
+          </div>
+        </li>
+
+        <li>
+            <button id="publicar">Publicar la distribución</button>
+            <div id="mandar_a_publicar" title="¿Seguro?">
+                <form action="{% url 'dborrador:publicar' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
+                {% csrf_token %}
+                <p> ¿Seguro querés publicar esta distribución? </p>
+                <p> Mirá que no tiene vuelta atrás. </p>
+                <button id="dale">Seeeee</button>
+                </form>
+            </div>
+        </li>
+
+      </ul>
+    </div>
+
 
     {% else %}
 
-    <form action="{% url 'dborrador:index' %}" method="post">
+    <form action="{% url 'dborrador:empezar' %}" method="post">
         {% csrf_token %}
-        <p> Año: 
-        <select name="anno">
-            {% for a in annos %}
-            <option value="{{ a }}">{{ a }}</option>
-            {% endfor %}
-        </select></p>
+        <ul style="list-style-type:none;">
+            <li> Año: 
+                <select name="anno">
+                    {% for a in annos %}
+                    <option value="{{ a }}">{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </li>
 
-        <p> Cuatrimestre: 
-        <select name="cuatrimestre">
-            {% for c in cuatrimestres %}
-            <option value="{{ c.name }}">{{ c.value }}</option>
-            {% endfor %}
-        </select></p>
-
-        <p> Tipo de docentes: 
-        <select name="tipo">
-            {% for t in tipos %}
-            <option value="{{ t.name }}">{{ t.value }}</option>
-            {% endfor %}
-        </select></p>
-
-        <p> Intento:
-        <input type="number" name="intento" value=0>
-        </p>
-        <input type="submit" name="distribuir" value="Distribuir">
+            <li> Cuatrimestre: 
+                <select name="cuatrimestre">
+                    {% for c in cuatrimestres %}
+                    <option value="{{ c.name }}">{{ c.value }}</option>
+                    {% endfor %}
+                </select>
+            </li>
+            <input type="submit" name="distribuir" value="Comenzar a distribuir">
+        </ul>
     </form>
 
     {% endif %}

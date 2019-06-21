@@ -1,0 +1,56 @@
+{% extends "dborrador/base.html" %}
+
+{% load static %}
+
+{% block subtitulo %}
+Cambiar a {{ carga.docente }} de turno
+{% endblock subtitulo %}
+
+
+{% block cuerpo %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+
+<div class="subseccion">
+
+    <p> <div id="titulo">Actual:</div> {{ asignado }} </p>
+
+    <form action="{% url 'dborrador:cambiar_docente' anno cuatrimestre intento_algoritmo intento_manual carga.id %}" method="post">
+        {% csrf_token %}
+
+        <div id="titulo">Cambiar a</div>
+        <select name="cambio_a">
+            {% for turno, preferido in turnos %}
+            <option value="{{ turno.id }}" {% if turno.id == asignado.id %}selected{% endif %} {% if not preferido %}disabled{% endif%}>{{ turno }}</option>
+            {% endfor %}
+        </select>
+
+        <p> <div id="titulo">Preferencias:</div> 
+            <ul>
+            {% for preferencia in preferencias %}
+            <li> {{ preferencia.preferencia.turno }} ({{ preferencia.peso_normalizado|floatformat:4 }})</li>
+            {% endfor %}
+            </ul>
+            </p>
+
+        <p> <div id="titulo">Cargo:</div> {{ cargo.value }} </p>
+
+        <p> <div id="titulo">Cargo que ocuparía:</div>
+            <select name="cargo_que_ocupa">
+                {% for c in cargos %}
+                <option value="{{ c.name }}" {% if c == cargo %}selected{% endif %}>{{ c.value }}</option>
+                {% endfor %}
+            </select>
+        </p>
+
+        <p>
+        <input type="submit" name="cambiar" value="Hacer el cambio">
+        <input type="submit" name="cancelar" value="cancelar">
+        </p>
+
+    </form>
+
+</div>
+
+
+{% endblock cuerpo %}

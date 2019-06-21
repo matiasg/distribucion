@@ -6,8 +6,8 @@ from django.forms import ValidationError
 from django.contrib import messages
 from django.core.validators import EmailValidator
 
-from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres
-from materias.misc import Mapeos, TipoDocentes
+from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres, TipoDocentes
+from materias.misc import Mapeos
 from encuestas.models import PreferenciasDocente, OtrosDatos, telefono_validator
 
 from locale import strxfrm

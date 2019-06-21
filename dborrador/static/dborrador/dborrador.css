@@ -10,6 +10,58 @@
   font-weight: bold;
 }
 
+ul.sin_puntos {
+  list-style-type: none;
+  padding: 0px 15px 0px 4px;
+}
+
+ul.sin_puntos li {
+  margin: 15px 0px 10px 0px;
+  border: 2px grey solid;
+  padding: 15px 0px 15px 4px;
+}
+
+div#selector_intento_manual.ui-slider {
+  text-align: right;
+}
+
+td.necesidades {
+  width: 6em;
+}
+
+td.necesidades mark {
+  display: table-cell;
+  padding: 4px;
+}
+
+td.necesidades mark#bien {
+  background: #8d8;
+  opacity: 0.5;
+}
+
+td.necesidades mark#maso {
+  background: #ff4;
+  opacity: 0.7;
+}
+
+td.necesidades mark#mal {
+  background: #f44;
+  opacity: 0.9;
+}
+
+.comentarios
+{
+  font-size: small;
+  width: 240px;
+  height: 56px;
+}
+
+.comentarios textarea
+{
+  width: 98%;
+  height: 100%;
+}
+
 .subseccion #problema
 {
   font-size: 18px;
@@ -50,4 +102,41 @@
 
 .tooltip .tooltiptext .titulo {
   text-decoration: underline; 
+}
+
+td.datosdoc .cargas_fijas {
+  background-color: #8f8;
+}
+
+td.datosdoc .cargas_en_distribucion #automatica {
+  background: #f89;
+  margin-left: 0.5em; 
+}
+
+td.datosdoc .cargas_en_distribucion #manual {
+  background: #bf9;
+  margin-left: 0.5em; 
+}
+
+table .encabezado {
+  background-color: #148;
+  color: #eee;
+  text-align: center;
+  font-size: large;
+}
+
+table .cuerpo tr td {
+  vertical-align: top;
+  margin: 1px;
+  border-left: 1px solid #777;
+  padding: 0em 1em 0em 1em;
+}
+
+table.contentbold {
+  border: 0px;
+}
+
+table.contentbold tr td {
+  padding: 5px;
+  border: 1px black solid;
 }

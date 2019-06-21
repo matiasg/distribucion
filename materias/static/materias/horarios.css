@@ -136,19 +136,6 @@ td.pabellon
   font-weight: bold;
 }
 
-.comentarios
-{
-  font-size: small;
-  width: 480px;
-  height: 48px;
-}
-
-.comentarios textarea
-{
-  width: 98%;
-  height: 100%;
-}
-
 .tabla_numeros_chicos table input
 {
   width: 5em;

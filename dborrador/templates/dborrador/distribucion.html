@@ -1,0 +1,112 @@
+{% extends "dborrador/base.html" %}
+
+{% load static %}
+
+{% block subtitulo %}
+Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
+{% endblock subtitulo %}
+
+
+{% block cuerpo %}
+
+<button id="esconder">Mostrar/esconder problemas</button>
+<div id="escondible" class="subseccion">
+    <div id="titulo">Docentes no distribuidos</div>
+    <table>
+        <thead class="encabezado"> {% for tipo, lista in sin_distribuir.items %} <td> {{ tipo.value }} </td> {% endfor %} </thead>
+        <tbody class="cuerpo">
+            <tr>
+                {% for tipo, lista in sin_distribuir.items %}
+                <td> <ul> {% for carga, preferencias in lista %}
+                    <li>
+                        <div class="tooltip">
+                            <a href="{{ cambiar_docente_url }}{{ carga.id }}"> {{ carga.docente }} </a>
+                            <span class="tooltiptext">
+                                <span class="titulo">Encuesta de {{ carga.docente }}:</span>
+                                <ul>
+                                    {% for preferencia in preferencias %}
+                                    <li>{{ preferencia.preferencia.turno }} ({{preferencia.peso_normalizado|floatformat:4}})</li>
+                                    {% endfor %}
+                                </ul>
+                            </span>
+                        </div>
+                    </li>
+                {% endfor %} </ul> </td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+
+
+{% for tipo, lista in materias %}
+<div class="seccion">{{ tipo }}</div>
+
+{% for materia, turnos in lista %}
+
+{% if turnos %}
+<table class="contentbold">
+  <caption>{{ materia.nombre.upper }}</caption>
+  <tbody>
+    {% for turno in turnos %}
+    <tr>
+
+      <td class="fondo{{ turno.tipo }}">
+        <div class="tooltip">{{ turno.horarios_info.tipoynumero }}
+          <span class="tooltiptext">
+            <span class="titulo">Docentes que lo pidieron:</span>
+            <ul>{% for preferencia in turno.preferencias %}
+              <li>{{ preferencia.preferencia.cargo }}: {{ preferencia.preferencia.docente }} ({{preferencia.peso_normalizado|floatformat:4}})</li>
+              {% endfor %}
+            </ul>
+          </span>
+        </div>
+      </td>
+      <td class="diayhora">{{ turno.horarios_info.diayhora }}</td>
+      <td class="datosdoc">
+        <div class="cargas_fijas">
+          <ul>
+            {% for tipo, cargas_turno in turno.cargas %}
+            {% if cargas_turno %}
+            <li>
+              {{ tipo.value }}: {% for carga in cargas_turno %} {{ carga.docente.nombre }} {% endfor %}
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="cargas_en_distribucion">
+          <ul>
+            {% for tipo, asignaciones_turno in turno.asignaciones %}
+            {% if asignaciones_turno %}
+            <li>
+              {{ tipo.value }}:
+              {% for asignacion in asignaciones_turno %}
+              <span id="{% if asignacion.es_manual %}manual{% else %}automatica{% endif %}">
+              <a href="{{ cambiar_docente_url }}{{ asignacion.carga.id }}">{{ asignacion.carga.docente }}</a>
+              </span>
+              {% endfor %}
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+        </div>
+      </td>
+      <td class="necesidades">{% for tipo, necesidad in turno.necesidades_insatisfechas.items %}
+        <mark id="{% if necesidad > 0 %}mal{% elif necesidad == 0 %}bien{% else %}maso{% endif %}">
+          <div class="tooltip">{{ necesidad }}<span class="tooltiptext">{{ tipo.value }}</span></div>
+        </mark>
+        {% endfor %}
+      </td>
+      <td class="comentarios"><textarea name="comentarios_{{ turno.id }}">{{ turno.datos.comentarios }}</textarea></td>
+    </tr>
+
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+{% endblock cuerpo %}
