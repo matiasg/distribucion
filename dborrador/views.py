@@ -118,6 +118,15 @@ def _todos_los_intentos(intento_algoritmo):
 def espiar_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
     anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
     intento = Intento(intento_algoritmo, intento_manual)
+
+    intento_algoritmo_acotado, intento_manual_acotado = _acota_intentos_para_ver(anno_cuat.anno, anno_cuat.cuatrimestre,
+                                                                                 intento_algoritmo, intento_manual)
+    intento_acotado = Intento(intento_algoritmo_acotado, intento_manual_acotado)
+    if intento.valor != intento_acotado.valor:
+        redirect = reverse('dborrador:espiar_distribucion', args=(anno, cuatrimestre, intento_algoritmo_acotado, intento_manual_acotado))
+        return HttpResponseRedirect(redirect)
+
+
     context = {'anno': anno,
                'cuatrimestre': cuatrimestre,
                'intento_algoritmo': intento.algoritmo,
@@ -153,6 +162,25 @@ def espiar_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_
     return render(request, 'dborrador/espiar_distribucion.html', context)
 
 
+def _acota_intentos_para_ver(anno, cuatrimestre, intento_algoritmo, intento_manual):
+    '''devuelve (intento_algoritmo, intento_manual) más cercanos a los de entrada
+    de manera que haya asignaciones con ese intento.
+    '''
+    intentos = _todos_los_intentos(intento_algoritmo)
+
+    if intento_algoritmo < 0:
+        return _acota_intentos_para_ver(anno, cuatrimestre, 0, intento_manual)
+    elif intento_algoritmo > intentos['max_intento_algoritmo']:
+        return _acota_intentos_para_ver(anno, cuatrimestre, intentos['max_intento_algoritmo'], intento_manual)
+    elif intento_manual < 0:
+        return _acota_intentos_para_ver(anno, cuatrimestre, intento_algoritmo, 0)
+    elif intento_manual > intentos['max_intento_manual']:
+        return _acota_intentos_para_ver(anno, cuatrimestre, intento_algoritmo, intentos['max_intento_manual'])
+
+    return (intento_algoritmo, intento_manual)
+
+
+
 @login_required
 @permission_required('dborrador.add_asignacion')
 def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
@@ -161,31 +189,24 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     ## (salvarlos con intentos=(i.valor, i.valor+1) y con intentos=(i.valor+1, None)
     anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
     intento = Intento(intento_algoritmo, intento_manual)
+
+    intento_algoritmo_acotado, intento_manual_acotado = _acota_intentos_para_ver(anno_cuat.anno, anno_cuat.cuatrimestre,
+                                                                                 intento_algoritmo, intento_manual)
+    intento_acotado = Intento(intento_algoritmo_acotado, intento_manual_acotado)
+    if intento.valor != intento_acotado.valor:
+        redirect = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento_algoritmo_acotado, intento_manual_acotado))
+        return HttpResponseRedirect(redirect)
+
     logger.info('intento: %d, %d', intento_algoritmo, intento_manual)
 
     context = {'anno': anno,
                'cuatrimestre': cuatrimestre,
-               'intento_algoritmo': intento.algoritmo,
-               'intento_manual': intento.manual,
+               'intento_algoritmo': intento_algoritmo,
+               'intento_manual': intento_manual,
                'intento': intento.valor,
                'tipos': list(TipoDocentes),
-               **_todos_los_intentos(intento.algoritmo),
+               **_todos_los_intentos(intento_algoritmo),
                }
-
-    ### TODO:
-    ## copiar este comportamiento a espiar_distribucion
-    redirect = None
-    if intento_algoritmo < 0:
-        redirect = reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, intento_manual))
-    elif intento_algoritmo > context['max_intento_algoritmo']:
-        redirect = reverse('dborrador:distribucion', args=(anno, cuatrimestre, context['max_intento_algoritmo'], intento_manual))
-    elif intento_manual < 0:
-        redirect = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento_algoritmo, 0))
-    elif intento_manual > context['max_intento_manual']:
-        redirect = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento_algoritmo, context['max_intento_manual']))
-    if redirect is not None:
-        return HttpResponseRedirect(redirect)
-
 
     turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
     obligatoriedades = {TipoMateria.B.name: 'Obligatorias',
