@@ -9,33 +9,33 @@ Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
 
 {% block cuerpo %}
 
-<div class="subseccion"><div id="titulo">Docentes no distribuidos</div>
-  <button id="esconder">Mostrar/esconder docentes sin distribuir</button>
-  <table id="escondible">
-    <thead class="encabezado"> {% for tipo, lista in sin_distribuir.items %} <td> {{ tipo.value }} </td> {% endfor %} </thead>
-    <tbody class="cuerpo">
-      <tr>
-        {% for tipo, lista in sin_distribuir.items %}
-        <td> <ul> {% for carga, preferencias in lista %}
-            <li>
-              <div class="tooltip">
-                <a href="{{ cambiar_docente_url }}{{ carga.id }}">
-                  {{ carga.docente }}
-                </a>
-                <span class="tooltiptext">
-                  <span class="titulo">Encuesta de {{ carga.docente }}:</span>
-                  <ul>{% for preferencia in preferencias %}
-                    <li>{{ preferencia.preferencia.turno }} ({{preferencia.peso_normalizado|floatformat:4}})</li>
-                    {% endfor %}
-                  </ul>
-                </span>
-              </div>
-            </li>
-            {% endfor %} </ul> </td>
-        {% endfor %}
-      </tr>
-    </tbody>
-  </table>
+<button id="esconder">Mostrar/esconder problemas</button>
+<div id="escondible" class="subseccion">
+    <div id="titulo">Docentes no distribuidos</div>
+    <table>
+        <thead class="encabezado"> {% for tipo, lista in sin_distribuir.items %} <td> {{ tipo.value }} </td> {% endfor %} </thead>
+        <tbody class="cuerpo">
+            <tr>
+                {% for tipo, lista in sin_distribuir.items %}
+                <td> <ul> {% for carga, preferencias in lista %}
+                    <li>
+                        <div class="tooltip">
+                            <a href="{{ cambiar_docente_url }}{{ carga.id }}"> {{ carga.docente }} </a>
+                            <span class="tooltiptext">
+                                <span class="titulo">Encuesta de {{ carga.docente }}:</span>
+                                <ul>
+                                    {% for preferencia in preferencias %}
+                                    <li>{{ preferencia.preferencia.turno }} ({{preferencia.peso_normalizado|floatformat:4}})</li>
+                                    {% endfor %}
+                                </ul>
+                            </span>
+                        </div>
+                    </li>
+                {% endfor %} </ul> </td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
 </div>
 
 
