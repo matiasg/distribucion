@@ -471,7 +471,23 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
         return render(request, 'dborrador/cambiar_docente.html', context)
 
 
+def publicar(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
+    intento = Intento(intento_algoritmo, intento_manual)
+    asignaciones = Asignacion.validas_en(intento).all()
 
+    with transaction.atomic():
+        for asignacion in asignaciones:
+            carga = asignacion.carga
+            carga.turno = asignacion.turno
+            carga.save()
+            logger.debug('Estoy publicando: %s', carga)
+
+        logger.info('publiqué %d asignaciones', asignaciones.count())
+        borradas, _ = Asignacion.objects.all().delete()
+        logger.info('y ahora borré %d de dborrador', borradas)
+
+    redirect = reverse('materias:por_anno_y_cuatrimestre', args=(f'{anno}{Cuatrimestres[cuatrimestre].value}',))
+    return HttpResponseRedirect(redirect)
 
 
 

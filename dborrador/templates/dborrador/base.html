@@ -86,6 +86,18 @@
           </div>
         </li>
 
+        <li>
+            <button id="publicar">Publicar la distribución</button>
+            <div id="mandar_a_publicar" title="¿Seguro?">
+                <form action="{% url 'dborrador:publicar' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
+                {% csrf_token %}
+                <p> ¿Seguro querés publicar esta distribución? </p>
+                <p> Mirá que no tiene vuelta atrás. </p>
+                <button id="dale">Seeeee</button>
+                </form>
+            </div>
+        </li>
+
       </ul>
     </div>
 
