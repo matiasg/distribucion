@@ -6,6 +6,7 @@ BRANCH=master
 curl --fail --silent --show-error --location https://codeload.github.com/matiasg/distribucion/tar.gz/${BRANCH} | tar xvz -C . distribucion-${BRANCH}/Makefile distribucion-${BRANCH}/dockerfiles distribucion-${BRANCH}/docker-compose.yaml
 mv distribucion-${BRANCH}/* .
 rmdir distribucion-${BRANCH}
+sed -i "s/BRANCH/${BRANCH}/" dockerfiles/dockerfile_body
 
 echo "Esta instalación se hace dentro de la uba?"
 select uba in "Si" "No"; do
