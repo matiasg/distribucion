@@ -28,7 +28,7 @@ logger = logging.getLogger()
 coloredlogs.install(level='WARNING')
 
 
-path = Path('/sitio_anterior')
+path = Path(__file__).absolute().parent.parent.parent / 'sitio_anterior'
 anno = 2019
 cuatrimestre = Cuatrimestres.S
 cargos_ya_distribuidos = TipoDocentes.P
@@ -37,7 +37,7 @@ def borra_datos_de_anno_y_cuatrimestre():
     tb = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
     cb = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
     eb = PreferenciasDocente.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre.name).delete()
-    ob = OtrosDatos.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre.name).delete()
+    ob = OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
     logger.info('Borré datos de turnos: %s', tb)
     logger.info('Borré datos de cargas: %s', cb)
     logger.info('Borré datos de preferencias: %s', eb)
@@ -239,7 +239,7 @@ def main():
             else:
                 asignacion = Asignacion.objects.create(carga=carga,
                                                        turno=turnos_nuestros[carga_fila['turno']],
-                                                       intento=0)
+                                                       intentos=(0, None))
                 logger.info('Asigné un docente de manera fija: %s', asignacion)
 
         opciones, datos_docentes = LectorDeCsv.lee_encuestas()
@@ -269,6 +269,8 @@ def main():
             OtrosDatos.objects.create(
                 docente=docente,
                 fecha_encuesta=fecha_encuesta,
+                anno=anno,
+                cuatrimestre=cuatrimestre.name,
                 email=datos['email'],
                 telefono=datos['telefono'],
                 cargas=datos['cargas'],
