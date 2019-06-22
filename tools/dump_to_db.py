@@ -32,7 +32,7 @@ path = Path(__file__).absolute().parent.parent.parent / 'sitio_anterior'
 anno = 2019
 cuatrimestre = Cuatrimestres.S
 cargos_ya_distribuidos = TipoDocentes.P
-ajustar_cargas_a_encuestas = True
+ajustar_cargas_a_encuestas = False
 
 def borra_datos_de_anno_y_cuatrimestre():
     tb = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
@@ -233,14 +233,16 @@ def main():
                 # tomamos la primera carga que no tenga turno asignado
                 carga = cargas.first()
 
-            if Mapeos.tipos_de_cargo(cargo) >= cargos_ya_distribuidos:
+            tipo_de_cargo = Mapeos.tipos_de_cargo(cargo)
+            if tipo_de_cargo >= cargos_ya_distribuidos:
                 carga.turno = turnos_nuestros[carga_fila['turno']]
                 carga.save()
                 logger.info('Carga generada: %s', carga)
             else:
                 asignacion = Asignacion.objects.create(carga=carga,
                                                        turno=turnos_nuestros[carga_fila['turno']],
-                                                       intentos=(0, None))
+                                                       intentos=(0, None),
+                                                       cargo_que_ocupa=tipo_de_cargo.name)
                 logger.info('Asigné un docente de manera fija: %s', asignacion)
 
         opciones, datos_docentes = LectorDeCsv.lee_encuestas()
@@ -276,7 +278,7 @@ def main():
                 email=datos['email'],
                 telefono=datos['telefono'],
                 cargas=datos['cargas'],
-                comentario=f'General: {datos["observaciones_generales"]}. Cuatrimestre: {datos["observaciones_particulares"]}'
+                comentario=f'General: {datos["observaciones_generales"]}.\nCuatrimestre: {datos["observaciones_particulares"]}'
             )
 
         # salvamos opciones
