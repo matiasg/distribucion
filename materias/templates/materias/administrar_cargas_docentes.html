@@ -9,6 +9,7 @@
 <table id=cargas_docentes>
     <thead>
         <td>Docente</td>
+        <td>Cargos</td>
         <td>Asignadas</td>
         <td>Pedidas</td>
         <td>Comentarios</td>
@@ -17,9 +18,10 @@
     {% for docente, cargas_pedidas in diferencias.items %}
     <tr>
         <td id=docente>{{ docente }}</td>
+        <td>{{ docente.cargos|join:", " }}</td>
         <td>{{ cargas_pedidas.0 }}</td>
         <td>{{ cargas_pedidas.1 }}</td>
-        <td id=comentario>{{ cargas_pedidas.2.comentario }}</td>
+        <td id=comentario>{{ cargas_pedidas.2.comentario|linebreaksbr }}</td>
     </tr>
     {% endfor %}
 </table>
