@@ -22,6 +22,8 @@ telefono_validator = RegexValidator(regex=r'^\+?[0-9 -]{9,15}$',
 class OtrosDatos(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
     fecha_encuesta = models.DateTimeField()
+    anno = models.IntegerField()
+    cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
     comentario = models.TextField()
     cargas = models.PositiveIntegerField(validators=[MaxValueValidator(3)])
     email = models.EmailField()
