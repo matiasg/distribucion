@@ -32,6 +32,7 @@ path = Path(__file__).absolute().parent.parent.parent / 'sitio_anterior'
 anno = 2019
 cuatrimestre = Cuatrimestres.S
 cargos_ya_distribuidos = TipoDocentes.P
+ajustar_cargas_a_encuestas = True
 
 def borra_datos_de_anno_y_cuatrimestre():
     tb = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
@@ -251,20 +252,21 @@ def main():
             cargas_esperadas = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name, docente=docente)
             fecha_encuesta = datos['timestamp']
 
-            if datos['cargas'] < cargas_esperadas.count():
-                a_borrar = cargas_esperadas.count() - datos['cargas']
-                logger.warning("%s tiene %d carga(s) esperada(s) pero pide %d. Le borro %d carga(s)",
-                               docente, cargas_esperadas.count(), datos['cargas'], a_borrar)
-                for _ in range(a_borrar):
-                    cargas_esperadas.filter(turno=None).last().delete()
+            if ajustar_cargas_a_encuestas:
+                if datos['cargas'] < cargas_esperadas.count():
+                    a_borrar = cargas_esperadas.count() - datos['cargas']
+                    logger.warning("%s tiene %d carga(s) esperada(s) pero pide %d. Le borro %d carga(s)",
+                                   docente, cargas_esperadas.count(), datos['cargas'], a_borrar)
+                    for _ in range(a_borrar):
+                        cargas_esperadas.filter(turno=None).last().delete()
 
-            elif datos['cargas'] > cargas_esperadas.count():
-                a_crear = datos['cargas'] - cargas_esperadas.count()
-                logger.warning("%s tiene %d carga(s) esperada(s) pero pide %d. Le agrego %d carga(s)",
-                               docente, cargas_esperadas.count(), datos['cargas'], a_crear)
-                cargo = docente.cargos[0]
-                for _ in range(a_crear):
-                    Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre.name, docente=docente, cargo=cargo)
+                elif datos['cargas'] > cargas_esperadas.count():
+                    a_crear = datos['cargas'] - cargas_esperadas.count()
+                    logger.warning("%s tiene %d carga(s) esperada(s) pero pide %d. Le agrego %d carga(s)",
+                                   docente, cargas_esperadas.count(), datos['cargas'], a_crear)
+                    cargo = docente.cargos[0]
+                    for _ in range(a_crear):
+                        Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre.name, docente=docente, cargo=cargo)
 
             OtrosDatos.objects.create(
                 docente=docente,
