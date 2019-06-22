@@ -8,7 +8,8 @@ from django.contrib.auth.decorators import permission_required, login_required
 import logging
 logger = logging.getLogger(__name__)
 
-from .models import Materia, Turno, Horario, Cuatrimestres, TipoMateria
+from .models import Materia, Turno, Horario, Cuatrimestres, TipoMateria, Docente
+from encuestas.models import OtrosDatos
 
 
 def index(request):
@@ -75,21 +76,24 @@ def filtra_materias(**kwargs):
 @login_required
 @permission_required('materias.view_docente')
 def administrar(request):
-    if 'turnos_alumnos' in request.POST:
+    try:
         anno = int(request.POST['anno'])
         cuatrimestre = request.POST['cuatrimestre']
-        return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
-    elif 'turnos_docentes' in request.POST:
-        anno = int(request.POST['anno'])
-        cuatrimestre = request.POST['cuatrimestre']
-        return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
-    else:
+    except:
         anno_actual = timezone.now().year
         context = {
             'annos': [anno_actual, anno_actual + 1],
             'cuatrimestres': [c for c in Cuatrimestres],
         }
         return render(request, 'materias/administrar.html', context=context)
+    else:
+        if 'turnos_alumnos' in request.POST:
+            return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
+        elif 'turnos_docentes' in request.POST:
+            return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
+        elif 'cargas_docentes' in request.POST:
+            return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
+
 
 
 def administrar_general(request, anno, cuatrimestre, key_to_field, url):
@@ -147,3 +151,23 @@ def administrar_docentes(request, anno, cuatrimestre):
                             }
                     }
     return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_docentes.html')
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def administrar_cargas_docentes(request, anno, cuatrimestre):
+    docentes_y_cargas_nuestras = {d: d.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre) for d in Docente.objects.all()}
+    docentes_y_cargas_encuesta = {o.docente: o.cargas for o in OtrosDatos.objects.all()}
+    diferencias = {d: (len(docentes_y_cargas_nuestras[d]),
+                       docentes_y_cargas_encuesta[d],
+                       OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=d).first())
+                   for d in sorted(set(docentes_y_cargas_nuestras) & set(docentes_y_cargas_encuesta), key=lambda d: d.nombre)
+                   if len(docentes_y_cargas_nuestras[d]) != docentes_y_cargas_encuesta[d]
+                   }
+
+    context = {'anno': anno,
+               'cuatrimestre': cuatrimestre,
+               'docentes_y_cargas_nuestras': docentes_y_cargas_nuestras,
+               'diferencias': diferencias,
+               }
+
+    return render(request, 'materias/administrar_cargas_docentes.html', context)

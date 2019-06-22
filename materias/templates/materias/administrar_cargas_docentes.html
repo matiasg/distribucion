@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<form action="{% url 'materias:administrar_cargas_docentes' anno cuatrimestre %}" method="post">
+{% csrf_token %}
+
+<table id=cargas_docentes>
+    <thead>
+        <td>Docente</td>
+        <td>Asignadas</td>
+        <td>Pedidas</td>
+        <td>Comentarios</td>
+    </thead>
+
+    {% for docente, cargas_pedidas in diferencias.items %}
+    <tr>
+        <td id=docente>{{ docente }}</td>
+        <td>{{ cargas_pedidas.0 }}</td>
+        <td>{{ cargas_pedidas.1 }}</td>
+        <td id=comentario>{{ cargas_pedidas.2.comentario }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+</form>
