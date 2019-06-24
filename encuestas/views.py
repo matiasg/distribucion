@@ -18,7 +18,7 @@ import logging.config
 logger = logging.getLogger(__name__)
 
 
-def checkear_y_salvar(datos):
+def checkear_y_salvar(datos, anno, cuatrimestre):
     fecha_encuesta = timezone.now()
 
     # chequeos
@@ -36,7 +36,7 @@ def checkear_y_salvar(datos):
 
     # OtrosDatos
     docente = Docente.objects.get(pk=datos['docente'])
-    otros_datos, _ = OtrosDatos.objects.get_or_create(docente=docente,
+    otros_datos, _ = OtrosDatos.objects.get_or_create(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
                                                       defaults={'fecha_encuesta': fecha_encuesta,
                                                                 'cargas': 0, 'comentario': ''})
     otros_datos.fecha_encuesta = fecha_encuesta
@@ -132,7 +132,7 @@ def encuesta(request, anno, cuatrimestre, tipo_docente):
     except (ValueError, KeyError, Turno.DoesNotExist):
         return render(request, 'encuestas/encuesta.html', context)
     try:
-        opciones, otros_datos = checkear_y_salvar(request.POST)
+        opciones, otros_datos = checkear_y_salvar(request.POST, anno, cuatrimestre)
         return render(request,
                       'encuestas/final.html',
                       context={'opciones': opciones, 'docente': docente,
