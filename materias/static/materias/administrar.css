@@ -1,0 +1,34 @@
+table#cargas_docentes
+{
+  border: 1;
+}
+
+table#cargas_docentes thead
+{
+  background-color: #228;
+  color: #fff;
+  text-align: center;
+}
+
+table#cargas_docentes td
+{
+  padding: 5px;
+  border: 1px solid black; 
+}
+
+table#cargas_docentes td#docente
+{
+  font-weight: bold;
+}
+
+table#cargas_docentes td#comentario
+{
+  width: 80em;
+  font-size: small;
+}
+
+ul#administrar_listado li
+{
+  padding-top: 1em;
+}
+

@@ -28,16 +28,17 @@ logger = logging.getLogger()
 coloredlogs.install(level='WARNING')
 
 
-path = Path('/sitio_anterior')
+path = Path(__file__).absolute().parent.parent.parent / 'sitio_anterior'
 anno = 2019
 cuatrimestre = Cuatrimestres.S
 cargos_ya_distribuidos = TipoDocentes.P
+ajustar_cargas_a_encuestas = False
 
 def borra_datos_de_anno_y_cuatrimestre():
     tb = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
     cb = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
     eb = PreferenciasDocente.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre.name).delete()
-    ob = OtrosDatos.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre.name).delete()
+    ob = OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
     logger.info('Borré datos de turnos: %s', tb)
     logger.info('Borré datos de cargas: %s', cb)
     logger.info('Borré datos de preferencias: %s', eb)
@@ -232,14 +233,16 @@ def main():
                 # tomamos la primera carga que no tenga turno asignado
                 carga = cargas.first()
 
-            if Mapeos.tipos_de_cargo(cargo) >= cargos_ya_distribuidos:
+            tipo_de_cargo = Mapeos.tipos_de_cargo(cargo)
+            if tipo_de_cargo >= cargos_ya_distribuidos:
                 carga.turno = turnos_nuestros[carga_fila['turno']]
                 carga.save()
                 logger.info('Carga generada: %s', carga)
             else:
                 asignacion = Asignacion.objects.create(carga=carga,
                                                        turno=turnos_nuestros[carga_fila['turno']],
-                                                       intento=0)
+                                                       intentos=(0, None),
+                                                       cargo_que_ocupa=tipo_de_cargo.name)
                 logger.info('Asigné un docente de manera fija: %s', asignacion)
 
         opciones, datos_docentes = LectorDeCsv.lee_encuestas()
@@ -251,29 +254,36 @@ def main():
             cargas_esperadas = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name, docente=docente)
             fecha_encuesta = datos['timestamp']
 
-            if datos['cargas'] < cargas_esperadas.count():
-                a_borrar = cargas_esperadas.count() - datos['cargas']
-                logger.warning("%s tiene %d carga(s) esperada(s) pero pide %d. Le borro %d carga(s)",
-                               docente, cargas_esperadas.count(), datos['cargas'], a_borrar)
-                for _ in range(a_borrar):
-                    cargas_esperadas.filter(turno=None).last().delete()
+            if ajustar_cargas_a_encuestas:
+                if datos['cargas'] < cargas_esperadas.count():
+                    a_borrar = cargas_esperadas.count() - datos['cargas']
+                    logger.warning("%s tiene %d carga(s) esperada(s) pero pide %d. Le borro %d carga(s)",
+                                   docente, cargas_esperadas.count(), datos['cargas'], a_borrar)
+                    for _ in range(a_borrar):
+                        cargas_esperadas.filter(turno=None).last().delete()
 
-            elif datos['cargas'] > cargas_esperadas.count():
-                a_crear = datos['cargas'] - cargas_esperadas.count()
-                logger.warning("%s tiene %d carga(s) esperada(s) pero pide %d. Le agrego %d carga(s)",
-                               docente, cargas_esperadas.count(), datos['cargas'], a_crear)
-                cargo = docente.cargos[0]
-                for _ in range(a_crear):
-                    Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre.name, docente=docente, cargo=cargo)
+                elif datos['cargas'] > cargas_esperadas.count():
+                    a_crear = datos['cargas'] - cargas_esperadas.count()
+                    logger.warning("%s tiene %d carga(s) esperada(s) pero pide %d. Le agrego %d carga(s)",
+                                   docente, cargas_esperadas.count(), datos['cargas'], a_crear)
+                    cargo = docente.cargos[0]
+                    for _ in range(a_crear):
+                        Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre.name, docente=docente, cargo=cargo)
 
             OtrosDatos.objects.create(
                 docente=docente,
                 fecha_encuesta=fecha_encuesta,
+                anno=anno,
+                cuatrimestre=cuatrimestre.name,
                 email=datos['email'],
                 telefono=datos['telefono'],
                 cargas=datos['cargas'],
-                comentario=f'General: {datos["observaciones_generales"]}. Cuatrimestre: {datos["observaciones_particulares"]}'
+                comentario=f'General: {datos["observaciones_generales"]}.\nCuatrimestre: {datos["observaciones_particulares"]}'
             )
+
+            docente.email = datos['email']
+            docente.telefono = datos['telefono']
+            docente.save()
 
         # salvamos opciones
         for opcion in opciones:

@@ -30,7 +30,7 @@ def copiar_anno_y_cuatrimestre(anno, cuatrimestre):
     '''devuelve: (prefs copiadas, prefs borradas) '''
     copiadas = 0
     borradas, _ = Preferencia.objects.filter(preferencia__turno__anno=anno,
-                                               preferencia__turno__cuatrimestre=cuatrimestre).delete()
+                                             preferencia__turno__cuatrimestre=cuatrimestre).delete()
 
     docentes_con_encuesta = {od.docente for od in OtrosDatos.objects.all()}
     for docente in docentes_con_encuesta:

@@ -131,9 +131,16 @@ td.pabellon
   background-color: #a0a0a0;
 }
 
+.titulo
+{
+  font-size: 20px;
+  font-weight: bold;
+}
+
 .subtitulo
 {
   font-weight: bold;
+  margin: 10px;
 }
 
 .tabla_numeros_chicos table input
@@ -148,4 +155,24 @@ td.pabellon
   padding-left: 1em;
   padding-right: 1em;
   background-color: #ccc;
+}
+
+table#cargas
+{
+  border: 3px #226 solid;
+  margin: 10px;
+}
+
+table#cargas td
+{
+  border: 1px solid black;
+  font-size: large;
+  text-align: center;
+  padding: 6px;
+}
+
+table#cargas td input
+{
+  width: 3em;
+  font-size: large;
 }

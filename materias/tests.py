@@ -5,9 +5,10 @@ import re
 import datetime
 from django.utils import timezone
 
-from materias.models import (Cargos, Dedicaciones, CargoDedicacion, Docente,
+from materias.models import (Cargos, Carga, Dedicaciones, CargoDedicacion, Docente,
                              Materia, Turno, TipoMateria, TipoTurno, Dias, Cuatrimestres,
                              Horario)
+from encuestas.models import OtrosDatos
 from usuarios.models import Usuario
 from django.contrib.auth.models import Permission
 
@@ -305,3 +306,25 @@ class TestPaginas(TestCase):
         self.assertEqual(nturno12.alumnos, 13)
         self.assertEqual(nhorario112.aula, 'xyz')
         self.assertEqual(nhorario112.pabellon, 0)
+
+    def test_administrar_cargas_docentes(self):
+        self.client.login(username='autorizado', password='1234')
+
+        n = Docente.objects.create(nombre='nemo',
+                                   telefono='00 0000',
+                                   email='nemo@nautilus.org',
+                                   cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
+        c1 = Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
+        c2 = Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
+        OtrosDatos.objects.create(docente=n, fecha_encuesta=timezone.now(), anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                  cargas=2)
+
+        response = self.client.get(f'/materias/administrar_cargas_un_docente/2100/P/{n.id}', follow=True)
+        self.assertContains(response, 'cargo_TitExc')
+        self.assertContains(response, 'cargo_Ay1Smx')
+
+        response = self.client.post(f'/materias/administrar_cargas_un_docente/2100/P/{n.id}',
+                                    {'salvar': True, 'anno': 2100, 'cuatrimestre': Cuatrimestres.P.name, 'cargo_TitExc': 1, 'cargo_Ay1Smx': 1},
+                                    follow=True)
+        self.assertEquals(Carga.objects.filter(cargo='TitExc').count(), 1)
+        self.assertEquals(Carga.objects.filter(cargo='Ay1Smx').count(), 1)
