@@ -281,6 +281,10 @@ def main():
                 comentario=f'General: {datos["observaciones_generales"]}.\nCuatrimestre: {datos["observaciones_particulares"]}'
             )
 
+            docente.email = datos['email']
+            docente.telefono = datos['telefono']
+            docente.save()
+
         # salvamos opciones
         for opcion in opciones:
             datos = datos_docentes[opcion['encuesta_periodo_id']]
