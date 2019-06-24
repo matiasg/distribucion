@@ -322,3 +322,9 @@ class TestPaginas(TestCase):
         response = self.client.get(f'/materias/administrar_cargas_un_docente/2100/P/{n.id}', follow=True)
         self.assertContains(response, 'cargo_TitExc')
         self.assertContains(response, 'cargo_Ay1Smx')
+
+        response = self.client.post(f'/materias/administrar_cargas_un_docente/2100/P/{n.id}',
+                                    {'salvar': True, 'anno': 2100, 'cuatrimestre': Cuatrimestres.P.name, 'cargo_TitExc': 1, 'cargo_Ay1Smx': 1},
+                                    follow=True)
+        self.assertEquals(Carga.objects.filter(cargo='TitExc').count(), 1)
+        self.assertEquals(Carga.objects.filter(cargo='Ay1Smx').count(), 1)
