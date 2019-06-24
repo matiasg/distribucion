@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import permission_required, login_required
 import logging
 logger = logging.getLogger(__name__)
 
-from .models import Materia, Turno, Horario, Cuatrimestres, TipoMateria, Docente
+from .models import Materia, Turno, Horario, Cuatrimestres, TipoMateria, Docente, CargoDedicacion, Carga
 from encuestas.models import OtrosDatos
 
 
@@ -171,3 +171,47 @@ def administrar_cargas_docentes(request, anno, cuatrimestre):
                }
 
     return render(request, 'materias/administrar_cargas_docentes.html', context)
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def administrar_cargas_de_un_docente(request, anno, cuatrimestre, docente_id):
+    docente = Docente.objects.get(pk=docente_id)
+
+    if 'salvar' in request.POST:
+        for cargo_label in request.POST:
+            if cargo_label.startswith('cargo_'):
+                cargo = CargoDedicacion[cargo_label[-6:]]
+                cantidad_que_le_dejamos = int(request.POST[cargo_label])
+                cantidad_que_tiene = docente.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre, cargo=cargo.name).count()
+                logger.info('cargas %s', docente.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre, cargo=cargo))
+                logger.info('le dejamos %d, tiene %d', cantidad_que_le_dejamos, cantidad_que_tiene)
+
+                if cantidad_que_le_dejamos > cantidad_que_tiene:
+                    for i in range(cantidad_que_tiene, cantidad_que_le_dejamos):
+                        Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre, docente=docente, cargo=cargo.name)
+                        logger.debug('generé una carga para %s con cargo %s', docente, cargo)
+
+                elif cantidad_que_le_dejamos < cantidad_que_tiene:
+                    for i in range(cantidad_que_le_dejamos, cantidad_que_tiene):
+                        Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=docente, cargo=cargo.name).last().delete()
+                        logger.debug('borré una carga para %s con cargo %s', docente, cargo)
+
+                else:
+                    logger.debug('no cambié la cantidad de cargas de %s con cargo %s', docente, cargo)
+
+        return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
+
+    else:
+        cargas_pedidas = OtrosDatos.objects.get(anno=anno, cuatrimestre=cuatrimestre, docente=docente).cargas
+        cargas = docente.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre)
+        cargas_por_tipo = {cargo: cargas.filter(cargo=cargo).count() for cargo in docente.cargos}
+
+        context = {
+            'anno': anno,
+            'cuatrimestre': cuatrimestre,
+            'docente': docente,
+            'cargas': cargas,
+            'cargas_pedidas': cargas_pedidas,
+            'cargas_por_tipo': cargas_por_tipo,
+        }
+        return render(request, 'materias/administrar_cargas_un_docente.html', context)

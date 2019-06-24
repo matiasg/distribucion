@@ -17,7 +17,9 @@
 
     {% for docente, cargas_pedidas in diferencias.items %}
     <tr>
-        <td id=docente>{{ docente }}</td>
+        <td id=docente>
+            <a href="{% url 'materias:administrar_cargas_un_docente' anno cuatrimestre docente.id %}">{{ docente }}</a>
+        </td>
         <td>{{ docente.cargos|join:", " }}</td>
         <td>{{ cargas_pedidas.0 }}</td>
         <td>{{ cargas_pedidas.1 }}</td>
