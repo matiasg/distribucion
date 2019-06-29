@@ -40,8 +40,8 @@ class TestMapeos(TestCase):
 
     def test_cargos_de_tipos(self):
         cardeds = Mapeos.cargos_de_tipos(TipoDocentes.P)
-        self.assertEqual(len(cardeds), 3 * 3)
-        some_expected = { 'TitSim', 'AsoSmx', 'AdjExc' }
+        self.assertEqual(len(cardeds), 8 * 3)
+        some_expected = { 'TitSim', 'AsoSmx', 'AdjExc', 'VisSim', 'HonExc' }
         self.assertTrue(set(cardeds).issuperset(some_expected))
 
     def test_docentes_de_tipo(self):
