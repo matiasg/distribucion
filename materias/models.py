@@ -81,8 +81,15 @@ class TipoMateria(Enum):
     N = 'optativa no regular'
 
 
-def choice_enum(enum_cls, long_value=(lambda v: v)):
-    return ((e.name, long_value(e.value)) for e in enum_cls)
+class Pabellon(Enum):
+    Uno = '1'
+    Dos = '2'
+    Industrias = 'I'
+    Cero_infinito = '0'
+
+
+def choice_enum(enum_cls, short_value=(lambda e: e.name), long_value=(lambda e: e.value)):
+    return ((short_value(e), long_value(e)) for e in enum_cls)
 
 
 def get_key_enum(enum_cls):
@@ -168,11 +175,13 @@ class Turno(models.Model):
 
 
 class Horario(models.Model):
-    dia = models.CharField(max_length=2, choices=choice_enum(Dias, lambda v: v[0]))
+    dia = models.CharField(max_length=2, choices=choice_enum(Dias, long_value=(lambda e: e.value[0])))
     comienzo = models.TimeField('comienzo')
     final = models.TimeField('final')
     aula = models.CharField(max_length=5, blank=True, null=True)
-    pabellon = models.IntegerField(blank=True, null=True)
+    pabellon = models.CharField(max_length=1,
+                                choices=choice_enum(Pabellon, short_value=(lambda e: e.value), long_value=(lambda e: e.name)),
+                                blank=True, null=True)
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
     history = HistoricalRecords()
 
