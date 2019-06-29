@@ -28,7 +28,13 @@
                         {% for horario in turno.horario_set.all %}
                         <td class="tabla_col_borde_izquierdo">{{ horario.dia }}: {{ horario.de_a }}</td>
                         <td>Aula: <input type="text" name="aula_{{ horario.id }}" value="{{ horario.aula }}" maxlength=5></td>
-                        <td>Pab: <input type="number" name="pabellon_{{ horario.id }}" value="{{ horario.pabellon }}" min=0 max=3></td>
+                        <td>Pab: <select name="pabellon_{{ horario.id }}">
+                                {% for pabellon in pabellones %}
+                                    <option value="{{ pabellon.value.0 }}" {% if pabellon.value.0 == horario.pabellon %}selected{% endif %}>
+                                    {{ pabellon.value.1 }}
+                                    </option>
+                                {% endfor %}
+                        </select></td>
                         {% endfor %}
                     </tr>
                     {% endfor %}
