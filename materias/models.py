@@ -82,10 +82,10 @@ class TipoMateria(Enum):
 
 
 class Pabellon(Enum):
-    Uno = '1'
-    Dos = '2'
-    Industrias = 'I'
-    Cero_infinito = '0'
+    Uno = ('1', 'I')
+    Dos = ('2', 'II')
+    Industrias = ('I', 'Ind')
+    Cero_infinito = ('0', '0+∞')
 
 
 def choice_enum(enum_cls, short_value=(lambda e: e.name), long_value=(lambda e: e.value)):
@@ -179,9 +179,10 @@ class Horario(models.Model):
     comienzo = models.TimeField('comienzo')
     final = models.TimeField('final')
     aula = models.CharField(max_length=5, blank=True, null=True)
-    pabellon = models.CharField(max_length=1,
-                                choices=choice_enum(Pabellon, short_value=(lambda e: e.value), long_value=(lambda e: e.name)),
-                                blank=True, null=True)
+    pabellon = models.CharField(max_length=1, blank=True, null=True,
+                                choices=choice_enum(Pabellon,
+                                                    short_value=(lambda e: e.value[0]),
+                                                    long_value=(lambda e: e.value[1])))
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
     history = HistoricalRecords()
 
