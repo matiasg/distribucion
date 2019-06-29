@@ -51,7 +51,7 @@ class LectorDeCsv:
         '1t': Cargos.Tit,
         '1a': Cargos.Aso,
         '1j': Cargos.Adj,
-        '1v': Cargos.Tit, # TODO: crear cargos de visitante, issue #72
+        '1v': Cargos.Vis,
         '2': Cargos.JTP,
         '3': Cargos.Ay1,
         '4': Cargos.Ay2,
