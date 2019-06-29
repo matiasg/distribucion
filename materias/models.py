@@ -24,6 +24,11 @@ class Dias(Enum):
 
 
 class Cargos(Enum):
+    Eme = 'Prof. Emerito'
+    Hon = 'Prof. Honorario'
+    Con = 'Prof. Consulto'
+    Ple = 'Prof. Plenario'
+    Vis = 'Prof. Visitante'
     Tit = 'Prof. Titular'
     Aso = 'Prof. Asociado'
     Adj = 'Prof. Adjunto'
