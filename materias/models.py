@@ -82,8 +82,8 @@ class TipoMateria(Enum):
 
 
 class Pabellon(Enum):
-    Uno = ('1', 'I')
-    Dos = ('2', 'II')
+    Uno = ('1', '1')
+    Dos = ('2', '2')
     Industrias = ('I', 'Ind')
     Cero_infinito = ('0', '0+∞')
 
