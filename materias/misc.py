@@ -7,7 +7,7 @@ from materias.models import Docente, Turno, Carga, TipoTurno, Cargos, CargoDedic
 class Mapeos:
     '''Esta clase resuelve distintos tipos de mapeos'''
 
-    tipo_a_cargos = {TipoDocentes.P: [Cargos.Tit, Cargos.Aso, Cargos.Adj],
+    tipo_a_cargos = {TipoDocentes.P: [Cargos.Tit, Cargos.Aso, Cargos.Adj, Cargos.Vis, Cargos.Eme, Cargos.Hon, Cargos.Con, Cargos.Ple,],
                      TipoDocentes.J: [Cargos.JTP],
                      TipoDocentes.A1: [Cargos.Ay1],
                      TipoDocentes.A2: [Cargos.Ay2],
@@ -17,6 +17,11 @@ class Mapeos:
         Cargos.Tit: TipoDocentes.P,
         Cargos.Aso: TipoDocentes.P,
         Cargos.Adj: TipoDocentes.P,
+        Cargos.Eme: TipoDocentes.P,
+        Cargos.Hon: TipoDocentes.P,
+        Cargos.Con: TipoDocentes.P,
+        Cargos.Ple: TipoDocentes.P,
+        Cargos.Vis: TipoDocentes.P,
         Cargos.JTP: TipoDocentes.J,
         Cargos.Ay1: TipoDocentes.A1,
         Cargos.Ay2: TipoDocentes.A2,
