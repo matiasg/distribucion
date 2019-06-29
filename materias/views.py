@@ -8,7 +8,8 @@ from django.contrib.auth.decorators import permission_required, login_required
 import logging
 logger = logging.getLogger(__name__)
 
-from .models import Materia, Turno, Horario, Cuatrimestres, TipoMateria, Docente, CargoDedicacion, Carga
+from .models import (Materia, Turno, Horario, Cuatrimestres, TipoMateria,
+                     Docente, CargoDedicacion, Carga, Pabellon,)
 from encuestas.models import OtrosDatos
 
 
@@ -111,11 +112,11 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url):
                 for objeto in objetos:
                     for page_field, (field, _type) in modelo_key_to_field.items():
                         page_field_objeto = f'{page_field}_{objeto.id}'
-                        if _type in (int, str):
-                            v = _type(request.POST[page_field_objeto])
-                        elif _type is bool:
+                        if _type is bool:
                             # checkbox aparece solo si está marcado
                             v = page_field_objeto in request.POST
+                        else:
+                            v = _type(request.POST[page_field_objeto])
                         setattr(objeto, field, v)
                         logger.debug('cambiando %s a obj. %s por %s', page_field, objeto, v)
                     objeto.save()
@@ -125,7 +126,7 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url):
 
     else:
         materias = filtra_materias(anno=anno, cuatrimestre=cuatrimestre)
-        context = {'anno': anno, 'cuatrimestre': cuatrimestre, 'materias': materias}
+        context = {'anno': anno, 'cuatrimestre': cuatrimestre, 'materias': materias, 'pabellones': list(Pabellon)}
         return render(request, url, context)
 
 
@@ -134,7 +135,7 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url):
 def administrar_alumnos(request, anno, cuatrimestre):
     key_to_field = {Turno: {'alumnos': ('alumnos', int)},
                     Horario: {'aula': ('aula', str),
-                              'pabellon': ('pabellon', int)}
+                              'pabellon': ('pabellon', str)}
                     }
 
     return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_alumnos.html')

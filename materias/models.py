@@ -81,8 +81,15 @@ class TipoMateria(Enum):
     N = 'optativa no regular'
 
 
-def choice_enum(enum_cls, long_value=(lambda v: v)):
-    return ((e.name, long_value(e.value)) for e in enum_cls)
+class Pabellon(Enum):
+    Uno = ('1', '1')
+    Dos = ('2', '2')
+    Industrias = ('I', 'Ind')
+    Cero_infinito = ('0', '0+∞')
+
+
+def choice_enum(enum_cls, short_value=(lambda e: e.name), long_value=(lambda e: e.value)):
+    return ((short_value(e), long_value(e)) for e in enum_cls)
 
 
 def get_key_enum(enum_cls):
@@ -133,7 +140,7 @@ class Turno(models.Model):
         horarios = sorted(self.horario_set.all())
         dias = join([h.dia for h in horarios])
         horas = join([h.de_a() for h in horarios])
-        aulas = join([f'{h.aula} (P.{h.pabellon})' for h in horarios])
+        aulas = join([h.aula_y_pabellon() for h in horarios])
         return TurnoInfo(tipoynumero, f'{dias}: {horas}', aulas)
 
     def __lt__(self, other):
@@ -168,11 +175,14 @@ class Turno(models.Model):
 
 
 class Horario(models.Model):
-    dia = models.CharField(max_length=2, choices=choice_enum(Dias, lambda v: v[0]))
+    dia = models.CharField(max_length=2, choices=choice_enum(Dias, long_value=(lambda e: e.value[0])))
     comienzo = models.TimeField('comienzo')
     final = models.TimeField('final')
     aula = models.CharField(max_length=5, blank=True, null=True)
-    pabellon = models.IntegerField(blank=True, null=True)
+    pabellon = models.CharField(max_length=1, blank=True, null=True,
+                                choices=choice_enum(Pabellon,
+                                                    short_value=(lambda e: e.value[0]),
+                                                    long_value=(lambda e: e.value[1])))
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
     history = HistoricalRecords()
 
@@ -193,6 +203,9 @@ class Horario(models.Model):
 
         return f'{time_str(self.comienzo)} a {time_str(self.final)}'
 
+    def aula_y_pabellon(self):
+        pab = [p for p in Pabellon if p.value[0] == self.pabellon][0]
+        return f'{self.aula} (P.{pab.value[1]})'
 
 
 class Docente(models.Model):

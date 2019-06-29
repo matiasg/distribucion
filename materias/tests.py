@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from materias.models import (Cargos, Carga, Dedicaciones, CargoDedicacion, Docente,
                              Materia, Turno, TipoMateria, TipoTurno, Dias, Cuatrimestres,
-                             Horario)
+                             Horario, Pabellon)
 from encuestas.models import OtrosDatos
 from usuarios.models import Usuario
 from django.contrib.auth.models import Permission
@@ -115,6 +115,19 @@ class TestModels(TestCase):
         self.assertTrue('Teórica 0' not in str(turno0))
         self.assertTrue('Teórica 1' in str(self.turno))
 
+    def test_pabellones_en_turnos(self):
+        turno = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                     numero=1, tipo=TipoTurno.T.name,
+                                     necesidad_prof=0, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        siete, nueve = datetime.time(7), datetime.time(9)
+        horario1 = Horario.objects.create(turno=turno, dia=Dias.Lu.name, comienzo=siete, final=nueve,
+                                          aula='5', pabellon=Pabellon.Uno.value[0])
+        horario2 = Horario.objects.create(turno=turno, dia=Dias.Ju.name, comienzo=siete, final=nueve,
+                                          aula='6', pabellon=Pabellon.Cero_infinito.value[0])
+
+        self.assertEquals(turno.horarios_info().aula, f'5 (P.{Pabellon.Uno.value[1]}) y 6 (P.{Pabellon.Cero_infinito.value[1]})')
+
+
 
 class TestPaginas(TestCase):
 
@@ -138,7 +151,7 @@ class TestPaginas(TestCase):
                                             numero=2, tipo=TipoTurno.T.name, **dict_nec)
 
         siete, ocho, nueve, diez = datetime.time(7), datetime.time(8), datetime.time(9), datetime.time(10)
-        aula_pab = {'aula': 'no', 'pabellon': 6}
+        aula_pab = {'aula': 'no', 'pabellon': '0'}
         self.horario111 = Horario.objects.create(turno=self.turno11, dia=Dias.Lu.name, comienzo=ocho, final=nueve, **aula_pab)
         self.horario112 = Horario.objects.create(turno=self.turno11, dia=Dias.Ju.name, comienzo=siete, final=ocho, **aula_pab)
         self.horario121 = Horario.objects.create(turno=self.turno12, dia=Dias.Lu.name, comienzo=siete, final=nueve, **aula_pab)
@@ -273,7 +286,7 @@ class TestPaginas(TestCase):
         self.turno11.save()
 
         self.horario111.aula = 'EP1'
-        self.horario111.pabellon = 8
+        self.horario111.pabellon = '2'
         self.horario111.save()
 
         url = '/materias/administrar_alumnos/2100/P'
@@ -282,8 +295,10 @@ class TestPaginas(TestCase):
                                   response.content.decode()))
         self.assertTrue(re.search(f'name="aula_{self.horario111.id}".*value="EP1"',
                                   response.content.decode()))
-        self.assertTrue(re.search(f'name="pabellon_{self.horario111.id}".*value="8"',
-                                  response.content.decode()))
+        self.assertTrue(re.search((f'name="pabellon_{self.horario111.id}">'
+                                   f'(\s*(<option value="(1|I|0)"\s*>|(1|Ind|0+∞)|</option>)\s*)+'
+                                   f'<option value="2" selected>'),
+                                  response.content.decode(), flags=re.DOTALL))
 
         model_to_ktf = {Turno: {'alumnos': ('alumnos', int)},
                         Horario: {'aula': ('aula', str),
@@ -305,7 +320,7 @@ class TestPaginas(TestCase):
         nhorario112 = Horario.objects.get(pk=self.horario112.id)
         self.assertEqual(nturno12.alumnos, 13)
         self.assertEqual(nhorario112.aula, 'xyz')
-        self.assertEqual(nhorario112.pabellon, 0)
+        self.assertEqual(nhorario112.pabellon, '0')
 
     def test_administrar_cargas_docentes(self):
         self.client.login(username='autorizado', password='1234')
