@@ -138,7 +138,7 @@ class TestPaginas(TestCase):
                                             numero=2, tipo=TipoTurno.T.name, **dict_nec)
 
         siete, ocho, nueve, diez = datetime.time(7), datetime.time(8), datetime.time(9), datetime.time(10)
-        aula_pab = {'aula': 'no', 'pabellon': 6}
+        aula_pab = {'aula': 'no', 'pabellon': '0'}
         self.horario111 = Horario.objects.create(turno=self.turno11, dia=Dias.Lu.name, comienzo=ocho, final=nueve, **aula_pab)
         self.horario112 = Horario.objects.create(turno=self.turno11, dia=Dias.Ju.name, comienzo=siete, final=ocho, **aula_pab)
         self.horario121 = Horario.objects.create(turno=self.turno12, dia=Dias.Lu.name, comienzo=siete, final=nueve, **aula_pab)
@@ -273,7 +273,7 @@ class TestPaginas(TestCase):
         self.turno11.save()
 
         self.horario111.aula = 'EP1'
-        self.horario111.pabellon = 8
+        self.horario111.pabellon = '2'
         self.horario111.save()
 
         url = '/materias/administrar_alumnos/2100/P'
@@ -282,7 +282,7 @@ class TestPaginas(TestCase):
                                   response.content.decode()))
         self.assertTrue(re.search(f'name="aula_{self.horario111.id}".*value="EP1"',
                                   response.content.decode()))
-        self.assertTrue(re.search(f'name="pabellon_{self.horario111.id}".*value="8"',
+        self.assertTrue(re.search(f'name="pabellon_{self.horario111.id}".*value="2"',
                                   response.content.decode()))
 
         model_to_ktf = {Turno: {'alumnos': ('alumnos', int)},
@@ -305,7 +305,7 @@ class TestPaginas(TestCase):
         nhorario112 = Horario.objects.get(pk=self.horario112.id)
         self.assertEqual(nturno12.alumnos, 13)
         self.assertEqual(nhorario112.aula, 'xyz')
-        self.assertEqual(nhorario112.pabellon, 0)
+        self.assertEqual(nhorario112.pabellon, '0')
 
     def test_administrar_cargas_docentes(self):
         self.client.login(username='autorizado', password='1234')
