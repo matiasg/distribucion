@@ -6,9 +6,9 @@ from materias.models import (Materia, Turno, TipoTurno, Cargos, Carga, CargoDedi
                              Docente, TipoDocentes, TipoMateria, Cuatrimestres)
 from materias.misc import Mapeos, AnnoCuatrimestre
 from dborrador.models import Asignacion, Intento
-from dborrador.misc import MapeosDistribucion, Distribucion
+from dborrador.misc import Distribucion
 
-class TestMapeosDistribucion(TestCase):
+class TestDistribucion(TestCase):
 
     def setUp(self):
         anno = 2100
