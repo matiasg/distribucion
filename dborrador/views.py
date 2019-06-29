@@ -14,7 +14,7 @@ from django.contrib.auth.decorators import permission_required, login_required
 
 
 from .models import Preferencia, Asignacion, Comentario, Intento
-from .misc import MapeosDistribucion, Distribucion
+from .misc import Distribucion
 from materias.models import (Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria,
                              choice_enum, AnnoCuatrimestre, TipoDocentes,)
 from materias.misc import Mapeos

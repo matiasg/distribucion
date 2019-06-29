@@ -4,7 +4,6 @@ from materias.models import (Materia, Turno, TipoTurno, Cargos, Carga, Dedicacio
                              Docente, TipoMateria, Cuatrimestres)
 from materias.misc import Mapeos, TipoDocentes, AnnoCuatrimestre
 from dborrador.models import Asignacion
-from dborrador.misc import MapeosDistribucion
 
 
 class TestMapeos(TestCase):
