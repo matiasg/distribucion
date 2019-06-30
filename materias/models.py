@@ -214,14 +214,22 @@ class Horario(models.Model):
 
 
 class Docente(models.Model):
-    nombre = models.CharField(max_length=60)
+    na_nombre = models.CharField(max_length=30)
+    na_apellido = models.CharField(max_length=30)
     telefono = models.CharField(max_length=15, validators=[int_list_validator(sep=' ')])
     email = models.EmailField()
     cargos = ArrayField(models.CharField(max_length=6, choices=choice_enum(CargoDedicacion)), size=2)
     history = HistoricalRecords()
 
+    class Meta:
+        ordering: ['na_apellido', 'na_nombre']
+
     def __str__(self):
         return f'{self.nombre}'
+
+    @property
+    def nombre(self):
+        return f'{self.na_nombre} {self.na_apellido}'
 
     @classmethod
     def todos_los(cls, cargo):

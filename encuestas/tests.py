@@ -16,7 +16,7 @@ class TestEncuesta(TestCase):
 
     def setUp(self):
         self.anno = 2100
-        self.docente = Docente.objects.create(nombre='juan', email='mail@nada.org',
+        self.docente = Docente.objects.create(na_nombre='juan', email='mail@nada.org',
                                               telefono='1234',
                                               cargos=[CargoDedicacion.JTPSmx.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
@@ -149,11 +149,11 @@ class TestEncuesta(TestCase):
 
     def test_orden_docentes(self):
         for docente in [5, 1, 3, 8, 9, 6, 0, 7, 2, 4]:
-            Docente.objects.create(nombre=f'doc{docente}', email='mail@nada.org', telefono='1234',
+            Docente.objects.create(na_nombre=f'doc{docente}', na_apellido='X', email='mail@nada.org', telefono='1234',
                                    cargos=[CargoDedicacion.JTPSmx.name])
         response = self.client.get(f'/encuestas/encuesta/{self.anno}/{Cuatrimestres.P.name}/{TipoDocentes.J.name}')
 
-        docentes_en_desplegable = re.findall('>(doc[0-9])<', response.content.decode())
+        docentes_en_desplegable = re.findall('>(doc[0-9]) X<', response.content.decode())
         self.assertEqual(docentes_en_desplegable, [f'doc{d}' for d in range(10)])
 
     def test_orden_materias_y_turnos(self):

@@ -26,12 +26,12 @@ class TestModels(TestCase):
             self.assertEquals(len(cc), len(Dedicaciones))
 
     def test_mas_de_un_cargo(self):
-        n = Docente.objects.create(nombre='nemo',
+        n = Docente.objects.create(na_nombre='nemo',
                                    telefono='00 0000',
                                    email='nemo@nautilus.org',
                                    cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
 
-        nemos = Docente.objects.filter(nombre='nemo')
+        nemos = Docente.objects.filter(na_nombre='nemo')
         self.assertEquals(len(nemos), 1)
         self.assertEquals(nemos.first(), n)
 
@@ -40,13 +40,13 @@ class TestModels(TestCase):
         self.assertEquals(titulares.first(), n)
 
     def test_nada(self):
-        n = Docente.objects.create(nombre='nemo',
+        n = Docente.objects.create(na_nombre='nemo',
                                    telefono='00 0000',
                                    email='nemo@nautilus.org',
                                    cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
-        m = Docente.objects.create(nombre='mario', telefono='', email='',
+        m = Docente.objects.create(na_nombre='mario', telefono='', email='',
                                    cargos=[CargoDedicacion.Ay2Sim.name, CargoDedicacion.Ay2Sim.name])
-        o = Docente.objects.create(nombre='ovidio',
+        o = Docente.objects.create(na_nombre='ovidio',
                                    cargos=[CargoDedicacion.Ay2Sim.name])
         ayds1 = Docente.todos_los(Cargos.Ay1)
         self.assertEquals(len(ayds1), 1)
@@ -325,7 +325,7 @@ class TestPaginas(TestCase):
     def test_administrar_cargas_docentes(self):
         self.client.login(username='autorizado', password='1234')
 
-        n = Docente.objects.create(nombre='nemo',
+        n = Docente.objects.create(na_nombre='nemo',
                                    telefono='00 0000',
                                    email='nemo@nautilus.org',
                                    cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])

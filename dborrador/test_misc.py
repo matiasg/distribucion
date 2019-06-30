@@ -14,12 +14,12 @@ class TestDistribucion(TestCase):
         anno = 2100
         cuatrimestre = Cuatrimestres.P.name
         self.ac = AnnoCuatrimestre(anno, cuatrimestre)
-        self.n = Docente.objects.create(nombre='nemo',
-                                   telefono='00 0000',
-                                   email='nemo@nautilus.org',
-                                   cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
-        self.m = Docente.objects.create(nombre='mario', telefono='11 1111', email='mario@nautilus.org',
-                                   cargos=[CargoDedicacion.AsoSim.name])
+        self.n = Docente.objects.create(na_nombre='nemo',
+                                        telefono='00 0000',
+                                        email='nemo@nautilus.org',
+                                        cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
+        self.m = Docente.objects.create(na_nombre='mario', telefono='11 1111', email='mario@nautilus.org',
+                                        cargos=[CargoDedicacion.AsoSim.name])
         self.materia = Materia.objects.create(nombre='navegacion', obligatoriedad=TipoMateria.B.name)
         self.turno1 = Turno.objects.create(materia=self.materia, anno=anno, cuatrimestre=cuatrimestre,
                                            numero=1, tipo=TipoTurno.A.name,
