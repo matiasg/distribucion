@@ -15,7 +15,7 @@
         <td>Comentarios</td>
     </thead>
 
-    {% for docente, cargas_pedidas in diferencias.items %}
+    {% for docente, cargas_pedidas in diferencias_encuesta.items %}
     <tr>
         <td id=docente>
             <a href="{% url 'materias:administrar_cargas_un_docente' anno cuatrimestre docente.id %}">{{ docente }}</a>

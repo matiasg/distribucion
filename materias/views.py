@@ -158,17 +158,16 @@ def administrar_docentes(request, anno, cuatrimestre):
 def administrar_cargas_docentes(request, anno, cuatrimestre):
     docentes_y_cargas_nuestras = {d: d.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre) for d in Docente.objects.all()}
     docentes_y_cargas_encuesta = {o.docente: o.cargas for o in OtrosDatos.objects.all()}
-    diferencias = {d: (len(docentes_y_cargas_nuestras[d]),
-                       docentes_y_cargas_encuesta[d],
-                       OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=d).first())
-                   for d in sorted(set(docentes_y_cargas_nuestras) & set(docentes_y_cargas_encuesta), key=lambda d: d.nombre)
-                   if len(docentes_y_cargas_nuestras[d]) != docentes_y_cargas_encuesta[d]
-                   }
+    diferencias_encuesta = {d: (len(docentes_y_cargas_nuestras[d]),
+                                docentes_y_cargas_encuesta[d],
+                                OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=d).first())
+                            for d in sorted(set(docentes_y_cargas_nuestras) & set(docentes_y_cargas_encuesta), key=lambda d: d.nombre)
+                            if len(docentes_y_cargas_nuestras[d]) != docentes_y_cargas_encuesta[d]
+                            }
 
     context = {'anno': anno,
                'cuatrimestre': cuatrimestre,
-               'docentes_y_cargas_nuestras': docentes_y_cargas_nuestras,
-               'diferencias': diferencias,
+               'diferencias_encuesta': diferencias_encuesta,
                }
 
     return render(request, 'materias/administrar_cargas_docentes.html', context)
