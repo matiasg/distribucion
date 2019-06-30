@@ -221,6 +221,9 @@ class Docente(models.Model):
     cargos = ArrayField(models.CharField(max_length=6, choices=choice_enum(CargoDedicacion)), size=2)
     history = HistoricalRecords()
 
+    class Meta:
+        ordering: ['na_apellido', 'na_nombre']
+
     def __str__(self):
         return f'{self.nombre}'
 
