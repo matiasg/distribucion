@@ -8,7 +8,7 @@ from django.utils import timezone
 from materias.models import (Cargos, Carga, Dedicaciones, CargoDedicacion, Docente,
                              Materia, Turno, TipoMateria, TipoTurno, Dias, Cuatrimestres,
                              Horario, Pabellon)
-from encuestas.models import OtrosDatos
+from encuestas.models import PreferenciasDocente, OtrosDatos
 from usuarios.models import Usuario
 from django.contrib.auth.models import Permission
 
@@ -323,6 +323,27 @@ class TestPaginas(TestCase):
         self.assertEqual(nhorario112.pabellon, '0')
 
     def test_administrar_cargas_docentes(self):
+        self.client.login(username='autorizado', password='1234')
+        n = Docente.objects.create(na_nombre='nemo', na_apellido='X',
+                                   telefono='00 0000', email='nemo@nautilus.org',
+                                   cargos=[CargoDedicacion.TitExc.name])
+        m = Docente.objects.create(na_nombre='mario', na_apellido='Y',
+                                   telefono='00 0000', email='mario@nautilus.org',
+                                   cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
+        cn = Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
+        cm = Carga.objects.create(docente=m, cargo=CargoDedicacion.TitExc.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
+        cm = Carga.objects.create(docente=m, cargo=CargoDedicacion.Ay1Smx.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
+        now = timezone.now()
+        PreferenciasDocente.objects.create(docente=n, turno=self.turno11, cargo=Cargos.Tit.name, peso=2, fecha_encuesta=now)
+        OtrosDatos.objects.create(docente=n, fecha_encuesta=now, anno=2100, cuatrimestre=Cuatrimestres.P.name, cargas=2,
+                                  comentario='_esto deberia aparecer_')
+
+        response = self.client.get(f'/materias/administrar_cargas_docentes/2100/P', follow=True)
+        self.assertContains(response, '>nemo X<')
+        self.assertContains(response, '_esto deberia aparecer_')
+        self.assertContains(response, '>mario Y<')
+
+    def test_administrar_cargas_de_un_docente(self):
         self.client.login(username='autorizado', password='1234')
 
         n = Docente.objects.create(na_nombre='nemo',
