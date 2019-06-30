@@ -72,7 +72,7 @@ class LectorDeCsv:
 
     @classmethod
     def lee_docentes(cls):
-        return {_id: {'nombre': f'{nombre} {apellido}'}
+        return {_id: {'nombre': f'{nombre}', 'apellido': f'{apellido}'}
                 for _id, apellido, nombre, legajo, notas in cls.csv_reader('docente.txt')}
 
     @classmethod
@@ -209,13 +209,14 @@ def main():
         for cargo in cargos:
             doc_id = cargo['id']
             nombre = docentes[doc_id]['nombre']
+            apellido = docentes[doc_id]['apellido']
             cargo_ded = cargo['cargo']
-            docente_actual, creado = Docente.objects.get_or_create(nombre=nombre,
+            docente_actual, creado = Docente.objects.get_or_create(na_nombre=nombre, na_apellido=apellido,
                                                                    defaults={'cargos': [cargo_ded.name]})
             docentes_nuestros[doc_id] = docente_actual
 
             if creado:
-                logger.info('creé docente %s con cargo %s', nombre, cargo_ded.name)
+                logger.info('creé docente %s %s con cargo %s', nombre, apellido, cargo_ded.name)
             for _ in range(cargo['cargas']):
                 Carga.objects.create(docente=docente_actual, cargo=cargo_ded.name,
                                      anno=anno, cuatrimestre=cuatrimestre.name)
