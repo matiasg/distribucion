@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 from .models import (Materia, Turno, Horario, Cuatrimestres, TipoMateria,
                      Docente, CargoDedicacion, Carga, Pabellon,)
-from encuestas.models import OtrosDatos
+from encuestas.models import OtrosDatos, PreferenciasDocente
 
 
 def index(request):
@@ -158,6 +158,7 @@ def administrar_docentes(request, anno, cuatrimestre):
 def administrar_cargas_docentes(request, anno, cuatrimestre):
     docentes_y_cargas_nuestras = {d: d.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre) for d in Docente.objects.all()}
     docentes_y_cargas_encuesta = {o.docente: o.cargas for o in OtrosDatos.objects.all()}
+    # calculo diferencias contra encuesta
     diferencias_encuesta = {d: (len(docentes_y_cargas_nuestras[d]),
                                 docentes_y_cargas_encuesta[d],
                                 OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=d).first())
@@ -165,9 +166,19 @@ def administrar_cargas_docentes(request, anno, cuatrimestre):
                             if len(docentes_y_cargas_nuestras[d]) != docentes_y_cargas_encuesta[d]
                             }
 
+    # calculo docentes que deberían haber completado encuesta y no completaron
+    docentes_sin_distribuir = {d: cargas.filter(turno__isnull=True)
+                               for d, cargas in docentes_y_cargas_nuestras.items()}
+    docentes_con_encuesta = {pref.docente
+                              for pref in PreferenciasDocente.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre)}
+    docentes_sin_encuesta = {d: cargas.count()
+                             for d, cargas in docentes_sin_distribuir.items()
+                             if cargas.count() > 0 and d not in docentes_con_encuesta}
+
     context = {'anno': anno,
                'cuatrimestre': cuatrimestre,
                'diferencias_encuesta': diferencias_encuesta,
+               'docentes_sin_encuesta': docentes_sin_encuesta,
                }
 
     return render(request, 'materias/administrar_cargas_docentes.html', context)
@@ -202,7 +213,12 @@ def administrar_cargas_de_un_docente(request, anno, cuatrimestre, docente_id):
         return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
 
     else:
-        cargas_pedidas = OtrosDatos.objects.get(anno=anno, cuatrimestre=cuatrimestre, docente=docente).cargas
+        try:
+            cargas_pedidas = OtrosDatos.objects.get(anno=anno, cuatrimestre=cuatrimestre, docente=docente).cargas
+            completo_la_encuesta = True
+        except OtrosDatos.DoesNotExist:
+            cargas_pedidas = 0
+            completo_la_encuesta = False
         cargas = docente.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre)
         cargas_por_tipo = {cargo: cargas.filter(cargo=cargo).count() for cargo in docente.cargos}
 
@@ -213,5 +229,6 @@ def administrar_cargas_de_un_docente(request, anno, cuatrimestre, docente_id):
             'cargas': cargas,
             'cargas_pedidas': cargas_pedidas,
             'cargas_por_tipo': cargas_por_tipo,
+            'completo_la_encuesta': completo_la_encuesta,
         }
         return render(request, 'materias/administrar_cargas_un_docente.html', context)
