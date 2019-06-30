@@ -22,7 +22,7 @@ class TestPreparar(TestCase):
         self.client.login(username='autorizado', password='1234')
 
     def _agrega_preferencias(self):
-        self.docente = Docente.objects.create(nombre='juan', email='mail@nada.org',
+        self.docente = Docente.objects.create(na_nombre='juan', email='mail@nada.org',
                                               telefono='1234',
                                               cargos=[CargoDedicacion.TitSim.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
@@ -111,9 +111,9 @@ class TestPaginaPrincipal(TestCase):
 class TestVerDistribucion(TestCase):
 
     def setUp(self):
-        self.docente1 = Docente.objects.create(nombre='juan', email='mail@nada.org',
+        self.docente1 = Docente.objects.create(na_nombre='juan', email='mail@nada.org',
                                                telefono='1234', cargos=[CargoDedicacion.TitSim.name])
-        self.docente2 = Docente.objects.create(nombre='jose', email='mail@nade.org',
+        self.docente2 = Docente.objects.create(na_nombre='jose', email='mail@nade.org',
                                                telefono='1235', cargos=[CargoDedicacion.TitSim.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
         self.turno1 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
@@ -158,7 +158,7 @@ class TestVerDistribucion(TestCase):
         response = self.client.get(reverse('dborrador:distribucion',
                                            args=(2100, Cuatrimestres.P.name, 1, 0)))
         content = response.content.decode()
-        self.assertTrue(re.search((f'Encuesta de jose:'
+        self.assertTrue(re.search((f'Encuesta de jose\s*:'
                                    f'(<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*'
                                    f'{self.materia.nombre}'),
                                   content, flags=re.DOTALL),
@@ -184,9 +184,9 @@ class TestDistribuir(TestCase):
 
     def setUp(self):
         self.ac = AnnoCuatrimestre(2100, Cuatrimestres.P.name)
-        self.docente1 = Docente.objects.create(nombre='d1', email='d1@nada.org',
+        self.docente1 = Docente.objects.create(na_nombre='d1', email='d1@nada.org',
                                                telefono='1234', cargos=[CargoDedicacion.TitSim.name])
-        self.docente2 = Docente.objects.create(nombre='d2', email='d2@nade.org',
+        self.docente2 = Docente.objects.create(na_nombre='d2', email='d2@nade.org',
                                                telefono='1235', cargos=[CargoDedicacion.TitSim.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
         self.turno1 = Turno.objects.create(materia=self.materia, anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre,
@@ -222,7 +222,7 @@ class TestDistribuir(TestCase):
 class TestModel(TestCase):
 
     def setUp(self):
-        self.docente = Docente.objects.create(nombre='d1', email='d1@nada.org',
+        self.docente = Docente.objects.create(na_nombre='d1', email='d1@nada.org',
                                               telefono='1234', cargos=[CargoDedicacion.TitSim.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
         self.turno = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
