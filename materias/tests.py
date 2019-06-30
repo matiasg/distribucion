@@ -240,6 +240,7 @@ class TestPaginas(TestCase):
         botones_urls = {
             'turnos_docentes': 'administrar_docentes',
             'turnos_alumnos': 'administrar_alumnos',
+            'cargas_docentes': 'administrar_cargas_docentes',
         }
         for boton, url in botones_urls.items():
             response = self.client.post('/materias/administrar',
