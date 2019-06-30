@@ -127,6 +127,16 @@ class TestModels(TestCase):
 
         self.assertEquals(turno.horarios_info().aula, f'5 (P.{Pabellon.Uno.value[1]}) y 6 (P.{Pabellon.Cero_infinito.value[1]})')
 
+    def test_orden_docente(self):
+        c = Docente.objects.create(na_nombre='Ca', na_apellido='C',
+                                   telefono='00 0000', email='ca@nada.org', cargos=[CargoDedicacion.TitExc.name])
+        b = Docente.objects.create(na_nombre='Ba', na_apellido='B',
+                                   telefono='00 0000', email='ba@nada.org', cargos=[CargoDedicacion.TitExc.name])
+        a = Docente.objects.create(na_nombre='Áb', na_apellido='A',
+                                   telefono='00 0000', email='ab@nada.org', cargos=[CargoDedicacion.TitExc.name])
+        docentes = Docente.objects.all()
+        self.assertEquals(list(docentes), [a, b, c])
+
 
 
 class TestPaginas(TestCase):

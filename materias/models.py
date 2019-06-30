@@ -222,7 +222,7 @@ class Docente(models.Model):
     history = HistoricalRecords()
 
     class Meta:
-        ordering: ['na_apellido', 'na_nombre']
+        ordering = ['na_apellido', 'na_nombre']
 
     def __str__(self):
         return f'{self.nombre}'
