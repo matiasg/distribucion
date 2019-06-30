@@ -50,6 +50,11 @@ class Mapeos:
         el_mapa = {Cargos.Tit.name: TipoDocentes.P,
                    Cargos.Aso.name: TipoDocentes.P,
                    Cargos.Adj.name: TipoDocentes.P,
+                   Cargos.Eme.name: TipoDocentes.P,
+                   Cargos.Hon.name: TipoDocentes.P,
+                   Cargos.Con.name: TipoDocentes.P,
+                   Cargos.Ple.name: TipoDocentes.P,
+                   Cargos.Vis.name: TipoDocentes.P,
                    Cargos.JTP.name: TipoDocentes.J,
                    Cargos.Ay1.name: TipoDocentes.A1,
                    Cargos.Ay2.name: TipoDocentes.A2
