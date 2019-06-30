@@ -8,7 +8,7 @@ from django.utils import timezone
 from materias.models import (Cargos, Carga, Dedicaciones, CargoDedicacion, Docente,
                              Materia, Turno, TipoMateria, TipoTurno, Dias, Cuatrimestres,
                              Horario, Pabellon)
-from encuestas.models import OtrosDatos
+from encuestas.models import PreferenciasDocente, OtrosDatos
 from usuarios.models import Usuario
 from django.contrib.auth.models import Permission
 
@@ -240,6 +240,7 @@ class TestPaginas(TestCase):
         botones_urls = {
             'turnos_docentes': 'administrar_docentes',
             'turnos_alumnos': 'administrar_alumnos',
+            'cargas_docentes': 'administrar_cargas_docentes',
         }
         for boton, url in botones_urls.items():
             response = self.client.post('/materias/administrar',
@@ -324,15 +325,39 @@ class TestPaginas(TestCase):
 
     def test_administrar_cargas_docentes(self):
         self.client.login(username='autorizado', password='1234')
+        n = Docente.objects.create(na_nombre='nemo', na_apellido='X',
+                                   telefono='00 0000', email='nemo@nautilus.org',
+                                   cargos=[CargoDedicacion.TitExc.name])
+        m = Docente.objects.create(na_nombre='mario', na_apellido='Y',
+                                   telefono='00 0000', email='mario@nautilus.org',
+                                   cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
+        now = timezone.now()
+        Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
+        Carga.objects.create(docente=m, cargo=CargoDedicacion.TitExc.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
+        Carga.objects.create(docente=m, cargo=CargoDedicacion.Ay1Smx.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
+        PreferenciasDocente.objects.create(docente=n, turno=self.turno11, cargo=Cargos.Tit.name, peso=2, fecha_encuesta=now)
+        OtrosDatos.objects.create(docente=n, fecha_encuesta=now, anno=2100, cuatrimestre=Cuatrimestres.P.name, cargas=2,
+                                  comentario='_esto deberia aparecer_')
+
+        response = self.client.get(f'/materias/administrar_cargas_docentes/2100/P', follow=True)
+        self.assertContains(response, '>nemo X<')
+        self.assertContains(response, '_esto deberia aparecer_')
+        self.assertContains(response, '>mario Y<')
+
+    def test_administrar_cargas_de_un_docente(self):
+        self.client.login(username='autorizado', password='1234')
 
         n = Docente.objects.create(na_nombre='nemo',
-                                   telefono='00 0000',
-                                   email='nemo@nautilus.org',
+                                   telefono='00 0000', email='nemo@nautilus.org',
+                                   cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
+        m = Docente.objects.create(na_nombre='mario',
+                                   telefono='00 0000', email='mario@nautilus.org',
                                    cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
         c1 = Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
         c2 = Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
         OtrosDatos.objects.create(docente=n, fecha_encuesta=timezone.now(), anno=2100, cuatrimestre=Cuatrimestres.P.name,
                                   cargas=2)
+        cm = Carga.objects.create(docente=m, cargo=CargoDedicacion.TitExc.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
 
         response = self.client.get(f'/materias/administrar_cargas_un_docente/2100/P/{n.id}', follow=True)
         self.assertContains(response, 'cargo_TitExc')
@@ -341,5 +366,9 @@ class TestPaginas(TestCase):
         response = self.client.post(f'/materias/administrar_cargas_un_docente/2100/P/{n.id}',
                                     {'salvar': True, 'anno': 2100, 'cuatrimestre': Cuatrimestres.P.name, 'cargo_TitExc': 1, 'cargo_Ay1Smx': 1},
                                     follow=True)
-        self.assertEquals(Carga.objects.filter(cargo='TitExc').count(), 1)
-        self.assertEquals(Carga.objects.filter(cargo='Ay1Smx').count(), 1)
+        self.assertEquals(Carga.objects.filter(docente=n, cargo='TitExc').count(), 1)
+        self.assertEquals(Carga.objects.filter(docente=n, cargo='Ay1Smx').count(), 1)
+
+        response = self.client.get(f'/materias/administrar_cargas_un_docente/2100/P/{m.id}', follow=True)
+        self.assertContains(response, 'no completó la encuesta')
+        self.assertContains(response, 'cargo_TitExc')
