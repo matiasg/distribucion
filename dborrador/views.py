@@ -262,6 +262,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     return render(request, 'dborrador/distribucion.html', context)
 
 
+# XXX: este método no se usa
 @login_required
 @permission_required('dborrador.add_asignacion')
 def empezar_a_distribuir(request):
