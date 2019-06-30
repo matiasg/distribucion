@@ -231,6 +231,10 @@ class Docente(models.Model):
     def nombre(self):
         return f'{self.na_nombre} {self.na_apellido}'
 
+    @property
+    def apellido_nombre(self):
+        return f'{self.na_apellido}, {self.na_nombre}'
+
     @classmethod
     def todos_los(cls, cargo):
         cd = CargoDedicacion.con_cargo(cargo)
