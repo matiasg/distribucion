@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 import re
 import datetime
+from locale import strxfrm
 from django.utils import timezone
 
 from materias.models import (Cargos, Carga, Dedicaciones, CargoDedicacion, Docente,
@@ -126,6 +127,19 @@ class TestModels(TestCase):
                                           aula='6', pabellon=Pabellon.Cero_infinito.value[0])
 
         self.assertEquals(turno.horarios_info().aula, f'5 (P.{Pabellon.Uno.value[1]}) y 6 (P.{Pabellon.Cero_infinito.value[1]})')
+
+    def test_orden_docente(self):
+        c = Docente.objects.create(na_nombre='Ca', na_apellido='C',
+                                   telefono='00 0000', email='ca@nada.org', cargos=[CargoDedicacion.TitExc.name])
+        b = Docente.objects.create(na_nombre='Ba', na_apellido='B',
+                                   telefono='00 0000', email='ba@nada.org', cargos=[CargoDedicacion.TitExc.name])
+        a = Docente.objects.create(na_nombre='Áb', na_apellido='A',
+                                   telefono='00 0000', email='ab@nada.org', cargos=[CargoDedicacion.TitExc.name])
+        docentes = Docente.objects.all()
+        self.assertEquals(list(docentes), [a, b, c])
+
+        docentes = sorted(Docente.objects.all(), key=lambda d: strxfrm(d.apellido_nombre))
+        self.assertEquals(list(docentes), [a, b, c])
 
 
 

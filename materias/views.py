@@ -5,6 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.contrib.auth.decorators import permission_required, login_required
 
+from locale import strxfrm
 import logging
 logger = logging.getLogger(__name__)
 
@@ -162,7 +163,8 @@ def administrar_cargas_docentes(request, anno, cuatrimestre):
     diferencias_encuesta = {d: (len(docentes_y_cargas_nuestras[d]),
                                 docentes_y_cargas_encuesta[d],
                                 OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=d).first())
-                            for d in sorted(set(docentes_y_cargas_nuestras) & set(docentes_y_cargas_encuesta), key=lambda d: d.nombre)
+                            for d in sorted(set(docentes_y_cargas_nuestras) & set(docentes_y_cargas_encuesta),
+                                            key=lambda d: strxfrm(d.apellido_nombre))
                             if len(docentes_y_cargas_nuestras[d]) != docentes_y_cargas_encuesta[d]
                             }
 
@@ -170,7 +172,7 @@ def administrar_cargas_docentes(request, anno, cuatrimestre):
     docentes_sin_distribuir = {d: cargas.filter(turno__isnull=True)
                                for d, cargas in docentes_y_cargas_nuestras.items()}
     docentes_con_encuesta = {pref.docente
-                              for pref in PreferenciasDocente.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre)}
+                             for pref in PreferenciasDocente.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre)}
     docentes_sin_encuesta = {d: cargas.count()
                              for d, cargas in docentes_sin_distribuir.items()
                              if cargas.count() > 0 and d not in docentes_con_encuesta}

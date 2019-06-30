@@ -56,13 +56,6 @@ def _anno_cuat_tipos_context():
         'tipos': [t for t in TipoDocentes]}
     return context
 
-def _anno_cuat_tipo_de_request(request):
-    anno = request.POST['anno']
-    cuatrimestre = request.POST['cuatrimestre']
-    tipo_name = request.POST['tipo']
-    tipo = TipoDocentes[tipo_name]
-    return int(anno), cuatrimestre, tipo
-
 @login_required
 @permission_required('dborrador.add_asignacion')
 def index(request):
@@ -77,14 +70,6 @@ def preparar(request, anno, cuatrimestre):
     intento = Intento.de_algoritmo(0)
     distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento.algoritmo, intento.manual))
     return HttpResponseRedirect(distribucion_url)
-
-
-def _turno_tipo_obj_a_tipo_fun_obj(d, fun=lambda x: x):
-    ret = defaultdict(set)
-    for tipo_objs in d.values():
-        for tipo, turno_objs in tipo_objs.items():
-            ret[tipo].update({fun(o) for o in turno_objs})
-    return ret
 
 
 def _todos_los_intentos(intento_algoritmo):

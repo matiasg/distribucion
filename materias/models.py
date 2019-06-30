@@ -222,7 +222,7 @@ class Docente(models.Model):
     history = HistoricalRecords()
 
     class Meta:
-        ordering: ['na_apellido', 'na_nombre']
+        ordering = ['na_apellido', 'na_nombre']
 
     def __str__(self):
         return f'{self.nombre}'
@@ -230,6 +230,10 @@ class Docente(models.Model):
     @property
     def nombre(self):
         return f'{self.na_nombre} {self.na_apellido}'
+
+    @property
+    def apellido_nombre(self):
+        return f'{self.na_apellido}, {self.na_nombre}'
 
     @classmethod
     def todos_los(cls, cargo):
