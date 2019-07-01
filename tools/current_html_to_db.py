@@ -176,12 +176,21 @@ def salva_datos(html, anno, cuatrimestre):
                     elif posibles_docentes.count() > 1:
                         logger.error('ah, no, hay más de un docente con el mismo nombre: %s', posibles_docentes)
                         raise RuntimeError('problema con docentes: más de uno con el mismo nombre: {}'.format(docente))
-                    else:
-                        # todavía podríamos encontrar alguno que se llame parecido
+                    else:   # Todavía podríamos encontrar alguno que se llame parecido. Lo buscamos con distancia de edición
+                        # Nota: el .replace() que sigue es horrible. No encontré nada mejor.
+                        # Todo el escaping es muy automático y las funciones para escapar en SQL están
+                        # medio escondidas. Lo más cercano que vi es
+                        #     from django.db import connection
+                        #     cursor = connection.cursor()
+                        #     cursor.mogrify(docente)
+                        # Pero no (me) funciona.
+                        # TODO para el que mantenga este software: encontrá algo mejor. Suerte.
+                        template = "%(function)s(%(expressions)s, '{}')".format(docente.replace("'", "''"))
                         docentes_lvns = docentes_qs.annotate(similar=Func(F('na'),
                                                                           function='levenshtein',
-                                                                          template=f"%(function)s(%(expressions)s, '{docente}')"))
+                                                                          template=template))
                         docentes_parecidos = docentes_lvns.filter(similar__lt=3)
+                        print(len(docentes_parecidos))
                         if docentes_parecidos.count() > 0:
                             doc = docentes_parecidos.order_by('similar').first()
                             logger.warning('Encontré un docente que parece ser %s. Es %s. Los considero la misma persona.',
