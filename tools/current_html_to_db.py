@@ -9,6 +9,9 @@ import urllib.request as request
 from django.utils.dateparse import parse_time
 from argparse import ArgumentParser
 
+from django.db.models import Value, Func, F
+from django.db.models.functions import Concat
+
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
 import os
@@ -161,9 +164,35 @@ def salva_datos(html, anno, cuatrimestre):
                         continue
 
                     cargo = cargos_inferidos[i].name
-                    doc, creado = Docente.objects.get_or_create(nombre=docente,
-                                                                defaults={'cargos': [cargo]})
-                    if creado:
+
+                    # intento encontrar docente
+                    docentes_qs = Docente.objects.annotate(na=Concat('na_nombre', Value(' '), 'na_apellido'))
+                    posibles_docentes = docentes_qs.filter(na=docente)
+
+                    doc = None
+                    if posibles_docentes.count() == 1:
+                        doc = posibles_docentes.first()
+                        logger.debug('docente existente: %s', doc)
+                    elif posibles_docentes.count() > 1:
+                        logger.error('ah, no, hay más de un docente con el mismo nombre: %s', posibles_docentes)
+                        raise RuntimeError('problema con docentes: más de uno con el mismo nombre: {}'.format(docente))
+                    else:
+                        # todavía podríamos encontrar alguno que se llame parecido
+                        docentes_lvns = docentes_qs.annotate(similar=Func(F('na'),
+                                                                          function='levenshtein',
+                                                                          template=f"%(function)s(%(expressions)s, '{docente}')"))
+                        docentes_parecidos = docentes_lvns.filter(similar__lt=3)
+                        if docentes_parecidos.count() > 0:
+                            doc = docentes_parecidos.order_by('similar').first()
+                            logger.warning('Encontré un docente que parece ser %s. Es %s. Los considero la misma persona.',
+                                           docente, doc)
+
+                    if doc is None:
+                        palabras_na = docente.split()
+                        palabras_nombre = 1 if len(palabras_na) < 3 else 2
+                        nombre = ' '.join(palabras_na[:palabras_nombre])
+                        apellido = ' '.join(palabras_na[palabras_nombre:])
+                        doc = Docente.objects.create(na_nombre=nombre, na_apellido=apellido, cargos=[cargo])
                         logger.info('agregue a: %s', doc)
 
                     carga, creada = Carga.objects.get_or_create(docente=doc,
