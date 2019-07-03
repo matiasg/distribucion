@@ -99,8 +99,16 @@
         </li>
 
       </ul>
-    </div>
 
+    <h3>Otras opciones</h3>
+    <form action="{% url 'materias:administrar' %}" method="post">
+        {% csrf_token %}
+        <input type="submit" name="administrar turnos" value="Administrar turnos">
+        <input type="hidden" name="anno" value="{{ anno }}">
+        <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre }}">
+    </form>
+
+    </div>
 
     {% else %}
 

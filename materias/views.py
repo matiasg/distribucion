@@ -81,20 +81,23 @@ def administrar(request):
     try:
         anno = int(request.POST['anno'])
         cuatrimestre = request.POST['cuatrimestre']
+        annos = [anno]
+        cuatrimestres = [Cuatrimestres[cuatrimestre]]
     except:
         anno_actual = timezone.now().year
-        context = {
-            'annos': [anno_actual, anno_actual + 1],
-            'cuatrimestres': [c for c in Cuatrimestres],
-        }
-        return render(request, 'materias/administrar.html', context=context)
+        annos = [anno_actual, anno_actual + 1]
+        cuatrimestres = [c for c in Cuatrimestres]
+
+    if 'turnos_alumnos' in request.POST:
+        return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
+    elif 'turnos_docentes' in request.POST:
+        return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
+    elif 'cargas_docentes' in request.POST:
+        return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
     else:
-        if 'turnos_alumnos' in request.POST:
-            return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
-        elif 'turnos_docentes' in request.POST:
-            return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
-        elif 'cargas_docentes' in request.POST:
-            return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
+        return render(request, 'materias/administrar.html', context={'annos': annos,
+                                                                     'cuatrimestres': cuatrimestres})
+
 
 
 
