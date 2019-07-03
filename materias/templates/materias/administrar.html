@@ -37,5 +37,11 @@
             <div class="subtitulo">Administrar docentes: cargas docentes</div>
             <input type="submit" name="cargas_docentes" value="cargas docentes">
         </li>
+        {% if perms.dborrador.add_asignacion %}
+        <li>
+            <div class="subtitulo">Distribuir docentes</div>
+            <input type="submit" name="dborrador" value="distribuir docentes">
+        </li>
+        {% endif %}
     </ul>
 </body>

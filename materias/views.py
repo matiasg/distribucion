@@ -94,11 +94,11 @@ def administrar(request):
         return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
     elif 'cargas_docentes' in request.POST:
         return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
+    elif 'dborrador' in request.POST:
+        return HttpResponseRedirect(reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0)))
     else:
         return render(request, 'materias/administrar.html', context={'annos': annos,
                                                                      'cuatrimestres': cuatrimestres})
-
-
 
 
 def administrar_general(request, anno, cuatrimestre, key_to_field, url):
