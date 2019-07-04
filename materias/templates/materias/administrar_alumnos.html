@@ -15,15 +15,17 @@
             {% if turnos %}
             <span class="tabla_numeros_chicos">
             <table>
-                <caption>{{ materia.nombre.upper }}</caption>
+                <caption><a href="{% url 'materias:administrar_materia' materia.id %}">{{ materia.nombre.upper }}</a></caption>
                 <tbody>
                     <tr>
+                        <th></th>
                         <th></th>
                         <th>alumnos</th>
                     </tr>
                     {% for turno in turnos %}
                     <tr>
                         <td class="fondo{{ turno.tipo }}">{{ turno.tipo }} {{ turno.numero }}</td>
+                        <td class="fondo{{ turno.tipo }}">{{ turno.horarios_info.diayhora }}</td>
                         <td><input type="number" name="alumnos_{{ turno.id }}" min=0 max=1000 value={{ turno.alumnos }}></td>
                         {% for horario in turno.horario_set.all %}
                         <td class="tabla_col_borde_izquierdo">{{ horario.dia }}: {{ horario.de_a }}</td>
