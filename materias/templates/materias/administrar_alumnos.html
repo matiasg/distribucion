@@ -15,7 +15,7 @@
             {% if turnos %}
             <span class="tabla_numeros_chicos">
             <table>
-                <caption><a href="{% url 'materias:administrar_materia' materia.id %}">{{ materia.nombre.upper }}</a></caption>
+                <caption><a href="{% url 'materias:administrar_materia' materia.id anno cuatrimestre %}">{{ materia.nombre.upper }}</a></caption>
                 <tbody>
                     <tr>
                         <th></th>
