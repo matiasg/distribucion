@@ -17,4 +17,6 @@ urlpatterns = [
     path('<str:anno_cuat>', views.por_anno_y_cuatrimestre, name='por_anno_y_cuatrimestre'),
     path('administrar_materia/<int:materia_id>/<int:anno>/<str:cuatrimestre>',
          views.administrar_materia, name='administrar_materia'),
+    path('agregar_turno/<int:materia_id>/<str:tipo>/<int:anno>/<str:cuatrimestre>',
+         views.agregar_turno, name='agregar_turno'),
 ]
