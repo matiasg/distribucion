@@ -136,9 +136,13 @@ class Turno(models.Model):
     def horarios_info(self):
 
         def join(lst):
-            if len(set(lst)) == 1:
+            distintos = len(set(lst))
+            if distintos == 0:
+                return ''
+            if distintos == 1:
                 return lst[0]
-            return ' y '.join(lst)
+            else:
+                return f'{ ", ".join(lst[:-1]) } y {lst[-1]}'
 
         tipo = f'{TipoTurno[self.tipo].value}'
         tipoynumero = f'{tipo} {self.numero}' if self.numero else tipo
