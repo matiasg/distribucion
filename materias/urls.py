@@ -15,4 +15,5 @@ urlpatterns = [
     path('administrar_cargas_un_docente/<int:anno>/<str:cuatrimestre>/<int:docente_id>',
          views.administrar_cargas_de_un_docente, name='administrar_cargas_un_docente'),
     path('<str:anno_cuat>', views.por_anno_y_cuatrimestre, name='por_anno_y_cuatrimestre'),
+    path('administrar_materia/<int:materia_id>', views.administrar_materia, name='administrar_materia'),
 ]
