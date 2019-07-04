@@ -9,7 +9,7 @@ from locale import strxfrm
 import logging
 logger = logging.getLogger(__name__)
 
-from .models import (Materia, Turno, Horario, Cuatrimestres, TipoMateria,
+from .models import (Materia, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
                      Docente, CargoDedicacion, Carga, Pabellon,)
 from encuestas.models import OtrosDatos, PreferenciasDocente
 
@@ -237,3 +237,35 @@ def administrar_cargas_de_un_docente(request, anno, cuatrimestre, docente_id):
             'completo_la_encuesta': completo_la_encuesta,
         }
         return render(request, 'materias/administrar_cargas_un_docente.html', context)
+
+
+@login_required
+@permission_required('materias.add_turno')
+def agregar_turno(request, materia_id, tipo, anno, cuatrimestre):
+    materia = Materia.objects.get(pk=materia_id)
+    turnos = Turno.objects.filter(materia=materia, anno=anno, cuatrimestre=cuatrimestre)
+    numero_nuevo_turno = max(t.numero for t in turnos.filter(tipo=tipo)) + 1
+    turno = Turno.objects.create(materia=materia, anno=anno, cuatrimestre=cuatrimestre, tipo=tipo, numero=numero_nuevo_turno,
+                                 necesidad_prof=0, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0,
+                                 )
+    # TODO: hacer una página mejor que la del admin
+    return HttpResponseRedirect(reverse('admin:materias_turno_change', args=(turno.id,)))
+
+
+@login_required
+@permission_required('materias.add_turno')
+def administrar_materia(request, materia_id, anno, cuatrimestre):
+    for tipo in TipoTurno:
+        boton = f'agregar_turno_{tipo.name}'
+        if boton in request.POST:
+            return HttpResponseRedirect(reverse('materias:agregar_turno', args=(materia_id, tipo.name, anno, cuatrimestre)))
+    else:
+        materia = Materia.objects.get(pk=materia_id)
+        context = {
+            'materia': materia,
+            'turnos': sorted(Turno.objects.filter(materia=materia, anno=anno, cuatrimestre=cuatrimestre)),
+            'anno': anno,
+            'cuatrimestre': cuatrimestre,
+            'tipoturno': {t.name: t.value for t in TipoTurno},
+        }
+        return render(request, 'materias/administrar_materia.html', context)
