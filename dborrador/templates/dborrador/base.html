@@ -43,8 +43,11 @@
     <ul class="sin_puntos">
       <form action="{% url 'dborrador:distribucion' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
         {% csrf_token %}
-        <li>Año: {{ anno }} <input type="hidden" name="anno" value="{{ anno }}"></li>
-        <li>Cuatrimestre: {{ cuatrimestre }} <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre }}"></li>
+        <li>Año: {{ anno }}, <input type="hidden" name="anno" value="{{ anno }}">
+            Cuat: {{ cuatrimestre }} <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre }}">
+        </li>
+
+
         <li>Intento:
         <br><input id="selector_intento" name="intento_algoritmo" min=0 max={{max_intento_algoritmo}}>
         <br><div id="selector_intento_manual" name="intento_manual"> {{ max_intento_manual }}</div>
@@ -98,6 +101,11 @@
             </div>
         </li>
 
+        <li>
+            <form action="{% url 'dborrador:index'  %}" method="post">
+            {% csrf_token %}
+            <button name="cambiar_annocuat" value="cmb">Cambiar año y/o cuatrimestre</button>
+        </li>
       </ul>
 
     <h3>Otras opciones</h3>
@@ -130,7 +138,7 @@
                     {% endfor %}
                 </select>
             </li>
-            <input type="submit" name="distribuir" value="Comenzar a distribuir">
+            <input type="submit" name="distribuir" value="distribuir">
         </ul>
     </form>
 
