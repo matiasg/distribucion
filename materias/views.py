@@ -269,3 +269,14 @@ def administrar_materia(request, materia_id, anno, cuatrimestre):
             'tipoturno': {t.name: t.value for t in TipoTurno},
         }
         return render(request, 'materias/administrar_materia.html', context)
+
+
+@login_required
+@permission_required('materias.add_turno')
+def borrar_turno(request, turno_id):
+    turno = Turno.objects.get(pk=turno_id)
+    materia = turno.materia
+    anno = turno.anno
+    cuatrimestre = turno.cuatrimestre
+    turno.delete()
+    return HttpResponseRedirect(reverse('materias:administrar_materia', args=(materia.id, anno, cuatrimestre)))
