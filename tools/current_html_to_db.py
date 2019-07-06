@@ -48,9 +48,9 @@ def maymin(materia):
 def convierte_a_horarios(text):
     dia = '({})'.format('|'.join(d.name for d in Dias))
     hora = r'(\d{1,2}(:\d{2})?)\b'
-    dia_y_hora = re.compile(fr'^({dia}):\s*({hora}) a ({hora})')
-    dos_dias_y_hora = re.compile(fr'^({dia}) - ({dia}):\s*({hora}) a ({hora})')
-    tres_dias_y_hora = re.compile(fr'^({dia}) - ({dia}) - ({dia}):\s*({hora}) a ({hora})')
+    dia_y_hora = re.compile(fr'^({dia}):\s*({hora}) (?:a|-) ({hora})')
+    dos_dias_y_hora = re.compile(fr'^({dia}) - ({dia}):\s*({hora}) (?:a|-) ({hora})')
+    tres_dias_y_hora = re.compile(fr'^({dia}) - ({dia}) - ({dia}):\s*({hora}) (?:a|-) ({hora})')
 
     def hm(hhmm):
         ret = parse_time(hhmm) or datetime.time(int(hhmm), 0)
