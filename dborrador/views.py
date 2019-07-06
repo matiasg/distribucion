@@ -113,7 +113,7 @@ def espiar_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_
 
 
     context = {'anno': anno,
-               'cuatrimestre': cuatrimestre,
+               'cuatrimestre': Cuatrimestres[cuatrimestre],
                'intento_algoritmo': intento.algoritmo,
                'intento_manual': intento.manual,
                'intento': intento.valor,
@@ -185,7 +185,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     logger.info('intento: %d, %d', intento_algoritmo, intento_manual)
 
     context = {'anno': anno,
-               'cuatrimestre': cuatrimestre,
+               'cuatrimestre': Cuatrimestres[cuatrimestre],
                'intento_algoritmo': intento_algoritmo,
                'intento_manual': intento_manual,
                'intento': intento.valor,
@@ -447,7 +447,7 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
                    'cargo': Mapeos.tipos_de_cargo(carga.cargo),
                    'turnos': turnos,
                    'anno': anno,
-                   'cuatrimestre': cuatrimestre,
+                   'cuatrimestre': Cuatrimestres[cuatrimestre],
                    'preferencias': preferencias,
                    'intento_algoritmo': intento_algoritmo,
                    'intento_manual': intento_manual,

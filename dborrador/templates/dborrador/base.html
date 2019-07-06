@@ -41,10 +41,10 @@
         </script>
 
     <ul class="sin_puntos">
-      <form action="{% url 'dborrador:distribucion' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
+      <form action="{% url 'dborrador:distribucion' anno cuatrimestre.name intento_algoritmo intento_manual %}" method="post">
         {% csrf_token %}
         <li>Año: {{ anno }}, <input type="hidden" name="anno" value="{{ anno }}">
-            Cuat: {{ cuatrimestre }} <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre }}">
+            Cuat: {{ cuatrimestre.value }} <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre.name }}">
         </li>
 
 
@@ -57,7 +57,7 @@
 
     <div class="base_opciones">
         <li>
-          <form action="{% url 'dborrador:preparar' anno cuatrimestre %}" method="post">
+          <form action="{% url 'dborrador:preparar' anno cuatrimestre.name %}" method="post">
             {% csrf_token %}
             <button name="paso_siguiente" value="copiar encuestas">Copiar encuestas</button>
           </form>
@@ -66,7 +66,7 @@
           <button id="distribuir">Correr el algoritmo</button>
 
           <div id="preguntas_distribucion_algoritmo" title="Correr el algoritmo">
-            <form action="{% url 'dborrador:seleccion_tipo_distribuir' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
+            <form action="{% url 'dborrador:seleccion_tipo_distribuir' anno cuatrimestre.name intento_algoritmo intento_manual %}" method="post">
               {% csrf_token %}
 
               {% if intento < max_intento %}
@@ -92,7 +92,7 @@
         <li>
             <button id="publicar">Publicar la distribución</button>
             <div id="mandar_a_publicar" title="¿Seguro?">
-                <form action="{% url 'dborrador:publicar' anno cuatrimestre intento_algoritmo intento_manual %}" method="post">
+                <form action="{% url 'dborrador:publicar' anno cuatrimestre.name intento_algoritmo intento_manual %}" method="post">
                 {% csrf_token %}
                 <p> ¿Seguro querés publicar esta distribución? </p>
                 <p> Mirá que no tiene vuelta atrás. </p>
@@ -105,6 +105,7 @@
             <form action="{% url 'dborrador:index'  %}" method="post">
             {% csrf_token %}
             <button name="cambiar_annocuat" value="cmb">Cambiar año y/o cuatrimestre</button>
+            </form>
         </li>
       </ul>
 
@@ -113,7 +114,7 @@
         {% csrf_token %}
         <input type="submit" name="administrar turnos" value="Administrar turnos">
         <input type="hidden" name="anno" value="{{ anno }}">
-        <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre }}">
+        <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre.name }}">
     </form>
 
     </div>
