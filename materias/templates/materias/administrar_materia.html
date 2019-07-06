@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
+<script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
+<script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
+<script src="{% static 'materias/scripts.js' %}"></script>
+
+<div class="subtitulo">{{ materia }}</div>
+
+<table id="administrar_materia">
+    <thead>
+        <th>tipo</th>
+        <th>horario</th>
+        <th>borrar</th>
+    </thead>
+    {% regroup turnos|dictsort:"tipo" by tipo as tipos %}
+    {% for tipo, turnos in tipos %}
+        {% for turno in turnos %}
+        {% with turno.horarios_info as info %}
+        <tr>
+            <td>{{ info.tipoynumero }} {{ tipo.subnumero }}</td>
+            <td>{{ info.diayhora }}</td>
+            <td><button id="borrar_turno" data-turno="{{ turno.id }}">Borrar turno</button>
+            </td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+    {% endfor %}
+</table>
+<div class="borrar_turno_dialogo" url="{% url 'materias:borrar_turno' 31415926535 %}">
+    ¿Confirmás que querés borrar este turno?
+</div>
+
+<form action="{% url 'materias:administrar_materia' materia.id anno cuatrimestre %}" method="post">
+{% csrf_token %}
+
+{% for nombre, valor in tipoturno.items %}
+<input type="submit" name="agregar_turno_{{ nombre }}" value="Agregar un turno de {{ valor }}">
+{% endfor %}
+</form>
