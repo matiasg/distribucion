@@ -213,8 +213,11 @@ class Horario(models.Model):
         return f'{time_str(self.comienzo)} a {time_str(self.final)}'
 
     def aula_y_pabellon(self):
-        pab = [p for p in Pabellon if p.value[0] == self.pabellon][0]
-        return f'{self.aula} (P.{pab.value[1]})'
+        if self.pabellon:
+            pab = [p for p in Pabellon if p.value[0] == self.pabellon][0]
+            return f'{self.aula} (P.{pab.value[1]})'
+        else:
+            return ''
 
 
 class Docente(models.Model):
