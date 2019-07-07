@@ -20,3 +20,11 @@ $(document).ready(function(){
         })
     });
 });
+$(document).ready(function(){
+    $( "#agregar_horario_dialog" ).toggle({ autoOpen: false });
+});
+$(document).ready(function(){
+    $( "#agregar_horario" ).click(function() {
+        $( "#agregar_horario_dialog" ).toggle('blind', {percent: 90}, 200);
+    });
+});
