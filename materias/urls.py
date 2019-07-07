@@ -20,4 +20,6 @@ urlpatterns = [
     path('agregar_turno/<int:materia_id>/<str:tipo>/<int:anno>/<str:cuatrimestre>',
          views.agregar_turno, name='agregar_turno'),
     path('borrar_turno/<int:turno_id>', views.borrar_turno, name='borrar_turno'),
+    path('cambiar_turno/<int:turno_id>', views.cambiar_turno, name='cambiar_turno'),
+    path('borrar_horario/<int:horario_id>', views.borrar_horario, name='borrar_horario'),
 ]

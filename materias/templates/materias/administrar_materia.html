@@ -8,20 +8,30 @@
 <script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
 <script src="{% static 'materias/scripts.js' %}"></script>
 
-<div class="subtitulo">{{ materia }}</div>
+<h1>
+    Administrar materias de: <a href="{% url 'materias:administrar_alumnos' anno cuatrimestre %}">
+        {{ anno }}, cuatrimestre {{ cuatrimestre }}
+    </a>
+</h1>
+<h2>
+    {{ materia }}
+</h2>
 
 <table id="administrar_materia">
     <thead>
-        <th>tipo</th>
-        <th>horario</th>
-        <th>borrar</th>
+        <tr> <th>tipo</th> <th>horario</th> <th>borrar</th> </tr>
     </thead>
+    <tbody>
     {% regroup turnos|dictsort:"tipo" by tipo as tipos %}
     {% for tipo, turnos in tipos %}
         {% for turno in turnos %}
         {% with turno.horarios_info as info %}
         <tr>
-            <td>{{ info.tipoynumero }} {{ tipo.subnumero }}</td>
+            <td>
+                <a href="{% url 'materias:cambiar_turno' turno.id %}">
+                    {{ info.tipoynumero }} {{ tipo.subnumero }}
+                </a>
+            </td>
             <td>{{ info.diayhora }}</td>
             <td><button id="borrar_turno" data-turno="{{ turno.id }}">Borrar turno</button>
             </td>
@@ -29,6 +39,7 @@
         {% endwith %}
         {% endfor %}
     {% endfor %}
+    </tbody>
 </table>
 <div class="borrar_turno_dialogo" url="{% url 'materias:borrar_turno' 31415926535 %}">
     ¿Confirmás que querés borrar este turno?

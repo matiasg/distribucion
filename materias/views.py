@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.shortcuts import render
 from django.db import transaction
 from django.utils import timezone
+from django.utils.dateparse import parse_time
 from django.contrib.auth.decorators import permission_required, login_required
 
 from locale import strxfrm
@@ -10,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from .models import (Materia, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
-                     Docente, CargoDedicacion, Carga, Pabellon,)
+                     Docente, CargoDedicacion, Carga, Pabellon, Dias)
 from encuestas.models import OtrosDatos, PreferenciasDocente
 
 
@@ -246,10 +247,8 @@ def agregar_turno(request, materia_id, tipo, anno, cuatrimestre):
     turnos = Turno.objects.filter(materia=materia, anno=anno, cuatrimestre=cuatrimestre)
     numero_nuevo_turno = max(t.numero for t in turnos.filter(tipo=tipo)) + 1
     turno = Turno.objects.create(materia=materia, anno=anno, cuatrimestre=cuatrimestre, tipo=tipo, numero=numero_nuevo_turno,
-                                 necesidad_prof=0, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0,
-                                 )
-    # TODO: hacer una página mejor que la del admin
-    return HttpResponseRedirect(reverse('admin:materias_turno_change', args=(turno.id,)))
+                                 necesidad_prof=0, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+    return HttpResponseRedirect(reverse('materias:cambiar_turno', args=(turno.id,)))
 
 
 @login_required
@@ -270,13 +269,55 @@ def administrar_materia(request, materia_id, anno, cuatrimestre):
         }
         return render(request, 'materias/administrar_materia.html', context)
 
+def _turno_a_materia_args(turno):
+    return (turno.materia.id, turno.anno, turno.cuatrimestre)
 
 @login_required
 @permission_required('materias.add_turno')
 def borrar_turno(request, turno_id):
     turno = Turno.objects.get(pk=turno_id)
-    materia = turno.materia
-    anno = turno.anno
-    cuatrimestre = turno.cuatrimestre
+    args = _turno_a_materia_args(turno)
     turno.delete()
-    return HttpResponseRedirect(reverse('materias:administrar_materia', args=(materia.id, anno, cuatrimestre)))
+    return HttpResponseRedirect(reverse('materias:administrar_materia', args=args))
+
+
+@login_required
+@permission_required('materias.add_turno')
+def cambiar_turno(request, turno_id):
+    turno = Turno.objects.get(pk=turno_id)
+
+    if 'salvar' in request.POST:
+        return HttpResponseRedirect(reverse('materias:administrar_materia', args=_turno_a_materia_args(turno)))
+
+    for horario_agregado in range(3):
+        try:
+            dia = request.POST[f'dia{horario_agregado}']
+            comienzo = parse_time(request.POST[f'comienzo{horario_agregado}'])
+            final = parse_time(request.POST[f'final{horario_agregado}'])
+            horario = Horario.objects.create(dia=dia, comienzo=comienzo, final=final, turno=turno)
+            break
+        except:
+            pass
+
+    else:
+        context = {
+            'turno': turno,
+            'materia': turno.materia,
+            'tipoturno': TipoTurno[turno.tipo],
+            'dias': [d for d in Dias],
+            'horas': [('', ''),
+                      *((f'{hora:02d}:{minutos:02d}:00', f'{hora:02d}:{minutos:02d}')
+                        for hora in range(6, 24) for minutos in (0, 30) ) ]
+        }
+        return render(request, 'materias/cambiar_turno.html', context)
+
+    return HttpResponseRedirect(reverse('materias:cambiar_turno', args=(turno_id,)))
+
+
+@login_required
+@permission_required('materias.add_turno')
+def borrar_horario(request, horario_id):
+    horario = Horario.objects.get(pk=horario_id)
+    turno = horario.turno
+    horario.delete()
+    return HttpResponseRedirect(reverse('materias:cambiar_turno', args=(turno.id,)))
