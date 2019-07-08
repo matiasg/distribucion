@@ -131,7 +131,11 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url):
 
     else:
         materias = filtra_materias(anno=anno, cuatrimestre=cuatrimestre)
-        context = {'anno': anno, 'cuatrimestre': cuatrimestre, 'materias': materias, 'pabellones': list(Pabellon)}
+
+        context = {'anno': anno,
+                   'cuatrimestre': Cuatrimestres[cuatrimestre],
+                   'materias': materias,
+                   'pabellones': list(Pabellon)}
         return render(request, url, context)
 
 
