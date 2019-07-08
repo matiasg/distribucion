@@ -298,7 +298,8 @@ def cambiar_turno(request, turno_id):
             dia = request.POST[f'dia{horario_agregado}']
             comienzo = parse_time(request.POST[f'comienzo{horario_agregado}'])
             final = parse_time(request.POST[f'final{horario_agregado}'])
-            horario = Horario.objects.create(dia=dia, comienzo=comienzo, final=final, turno=turno)
+            horario = Horario.objects.create(dia=dia, comienzo=comienzo, final=final, turno=turno,
+                                             aula='', pabellon='')
             break
         except:
             pass
