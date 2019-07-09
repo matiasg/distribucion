@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+{% load static %}
+{% load materias_tags %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<h1>Cambiar la carga docente de {{ carga.docente }} a {{ carga.turno }}</h1>
+<form action="{% url 'materias:cambiar_una_carga_publicada' carga.id %}" method="post">
+    {% csrf_token %}
+
+    <h2>Turno</h2>
+    <ul>
+        <li>
+            Actual: {{ carga.turno }}
+        </li>
+        <li>
+            Moverlo a:
+            <select name="turno">
+                {% for t in turnos %}
+                <option value="{{ t.id }}" {% if t == carga.turno %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+        </li>
+    </ul>
+
+<input type="submit" name="salvar" value="Salvar">
+
+</form>
