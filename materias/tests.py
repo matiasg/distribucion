@@ -12,6 +12,7 @@ from materias.models import (Cargos, Carga, Dedicaciones, CargoDedicacion, Docen
 from encuestas.models import PreferenciasDocente, OtrosDatos
 from usuarios.models import Usuario
 from django.contrib.auth.models import Permission
+from django.urls import reverse
 
 class TestModels(TestCase):
 
@@ -401,5 +402,28 @@ class TestPaginas(TestCase):
         self.assertContains(response, 'no completó la encuesta')
         self.assertContains(response, 'cargo_TitExc')
 
-    def test_agregar_turno(self):
-        pass
+    def test_adminitrar_materia_requiere_login(self):
+        url = reverse('materias:administrar_materia', args=(self.materia1.id, self.anno, self.cuatrimestre.name))
+
+        response = self.client.get(url, follow=True)
+        self.assertEqual(response.redirect_chain[0][1], 302)
+        self.assertEqual(response.redirect_chain[-1][1], 301)
+        self.assertTrue(response.redirect_chain[-1][0].startswith('/admin/login'))
+
+        self.client.login(username='autorizado', password='1234')
+        response = self.client.get(url, follow=True)
+        self.assertEqual(response.redirect_chain, [])
+        self.assertEqual(response.status_code, 200)
+
+    def test_administrar_materia(self):
+        self.client.login(username='autorizado', password='1234')
+        url = reverse('materias:administrar_materia', args=(self.materia1.id, self.anno, self.cuatrimestre.name))
+        response = self.client.get(url, follow=True)
+
+        for turno in (self.turno11, self.turno12, self.turno13, self.turno14):
+            self.assertContains(response, f'{TipoTurno[turno.tipo].value} {turno.numero}')
+            href_url = reverse('materias:cambiar_turno', args=(turno.id,))
+            self.assertContains(response, href_url)
+
+        for tipo in TipoTurno:
+            self.assertContains(response, f'name="agregar_turno_{tipo.name}"')
