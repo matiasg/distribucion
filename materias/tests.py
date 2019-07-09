@@ -146,22 +146,24 @@ class TestModels(TestCase):
 class TestPaginas(TestCase):
 
     def setUp(self):
+        self.anno = 2100
+        self.cuatrimestre = Cuatrimestres.P
         self.materia1 = Materia.objects.create(nombre='lacan 1', obligatoriedad=TipoMateria.B.name)
         self.materia2 = Materia.objects.create(nombre='lacan 2', obligatoriedad=TipoMateria.B.name)
         self.materia3 = Materia.objects.create(nombre='lacan 3', obligatoriedad=TipoMateria.B.name)
 
         dict_nec = {'necesidad_prof': 0, 'necesidad_jtp': 0, 'necesidad_ay1': 0, 'necesidad_ay2': 0}
-        self.turno11 = Turno.objects.create(materia=self.materia1, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+        self.turno11 = Turno.objects.create(materia=self.materia1, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                             numero=1, tipo=TipoTurno.T.name, **dict_nec)
-        self.turno12 = Turno.objects.create(materia=self.materia1, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+        self.turno12 = Turno.objects.create(materia=self.materia1, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                             numero=2, tipo=TipoTurno.T.name, **dict_nec)
-        self.turno13 = Turno.objects.create(materia=self.materia1, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+        self.turno13 = Turno.objects.create(materia=self.materia1, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                             numero=3, tipo=TipoTurno.T.name, **dict_nec)
-        self.turno14 = Turno.objects.create(materia=self.materia1, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+        self.turno14 = Turno.objects.create(materia=self.materia1, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                             numero=4, tipo=TipoTurno.T.name, **dict_nec)
-        self.turno21 = Turno.objects.create(materia=self.materia2, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+        self.turno21 = Turno.objects.create(materia=self.materia2, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                             numero=1, tipo=TipoTurno.T.name, **dict_nec)
-        self.turno22 = Turno.objects.create(materia=self.materia2, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+        self.turno22 = Turno.objects.create(materia=self.materia2, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                             numero=2, tipo=TipoTurno.T.name, **dict_nec)
 
         siete, ocho, nueve, diez = datetime.time(7), datetime.time(8), datetime.time(9), datetime.time(10)
@@ -183,21 +185,21 @@ class TestPaginas(TestCase):
         autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='materias', codename='view_docente'))
 
     def test_pagina_principal_con_y_sin_turnos(self):
-        response = self.client.get('/materias/21001')
+        response = self.client.get(f'/materias/{self.anno}{self.cuatrimestre.value}')
         self.assertContains(response, '<div class="seccion">Obligatorias</div>' )
         self.assertContains(response, '<table' )
         self.assertContains(response, self.materia1.nombre.upper())
         self.assertContains(response, self.materia2.nombre.upper())
         self.assertNotContains(response, self.materia3.nombre.upper())
 
-        response = self.client.get('/materias/21002')
+        response = self.client.get(f'/materias/{self.anno}{Cuatrimestres.S.value}')
         self.assertNotContains(response, '<table' )
 
         response = self.client.get('/materias/21011')
         self.assertNotContains(response, '<table' )
 
     def test_turnos_en_orden(self):
-        response = self.client.get('/materias/21001')
+        response = self.client.get(f'/materias/{self.anno}{self.cuatrimestre.value}')
         ubicacion_t11 = response.content.decode().index('Lu y Ju: 8 a 9 y 7 a 8')
         ubicacion_t12 = response.content.decode().index('Lu y Ju: 7 a 9 y 8 a 8')
         ubicacion_t13 = response.content.decode().index('Ju: 8 a 8')
@@ -207,14 +209,14 @@ class TestPaginas(TestCase):
         self.assertLess(ubicacion_t14, ubicacion_t13)
 
     def test_tabla_dice_aula(self):
-        response = self.client.get('/materias/21001')
+        response = self.client.get(f'/materias/{self.anno}{self.cuatrimestre.value}')
         self.assertContains(response, '<td class="aula">Aula: 3 (P.1)</td>')
 
     def test_turno_no_tiene_0(self):
-        turno0 = Turno.objects.create(materia=self.materia1, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+        turno0 = Turno.objects.create(materia=self.materia1, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                       numero=0, tipo=TipoTurno.T.name,
                                       necesidad_prof=0, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        response = self.client.get('/materias/21001')
+        response = self.client.get(f'/materias/{self.anno}{self.cuatrimestre.value}')
         self.assertNotContains(response, 'Teórica 0')
         self.assertContains(response, 'Teórica 1')
 
@@ -226,13 +228,13 @@ class TestPaginas(TestCase):
     def test_pagina_principal_sin_ac(self):
         response = self.client.get('/materias/')
         self.assertNotContains(response, 'Teórica')
-        with patch.object(timezone, 'now', return_value=datetime.datetime(2100, 1, 1)):
+        with patch.object(timezone, 'now', return_value=datetime.datetime(self.anno, 1, 1)):
             response = self.client.get('/materias/')
             self.assertNotContains(response, 'Teórica')
-        with patch.object(timezone, 'now', return_value=datetime.datetime(2100, 5, 1)):
+        with patch.object(timezone, 'now', return_value=datetime.datetime(self.anno, 5, 1)):
             response = self.client.get('/materias/')
             self.assertContains(response, 'Teórica')
-        with patch.object(timezone, 'now', return_value=datetime.datetime(2100, 10, 1)):
+        with patch.object(timezone, 'now', return_value=datetime.datetime(self.anno, 10, 1)):
             response = self.client.get('/materias/')
             self.assertNotContains(response, 'Teórica')
 
@@ -258,10 +260,10 @@ class TestPaginas(TestCase):
         }
         for boton, url in botones_urls.items():
             response = self.client.post('/materias/administrar',
-                                        {boton: True, 'anno': 2100, 'cuatrimestre': Cuatrimestres.P.name},
+                                        {boton: True, 'anno': self.anno, 'cuatrimestre': self.cuatrimestre.name},
                                         follow=True)
             self.assertEqual(response.redirect_chain[-1],
-                             (f'/materias/{url}/2100/{Cuatrimestres.P.name}', 302),
+                             (f'/materias/{url}/{self.anno}/{self.cuatrimestre.name}', 302),
                              f'No está redirigiendo bien a {url}')
 
     def test_administrar_docentes(self):
@@ -270,7 +272,7 @@ class TestPaginas(TestCase):
         self.turno11.dificil_de_cubrir = True
         self.turno11.save()
 
-        url = '/materias/administrar_docentes/2100/P'
+        url = f'/materias/administrar_docentes/{self.anno}/{self.cuatrimestre.name}'
         response = self.client.get(url, follow=True)
         self.assertContains(response, f'name="dificil_{self.turno11.id}" checked')
 
@@ -304,7 +306,7 @@ class TestPaginas(TestCase):
         self.horario111.pabellon = '2'
         self.horario111.save()
 
-        url = '/materias/administrar_alumnos/2100/P'
+        url = f'/materias/administrar_alumnos/{self.anno}/{self.cuatrimestre.name}'
         response = self.client.get(url, follow=True)
         self.assertTrue(re.search(f'name="alumnos_{self.turno11.id}".*value=7',
                                   response.content.decode()))
@@ -346,14 +348,19 @@ class TestPaginas(TestCase):
                                    telefono='00 0000', email='mario@nautilus.org',
                                    cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
         now = timezone.now()
-        Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
-        Carga.objects.create(docente=m, cargo=CargoDedicacion.TitExc.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
-        Carga.objects.create(docente=m, cargo=CargoDedicacion.Ay1Smx.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
-        PreferenciasDocente.objects.create(docente=n, turno=self.turno11, cargo=Cargos.Tit.name, peso=2, fecha_encuesta=now)
-        OtrosDatos.objects.create(docente=n, fecha_encuesta=now, anno=2100, cuatrimestre=Cuatrimestres.P.name, cargas=2,
+        Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name,
+                             anno=self.anno, cuatrimestre=self.cuatrimestre.name)
+        Carga.objects.create(docente=m, cargo=CargoDedicacion.TitExc.name,
+                             anno=self.anno, cuatrimestre=self.cuatrimestre.name)
+        Carga.objects.create(docente=m, cargo=CargoDedicacion.Ay1Smx.name,
+                             anno=self.anno, cuatrimestre=self.cuatrimestre.name)
+        PreferenciasDocente.objects.create(docente=n, turno=self.turno11,
+                                           cargo=Cargos.Tit.name, peso=2, fecha_encuesta=now)
+        OtrosDatos.objects.create(docente=n, fecha_encuesta=now,
+                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name, cargas=2,
                                   comentario='_esto deberia aparecer_')
 
-        response = self.client.get(f'/materias/administrar_cargas_docentes/2100/P', follow=True)
+        response = self.client.get(f'/materias/administrar_cargas_docentes/{self.anno}/{self.cuatrimestre.name}', follow=True)
         self.assertContains(response, '>nemo X<')
         self.assertContains(response, '_esto deberia aparecer_')
         self.assertContains(response, '>mario Y<')
@@ -367,22 +374,32 @@ class TestPaginas(TestCase):
         m = Docente.objects.create(na_nombre='mario',
                                    telefono='00 0000', email='mario@nautilus.org',
                                    cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
-        c1 = Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
-        c2 = Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
-        OtrosDatos.objects.create(docente=n, fecha_encuesta=timezone.now(), anno=2100, cuatrimestre=Cuatrimestres.P.name,
+        c1 = Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name,
+                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name)
+        c2 = Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name,
+                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name)
+        OtrosDatos.objects.create(docente=n, fecha_encuesta=timezone.now(),
+                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                   cargas=2)
-        cm = Carga.objects.create(docente=m, cargo=CargoDedicacion.TitExc.name, anno=2100, cuatrimestre=Cuatrimestres.P.name)
+        cm = Carga.objects.create(docente=m, cargo=CargoDedicacion.TitExc.name,
+                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name)
 
-        response = self.client.get(f'/materias/administrar_cargas_un_docente/2100/P/{n.id}', follow=True)
+        url = f'/materias/administrar_cargas_un_docente/{self.anno}/{self.cuatrimestre.name}/{n.id}'
+        response = self.client.get(url, follow=True)
         self.assertContains(response, 'cargo_TitExc')
         self.assertContains(response, 'cargo_Ay1Smx')
 
-        response = self.client.post(f'/materias/administrar_cargas_un_docente/2100/P/{n.id}',
-                                    {'salvar': True, 'anno': 2100, 'cuatrimestre': Cuatrimestres.P.name, 'cargo_TitExc': 1, 'cargo_Ay1Smx': 1},
+        response = self.client.post(f'/materias/administrar_cargas_un_docente/{self.anno}/{self.cuatrimestre.name}/{n.id}',
+                                    {'salvar': True, 'anno': self.anno, 'cuatrimestre': self.cuatrimestre.name,
+                                     'cargo_TitExc': 1, 'cargo_Ay1Smx': 1},
                                     follow=True)
         self.assertEquals(Carga.objects.filter(docente=n, cargo='TitExc').count(), 1)
         self.assertEquals(Carga.objects.filter(docente=n, cargo='Ay1Smx').count(), 1)
 
-        response = self.client.get(f'/materias/administrar_cargas_un_docente/2100/P/{m.id}', follow=True)
+        url = f'/materias/administrar_cargas_un_docente/{self.anno}/{self.cuatrimestre.name}/{m.id}'
+        response = self.client.get(url, follow=True)
         self.assertContains(response, 'no completó la encuesta')
         self.assertContains(response, 'cargo_TitExc')
+
+    def test_agregar_turno(self):
+        pass
