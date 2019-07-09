@@ -15,7 +15,9 @@ class Distribucion:
         '''AnnoCuatrimestre -> Intento -> {Turno -> TipoDocentes -> [Asignacion]}'''
         turnos = Turno.objects.filter(anno=ac.anno, cuatrimestre=ac.cuatrimestre)
         ret = {t: defaultdict(list) for t in turnos}
-        for asignacion in Asignacion.validas_en(intento):
+
+        asignaciones = Asignacion.validas_en(intento).filter(turno__anno=ac.anno, turno__cuatrimestre=ac.cuatrimestre)
+        for asignacion in asignaciones:
             tipo = TipoDocentes[asignacion.cargo_que_ocupa]
             ret[asignacion.turno][tipo].append(asignacion)
         return ret

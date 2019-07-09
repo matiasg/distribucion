@@ -3,7 +3,9 @@
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
 
-<form action="{% url 'materias:administrar_docentes' anno cuatrimestre %}" method="post">
+<h1>Administrar necesidades docentes de {{ anno }}, cuatrimestre {{ cuatrimestre.value }}</h1>
+
+<form action="{% url 'materias:administrar_docentes' anno cuatrimestre.name %}" method="post">
 {% csrf_token %}
 
     <input type="submit" name="cambiar" value="salvar">
@@ -19,6 +21,7 @@
                 <tbody>
                     <tr>
                         <th></th>
+                        <th></th>
                         <th>Prof</th>
                         <th>JTP</th>
                         <th>Ay1</th>
@@ -28,6 +31,7 @@
                     {% for turno in turnos %}
                     <tr>
                         <td class="fondo{{ turno.tipo }}">{{ turno.tipo }} {{ turno.numero }}</td>
+                        <td class="diayhora">{{ turno.horarios_info.diayhora }}</td>
                         <td><input type="number" name="necesidadprof_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_prof }}></td>
                         <td><input type="number" name="necesidadjtp_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_jtp }}></td>
                         <td><input type="number" name="necesidaday1_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_ay1 }}></td>

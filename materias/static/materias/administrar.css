@@ -36,3 +36,13 @@ ul#administrar_listado li
 {
   padding-top: 1em;
 }
+
+table#administrar_materia
+{
+  margin: 20px;
+}
+table#administrar_materia td
+{
+  border: 1px solid black;
+  padding: 5px;
+}

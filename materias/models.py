@@ -136,9 +136,13 @@ class Turno(models.Model):
     def horarios_info(self):
 
         def join(lst):
-            if len(set(lst)) == 1:
+            distintos = len(set(lst))
+            if distintos == 0:
+                return ''
+            if distintos == 1:
                 return lst[0]
-            return ' y '.join(lst)
+            else:
+                return f'{ ", ".join(lst[:-1]) } y {lst[-1]}'
 
         tipo = f'{TipoTurno[self.tipo].value}'
         tipoynumero = f'{tipo} {self.numero}' if self.numero else tipo
@@ -209,8 +213,11 @@ class Horario(models.Model):
         return f'{time_str(self.comienzo)} a {time_str(self.final)}'
 
     def aula_y_pabellon(self):
-        pab = [p for p in Pabellon if p.value[0] == self.pabellon][0]
-        return f'{self.aula} (P.{pab.value[1]})'
+        if self.pabellon:
+            pab = [p for p in Pabellon if p.value[0] == self.pabellon][0]
+            return f'{self.aula} (P.{pab.value[1]})'
+        else:
+            return ''
 
 
 class Docente(models.Model):

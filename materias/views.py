@@ -3,14 +3,15 @@ from django.urls import reverse
 from django.shortcuts import render
 from django.db import transaction
 from django.utils import timezone
+from django.utils.dateparse import parse_time
 from django.contrib.auth.decorators import permission_required, login_required
 
 from locale import strxfrm
 import logging
 logger = logging.getLogger(__name__)
 
-from .models import (Materia, Turno, Horario, Cuatrimestres, TipoMateria,
-                     Docente, CargoDedicacion, Carga, Pabellon,)
+from .models import (Materia, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
+                     Docente, CargoDedicacion, Carga, Pabellon, Dias)
 from encuestas.models import OtrosDatos, PreferenciasDocente
 
 
@@ -81,21 +82,24 @@ def administrar(request):
     try:
         anno = int(request.POST['anno'])
         cuatrimestre = request.POST['cuatrimestre']
+        annos = [anno]
+        cuatrimestres = [Cuatrimestres[cuatrimestre]]
     except:
         anno_actual = timezone.now().year
-        context = {
-            'annos': [anno_actual, anno_actual + 1],
-            'cuatrimestres': [c for c in Cuatrimestres],
-        }
-        return render(request, 'materias/administrar.html', context=context)
-    else:
-        if 'turnos_alumnos' in request.POST:
-            return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
-        elif 'turnos_docentes' in request.POST:
-            return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
-        elif 'cargas_docentes' in request.POST:
-            return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
+        annos = [anno_actual, anno_actual + 1]
+        cuatrimestres = [c for c in Cuatrimestres]
 
+    if 'turnos_alumnos' in request.POST:
+        return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
+    elif 'turnos_docentes' in request.POST:
+        return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
+    elif 'cargas_docentes' in request.POST:
+        return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
+    elif 'dborrador' in request.POST:
+        return HttpResponseRedirect(reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0)))
+    else:
+        return render(request, 'materias/administrar.html', context={'annos': annos,
+                                                                     'cuatrimestres': cuatrimestres})
 
 
 def administrar_general(request, anno, cuatrimestre, key_to_field, url):
@@ -127,7 +131,11 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url):
 
     else:
         materias = filtra_materias(anno=anno, cuatrimestre=cuatrimestre)
-        context = {'anno': anno, 'cuatrimestre': cuatrimestre, 'materias': materias, 'pabellones': list(Pabellon)}
+
+        context = {'anno': anno,
+                   'cuatrimestre': Cuatrimestres[cuatrimestre],
+                   'materias': materias,
+                   'pabellones': list(Pabellon)}
         return render(request, url, context)
 
 
@@ -234,3 +242,90 @@ def administrar_cargas_de_un_docente(request, anno, cuatrimestre, docente_id):
             'completo_la_encuesta': completo_la_encuesta,
         }
         return render(request, 'materias/administrar_cargas_un_docente.html', context)
+
+
+@login_required
+@permission_required('materias.add_turno')
+def agregar_turno(request, materia_id, tipo, anno, cuatrimestre):
+    materia = Materia.objects.get(pk=materia_id)
+    turnos = Turno.objects.filter(materia=materia, anno=anno, cuatrimestre=cuatrimestre)
+    numero_nuevo_turno = max(t.numero for t in turnos.filter(tipo=tipo)) + 1
+    turno = Turno.objects.create(materia=materia, anno=anno, cuatrimestre=cuatrimestre, tipo=tipo, numero=numero_nuevo_turno,
+                                 necesidad_prof=0, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+    return HttpResponseRedirect(reverse('materias:cambiar_turno', args=(turno.id,)))
+
+
+@login_required
+@permission_required('materias.add_turno')
+def administrar_materia(request, materia_id, anno, cuatrimestre):
+    for tipo in TipoTurno:
+        boton = f'agregar_turno_{tipo.name}'
+        if boton in request.POST:
+            return agregar_turno(request, materia_id, tipo.name, anno, cuatrimestre)
+    else:
+        materia = Materia.objects.get(pk=materia_id)
+        context = {
+            'materia': materia,
+            'turnos': sorted(Turno.objects.filter(materia=materia, anno=anno, cuatrimestre=cuatrimestre)),
+            'anno': anno,
+            'cuatrimestre': cuatrimestre,
+            'tipoturno': {t.name: t.value for t in TipoTurno},
+        }
+        return render(request, 'materias/administrar_materia.html', context)
+
+def _turno_a_materia_args(turno):
+    return (turno.materia.id, turno.anno, turno.cuatrimestre)
+
+@login_required
+@permission_required('materias.add_turno')
+def borrar_turno(request, turno_id):
+    turno = Turno.objects.get(pk=turno_id)
+    args = _turno_a_materia_args(turno)
+    turno.delete()
+    return HttpResponseRedirect(reverse('materias:administrar_materia', args=args))
+
+
+@login_required
+@permission_required('materias.add_turno')
+def cambiar_turno(request, turno_id):
+    turno = Turno.objects.get(pk=turno_id)
+
+    if 'volver' in request.POST:
+        return HttpResponseRedirect(reverse('materias:administrar_materia', args=_turno_a_materia_args(turno)))
+
+    # TODO: en este momento, cualquier botón de "agregar horario" da lo mismo. Todos agregan el primer horario
+    # que tenga dia, comienzo y final completado. Si hay más de uno, agregan solo el primero.
+    # Habría que permitir un botón general de "agregar horarios"
+    for horario_agregado in range(3):
+        try:
+            dia = request.POST[f'dia{horario_agregado}']
+            comienzo = parse_time(request.POST[f'comienzo{horario_agregado}'])
+            final = parse_time(request.POST[f'final{horario_agregado}'])
+            horario = Horario.objects.create(dia=dia, comienzo=comienzo, final=final, turno=turno,
+                                             aula='', pabellon='')
+            break
+        except:
+            pass
+
+    else:
+        context = {
+            'turno': turno,
+            'materia': turno.materia,
+            'tipoturno': TipoTurno[turno.tipo],
+            'dias': [d for d in Dias],
+            'horas': [('', ''),
+                      *((f'{hora:02d}:{minutos:02d}:00', f'{hora:02d}:{minutos:02d}')
+                        for hora in range(6, 24) for minutos in (0, 30) ) ]
+        }
+        return render(request, 'materias/cambiar_turno.html', context)
+
+    return HttpResponseRedirect(reverse('materias:cambiar_turno', args=(turno_id,)))
+
+
+@login_required
+@permission_required('materias.add_turno')
+def borrar_horario(request, horario_id):
+    horario = Horario.objects.get(pk=horario_id)
+    turno = horario.turno
+    horario.delete()
+    return HttpResponseRedirect(reverse('materias:cambiar_turno', args=(turno.id,)))
