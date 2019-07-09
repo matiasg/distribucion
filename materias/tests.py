@@ -455,3 +455,26 @@ class TestPaginas(TestCase):
         nuevo_horario = Horario.objects.get(turno=self.turno11, comienzo=datetime.time(1, 23, 45))
         self.assertEqual(nuevo_horario.dia, Dias.Vi.name)
         self.assertEqual(nuevo_horario.final, datetime.time(12, 34, 56))
+
+    def test_borrar_horario(self):
+        self.client.login(username='autorizado', password='1234')
+        self.assertTrue(self.horario111 in self.turno11.horario_set.all())
+        # borro el horario
+        url = reverse('materias:borrar_horario', args=(self.horario111.id,))
+        response = self.client.get(url, follow=True)
+        # veo que no existe más
+        self.assertFalse(self.horario111 in self.turno11.horario_set.all())
+        # veo que redirige bien
+        self.assertEqual(response.redirect_chain[0][0], reverse('materias:cambiar_turno', args=(self.turno11.id,)))
+
+    def test_borrar_turno(self):
+        self.client.login(username='autorizado', password='1234')
+        self.assertTrue(self.turno11 in self.materia1.turno_set.all())
+        # borro el turno
+        url = reverse('materias:borrar_turno', args=(self.turno11.id,))
+        response = self.client.get(url, follow=True)
+        # no existe más
+        self.assertFalse(self.turno11 in self.materia1.turno_set.all())
+        # redirige bien
+        self.assertEqual(response.redirect_chain[0][0], reverse('materias:administrar_materia',
+                                                                args=(self.materia1.id, self.anno, self.cuatrimestre.name)))
