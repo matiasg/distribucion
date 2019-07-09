@@ -261,7 +261,7 @@ def administrar_materia(request, materia_id, anno, cuatrimestre):
     for tipo in TipoTurno:
         boton = f'agregar_turno_{tipo.name}'
         if boton in request.POST:
-            return HttpResponseRedirect(reverse('materias:agregar_turno', args=(materia_id, tipo.name, anno, cuatrimestre)))
+            return agregar_turno(request, materia_id, tipo.name, anno, cuatrimestre)
     else:
         materia = Materia.objects.get(pk=materia_id)
         context = {
