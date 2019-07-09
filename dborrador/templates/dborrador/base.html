@@ -27,14 +27,14 @@
             selector_intento.spinner({min: 0, max: {{ max_intento_algoritmo }}});
             selector_intento.spinner("value", {{ intento_algoritmo }} );
             selector_intento.on("spin", function(event, ui) {
-              var url = "{% url 'dborrador:espiar_distribucion' anno cuatrimestre 31415926535 intento_manual %}";
+              var url = "{% url 'dborrador:espiar_distribucion' anno cuatrimestre.name 31415926535 intento_manual %}";
               if ({{ intento_algoritmo }} != ui.value) {
                 $(location).attr('href', url.replace('31415926535', ui.value));
               }
             });
 
             selector_intento_manual.on("slide", function(event, ui) {
-              var url = "{% url 'dborrador:espiar_distribucion' anno cuatrimestre intento_algoritmo 31415926535 %}";
+              var url = "{% url 'dborrador:espiar_distribucion' anno cuatrimestre.name intento_algoritmo 31415926535 %}";
               $(location).attr('href', url.replace('31415926535', ui.value));
             });
           })

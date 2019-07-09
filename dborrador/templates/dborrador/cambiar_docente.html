@@ -15,7 +15,7 @@ Cambiar a {{ carga.docente }} de turno
 
     <p> <div id="titulo">Actual:</div> {{ asignado }} </p>
 
-    <form action="{% url 'dborrador:cambiar_docente' anno cuatrimestre intento_algoritmo intento_manual carga.id %}" method="post">
+    <form action="{% url 'dborrador:cambiar_docente' anno cuatrimestre.name intento_algoritmo intento_manual carga.id %}" method="post">
         {% csrf_token %}
 
         <div id="titulo">Cambiar a</div>
