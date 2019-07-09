@@ -293,6 +293,9 @@ def cambiar_turno(request, turno_id):
     if 'volver' in request.POST:
         return HttpResponseRedirect(reverse('materias:administrar_materia', args=_turno_a_materia_args(turno)))
 
+    # TODO: en este momento, cualquier botón de "agregar horario" da lo mismo. Todos agregan el primer horario
+    # que tenga dia, comienzo y final completado. Si hay más de uno, agregan solo el primero.
+    # Habría que permitir un botón general de "agregar horarios"
     for horario_agregado in range(3):
         try:
             dia = request.POST[f'dia{horario_agregado}']
