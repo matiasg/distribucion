@@ -17,7 +17,7 @@ from .models import Preferencia, Asignacion, Comentario, Intento
 from .misc import Distribucion
 from materias.models import (Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria,
                              choice_enum, AnnoCuatrimestre, TipoDocentes,)
-from materias.misc import Mapeos
+from materias.misc import Mapeos, NoTurno
 from encuestas.models import PreferenciasDocente, OtrosDatos
 
 from allocation import allocating
@@ -384,15 +384,6 @@ def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_man
 def seleccion_tipo_distribuir(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
     tipo = request.POST['tipo']
     return distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_manual)
-
-
-class NoTurno:
-    def __init__(self, _id=-1, **kwargs):
-        self.__dict__.update(kwargs)
-        self.id = _id
-
-    def __str__(self):
-        return '_____ ningún turno _____'
 
 
 @login_required

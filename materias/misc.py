@@ -4,6 +4,15 @@ from collections import namedtuple, defaultdict
 from materias.models import Docente, Turno, Carga, TipoTurno, Cargos, CargoDedicacion, TipoDocentes, AnnoCuatrimestre
 
 
+class NoTurno:
+    def __init__(self, _id=-1, **kwargs):
+        self.__dict__.update(kwargs)
+        self.id = _id
+
+    def __str__(self):
+        return '_____ ningún turno _____'
+
+
 class Mapeos:
     '''Esta clase resuelve distintos tipos de mapeos'''
 

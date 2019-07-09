@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 from .models import (Materia, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
                      TipoDocentes, Docente, CargoDedicacion, Carga, Pabellon, Dias)
-from .misc import Mapeos
+from .misc import Mapeos, NoTurno
 from encuestas.models import OtrosDatos, PreferenciasDocente
 
 
@@ -262,6 +262,9 @@ def administrar_cargas_publicadas(request, anno, cuatrimestre):
 @permission_required('dborrador.add_asignacion')
 def cambiar_una_carga_publicada(request, carga_id):
     carga = Carga.objects.get(pk=carga_id)
+    anno = carga.anno
+    cuatrimestre = carga.cuatrimestre
+
     if 'salvar' in request.POST:
         nuevo_turno_id = int(request.POST['turno'])
         if nuevo_turno_id < 0:
@@ -273,12 +276,12 @@ def cambiar_una_carga_publicada(request, carga_id):
             carga.turno = nuevo_turno
         carga.save()
         return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas',
-                                            args=(carga.turno.anno, carga.turno.cuatrimestre)))
+                                            args=(anno, cuatrimestre)))
     else:
         cargo = carga.cargo
-        turnos = Turno.objects.filter(anno=carga.turno.anno, cuatrimestre=carga.turno.cuatrimestre)
+        turnos = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
         context = {'carga': carga,
-                   'turnos': turnos.order_by('materia', 'numero', 'tipo'),
+                   'turnos': [NoTurno()] + list(turnos.order_by('materia', 'numero', 'tipo')),
                    }
         return render(request, 'materias/cambiar_una_carga_publicada.html', context)
 
