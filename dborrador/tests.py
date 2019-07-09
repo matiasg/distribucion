@@ -8,7 +8,8 @@ import re
 
 from dborrador.models import Preferencia, Asignacion, Intento
 from dborrador.views import hacer_distribucion
-from materias.models import Docente, Materia, Turno, Cuatrimestres, Cargos, Carga, CargoDedicacion, TipoTurno, TipoMateria, AnnoCuatrimestre
+from materias.models import (Docente, Materia, Turno, Cuatrimestres, Cargos, Carga, CargoDedicacion,
+                             TipoTurno, TipoMateria, AnnoCuatrimestre)
 from materias.misc import TipoDocentes
 from encuestas.models import PreferenciasDocente, OtrosDatos
 from usuarios.models import Usuario
