@@ -26,4 +26,18 @@
 
 <input type="submit" name="salvar" value="Salvar">
 
+<h3>Historia de esta carga</h3>
+<ol>
+{% for ch in carga.history.all %}
+<li>
+    El {{ ch.history_date|date:"d/m/Y" }} a las {{ ch.history_date|time:"H:i" }} fue
+    {% if ch.turno is None %}
+    quitado de todo turno
+    {% else %}
+    asignado a la {{ ch.turno.horarios_info.tipoynumero }} de {{ ch.turno.materia }}
+    {% endif %}
+</li>
+{% endfor %}
+</ol>
+
 </form>
