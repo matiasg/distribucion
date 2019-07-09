@@ -427,3 +427,31 @@ class TestPaginas(TestCase):
 
         for tipo in TipoTurno:
             self.assertContains(response, f'name="agregar_turno_{tipo.name}"')
+
+    def test_agregar_turno(self):
+        self.client.login(username='autorizado', password='1234')
+        url = reverse('materias:administrar_materia', args=(self.materia1.id, self.anno, self.cuatrimestre.name))
+        response = self.client.post(url, {'agregar_turno_T': True}, follow=True)
+        # se generó un turno nuevo
+        self.assertContains(response, f'{TipoTurno.T.value} 5')
+        nuevo_turno = Turno.objects.get(materia=self.materia1, tipo=TipoTurno.T.name, numero=5)
+        # no tiene horarios
+        self.assertEqual(nuevo_turno.horario_set.count(), 0)
+
+    def test_cambiar_turno(self):
+        self.client.login(username='autorizado', password='1234')
+        url = reverse('materias:cambiar_turno', args=(self.turno11.id,))
+        response = self.client.post(url, follow=True)
+        # hay botones para borrar y agregar horarios
+        for horario in self.turno11.horario_set.all():
+            boton = f'input type="button" id="borrar_horario" data-horario="{horario.id}" value="Borrar horario">'
+            self.assertContains(response, boton)
+        self.assertContains(response, '<button>Agregar horario</button>')
+        # se puede agregar un horario
+        self.assertEqual(self.turno11.horario_set.count(), 2)
+        self.client.post(url, {'dia2': Dias.Vi.name, 'comienzo2': '01:23:45', 'final2': '12:34:56'},
+                         follow=True)
+        self.assertEqual(self.turno11.horario_set.count(), 3)
+        nuevo_horario = Horario.objects.get(turno=self.turno11, comienzo=datetime.time(1, 23, 45))
+        self.assertEqual(nuevo_horario.dia, Dias.Vi.name)
+        self.assertEqual(nuevo_horario.final, datetime.time(12, 34, 56))
