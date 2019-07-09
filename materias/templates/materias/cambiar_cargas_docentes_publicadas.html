@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+{% load static %}
+{% load materias_tags %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<table id="cargas_docentes">
+    <thead>
+        <tr>
+            <td>Docente</td> <td>Cargo</td>
+            <td>Turno</td>
+            <td>Materia</td>
+        </tr>
+    </thead>
+    <tbody>
+        {% for carga in cargas %}
+        <tr>
+            <td><a href="{% url 'materias:cambiar_una_carga_publicada' carga.id %}">{{ carga.docente }}</a></td>
+            <td>{{ carga.cargo|cargo_nombre_largo }}
+            <td>{{ carga.turno.horarios_info.tipoynumero }}</td>
+            <td>{{ carga.turno.materia }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+
+</table>
