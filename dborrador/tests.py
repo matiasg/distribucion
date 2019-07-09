@@ -218,6 +218,26 @@ class TestDistribuir(TestCase):
         for asignacion in Asignacion.objects.all():
             self.assertEqual(asignacion.intentos, NumericRange(Intento.de_algoritmo(1).valor, Intento.de_algoritmo(2).valor))
 
+    def test_cambiar_docente(self):
+        url = reverse('dborrador:distribucion', args=(self.ac.anno, self.ac.cuatrimestre, 0, 0))
+        response = self.client.get(url, follow=True)
+
+        cambiar_url = reverse('dborrador:cambiar_docente', args=(self.ac.anno, self.ac.cuatrimestre, 0, 0, self.carga1.id,))
+        self.assertContains(response, cambiar_url)
+        # el formulario apunta a la misma página y hay turnos en el select
+        response = self.client.get(cambiar_url, follow=True)
+        self.assertContains(response, cambiar_url)
+        link = f'<option value="{self.turno1.id}"  disabled>{self.turno1}</option>'
+        self.assertContains(response, link)
+        # con post se agrega la asignación
+        self.client.post(cambiar_url,
+                         {'cambiar': True, 'cambio_a': self.turno1.id, 'cargo_que_ocupa': TipoDocentes.A2.name},
+                         follow=True)
+        asignaciones = Asignacion.validas_en(Intento(0, 1)).filter(carga=self.carga1)
+        self.assertEqual(asignaciones.count(), 1)
+        asignacion = asignaciones.first()
+        self.assertEqual(asignacion.turno, self.turno1)
+        self.assertEqual(asignacion.cargo_que_ocupa, TipoDocentes.A2.name)
 
 
 class TestModel(TestCase):
