@@ -33,11 +33,15 @@
             <div class="subtitulo">Administrar turnos: necesidades docentes</div>
             <input type="submit" name="turnos_docentes" value="necesidades docentes">
         </li>
+        {% if perms.dborrador.add_asignacion %}
         <li>
-            <div class="subtitulo">Administrar docentes: cargas docentes</div>
+            <div class="subtitulo">Administrar docentes: cantidad de cargas docentes</div>
             <input type="submit" name="cargas_docentes" value="cargas docentes">
         </li>
-        {% if perms.dborrador.add_asignacion %}
+        <li>
+            <div class="subtitulo">Cambiar cargas ya publicadas</div>
+            <input type="submit" name="cargas_docentes_publicadas" value="cargas ya publicadas">
+        </li>
         <li>
             <div class="subtitulo">Distribuir docentes</div>
             <input type="submit" name="dborrador" value="distribuir docentes">
