@@ -290,7 +290,7 @@ def borrar_turno(request, turno_id):
 def cambiar_turno(request, turno_id):
     turno = Turno.objects.get(pk=turno_id)
 
-    if 'salvar' in request.POST:
+    if 'volver' in request.POST:
         return HttpResponseRedirect(reverse('materias:administrar_materia', args=_turno_a_materia_args(turno)))
 
     for horario_agregado in range(3):

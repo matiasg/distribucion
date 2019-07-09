@@ -70,7 +70,7 @@
 
 <form action="{% url 'materias:cambiar_turno' turno.id %}" method="post">
 {% csrf_token %}
-<input type="submit" name="salvar" value="salvar">
+<input type="submit" name="volver" value="volver">
 </form>
 
 <div class="borrar_horario_dialogo" url="{% url 'materias:borrar_horario' 31415926535 %}">
