@@ -256,7 +256,8 @@ def administrar_cargas_publicadas(request, anno, cuatrimestre):
                                                turno__isnull=True).order_by('docente__na_apellido', 'docente__na_nombre')
 
     context = {
-        'cargas': list(cargas_distribuidas) + list(cargas_no_distribuidas),
+        'distribuidas': cargas_distribuidas,
+        'no_distribuidas': cargas_no_distribuidas,
     }
     return render(request, 'materias/cambiar_cargas_docentes_publicadas.html', context)
 

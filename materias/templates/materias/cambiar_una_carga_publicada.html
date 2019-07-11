@@ -44,9 +44,9 @@
 <li>
     El {{ ch.history_date|date:"d/m/Y" }} a las {{ ch.history_date|time:"H:i" }}
     {% if ch.turno is None %}
-    pasó a no estar distribuido.
+    pasó a no estar en ningún turno.
     {% else %}
-    fue asignado a la {{ ch.turno.horarios_info.tipoynumero }} de {{ ch.turno.materia }}.
+    fue asignade a la {{ ch.turno.horarios_info.tipoynumero }} de {{ ch.turno.materia }}.
     {% endif %}
 </li>
 {% endfor %}
