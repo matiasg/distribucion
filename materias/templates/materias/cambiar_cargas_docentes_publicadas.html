@@ -6,7 +6,10 @@
 <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
 
 <h1>Cambiar cargas ya publicadas</h1>
-<a href="{% url 'materias:administrar' %}">Volver a administrar materias</a>
+
+<div id="actuar">
+    <a href="{% url 'materias:administrar' %}">Volver a administrar materias</a>
+</div>
 
 <h2>Cargas con turno asignado</h2>
 <table id="cargas_docentes">

@@ -47,7 +47,8 @@ table#administrar_materia td
   padding: 5px;
 }
 
-#actuar {
+#actuar,
+li input {
   -webkit-transition-duration: 0.4s; /* Safari */
   transition-duration: 0.4s;
   border: 2px solid #238;
@@ -59,7 +60,8 @@ table#administrar_materia td
   cursor: pointer;
 }
 
-#actuar:hover {
+#actuar:hover,
+li input:hover {
   background-color: #238;
   color: white;
 }
