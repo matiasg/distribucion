@@ -180,6 +180,22 @@ class TestVerDistribucion(TestCase):
                                   content, flags=re.DOTALL),
                         'No figuran los docentes que prefieren un turno sin docentes')
 
+    def test_espiar_distribucion(self):
+        now = timezone.now()
+        pd = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1, fecha_encuesta=now,
+                                                cargo=Cargos.Tit.name)
+        Preferencia.objects.create(preferencia=pd, peso_normalizado=1)
+        Asignacion.objects.create(intentos=(Intento(1, 0).valor, Intento(2, 0).valor),
+                                  carga=self.carga1, turno=self.turno1,
+                                  cargo_que_ocupa=TipoDocentes.P.name)
+        response = self.client.get(reverse('dborrador:espiar_distribucion', args=(2100, Cuatrimestres.P.name, 1, 0)),
+                                   follow=True)
+        self.assertContains(response, 'intento 1 : 0')
+        self.assertContains(response, self.materia.nombre.upper())
+        self.assertTrue(re.search(f'{TipoDocentes.P.value}:\s*{self.carga1.docente.nombre}',
+                                  response.content.decode(), flags=re.DOTALL),
+                        'La página de espiar distribución no contiene una materia')
+
 
 class TestDistribuir(TestCase):
 

@@ -1,6 +1,7 @@
 $(document).ready(function(){
     $( ".borrar_turno_dialogo" ).dialog({ autoOpen: false });
     $( ".borrar_horario_dialogo" ).dialog({ autoOpen: false });
+    $( ".cambiar_carga_publicada_dialogo" ).dialog({ autoOpen: false });
 });
 $(document).ready(function(){
     $( "#administrar_materia #borrar_turno" ).click(function() {
@@ -36,5 +37,19 @@ $(document).ready(function(){
                 }
             ]
         })
+    });
+    $( "#cambiar_carga_publicada" ).click(function() {
+        $( ".cambiar_carga_publicada_dialogo" ).dialog("open");
+        $( ".cambiar_carga_publicada_dialogo" ).dialog({
+            buttons: [
+                {
+                    text: 'Sí',
+                    click: function() {
+                        $("#cambio_de_carga").submit();
+                    },
+                    icons: { primary: 'ui-icon-check' }
+                }
+            ]
+        });
     });
 });

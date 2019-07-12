@@ -26,20 +26,19 @@
             
     <ul id=administrar_listado>
         <li>
-            <div class="subtitulo">Administrar turnos: alumnos, aulas y pabellones</div>
-            <input type="submit" name="turnos_alumnos" value="alumnos, aulas y pabellones">
+            <input type="submit" name="turnos_alumnos" value="administrar alumnos, aulas y pabellones">
         </li>
         <li>
-            <div class="subtitulo">Administrar turnos: necesidades docentes</div>
-            <input type="submit" name="turnos_docentes" value="necesidades docentes">
-        </li>
-        <li>
-            <div class="subtitulo">Administrar docentes: cargas docentes</div>
-            <input type="submit" name="cargas_docentes" value="cargas docentes">
+            <input type="submit" name="turnos_docentes" value="administrar necesidades docentes">
         </li>
         {% if perms.dborrador.add_asignacion %}
         <li>
-            <div class="subtitulo">Distribuir docentes</div>
+            <input type="submit" name="cargas_docentes" value="cantidad de cargas docentes">
+        </li>
+        <li>
+            <input type="submit" name="cargas_docentes_publicadas" value="cambiar cargas ya publicadas">
+        </li>
+        <li>
             <input type="submit" name="dborrador" value="distribuir docentes">
         </li>
         {% endif %}

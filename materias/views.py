@@ -11,7 +11,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 from .models import (Materia, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
-                     Docente, CargoDedicacion, Carga, Pabellon, Dias)
+                     TipoDocentes, Docente, CargoDedicacion, Carga, Pabellon, Dias)
+from .misc import Mapeos, NoTurno
 from encuestas.models import OtrosDatos, PreferenciasDocente
 
 
@@ -95,6 +96,8 @@ def administrar(request):
         return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
     elif 'cargas_docentes' in request.POST:
         return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
+    elif 'cargas_docentes_publicadas' in request.POST:
+        return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas', args=(anno, cuatrimestre)))
     elif 'dborrador' in request.POST:
         return HttpResponseRedirect(reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0)))
     else:
@@ -242,6 +245,49 @@ def administrar_cargas_de_un_docente(request, anno, cuatrimestre, docente_id):
             'completo_la_encuesta': completo_la_encuesta,
         }
         return render(request, 'materias/administrar_cargas_un_docente.html', context)
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def administrar_cargas_publicadas(request, anno, cuatrimestre):
+    cargas_distribuidas = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre,
+                                               turno__isnull=False).order_by('docente__na_apellido', 'docente__na_nombre')
+    cargas_no_distribuidas = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre,
+                                               turno__isnull=True).order_by('docente__na_apellido', 'docente__na_nombre')
+
+    context = {
+        'distribuidas': cargas_distribuidas,
+        'no_distribuidas': cargas_no_distribuidas,
+    }
+    return render(request, 'materias/cambiar_cargas_docentes_publicadas.html', context)
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def cambiar_una_carga_publicada(request, carga_id):
+    carga = Carga.objects.get(pk=carga_id)
+    anno = carga.anno
+    cuatrimestre = carga.cuatrimestre
+
+    if 'salvar' in request.POST:
+        nuevo_turno_id = int(request.POST['turno'])
+        if nuevo_turno_id < 0:
+            logger.warning('Estoy quitando a %s de su asignación a %s', carga.docente, carga.turno)
+            carga.turno = None
+        else:
+            nuevo_turno = Turno.objects.get(pk=nuevo_turno_id)
+            logger.info('Le cambio la carga a %s de %s a %s', carga.docente, carga.turno, nuevo_turno)
+            carga.turno = nuevo_turno
+        carga.save()
+        return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas',
+                                            args=(anno, cuatrimestre)))
+    else:
+        cargo = carga.cargo
+        turnos = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
+        context = {'carga': carga,
+                   'turnos': [NoTurno()] + list(turnos.order_by('materia', 'numero', 'tipo')),
+                   }
+        return render(request, 'materias/cambiar_una_carga_publicada.html', context)
 
 
 @login_required

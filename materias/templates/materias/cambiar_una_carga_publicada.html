@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+{% load static %}
+{% load materias_tags %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
+<script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
+<script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
+<script src="{% static 'materias/scripts.js' %}"></script>
+
+<h2>Cambiar la carga docente de {{ carga.docente }} a {{ carga.turno }}</h2>
+<form id="cambio_de_carga" action="{% url 'materias:cambiar_una_carga_publicada' carga.id %}" method="post">
+    {% csrf_token %}
+
+    <div id="actuar">
+        <div id="cambiar_carga_publicada" value="Salvar">Salvar</div>
+        <input type="hidden" name="salvar">
+    </div>
+
+    <div id="actuar">
+        <a href="{% url 'materias:administrar_cargas_publicadas' carga.anno carga.cuatrimestre %}">Cancelar cambio</a>
+    </div>
+
+    <h3>Turno</h3>
+    <ul>
+        <li>
+            Actual: {{ carga.turno }}
+        </li>
+        <li>
+            Moverlo a:
+            <select name="turno">
+                {% for t in turnos %}
+                <option value="{{ t.id }}" {% if t == carga.turno %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+        </li>
+    </ul>
+
+    <div class="cambiar_carga_publicada_dialogo" title="¿Seguro?">
+        <p> Esta carga ya está publicada. </p>
+        <p> ¿Realmente querés cambiarla? </p>
+    </div>
+</form>
+
+<h3>Historia de esta carga</h3>
+<ol>
+{% for ch in carga.history.all %}
+<li>
+    El {{ ch.history_date|date:"d/m/Y" }} a las {{ ch.history_date|time:"H:i" }}
+    {% if ch.turno is None %}
+    pasó a no estar en ningún turno.
+    {% else %}
+    fue asignade a la {{ ch.turno.horarios_info.tipoynumero }} de {{ ch.turno.materia }}.
+    {% endif %}
+</li>
+{% endfor %}
+</ol>
+

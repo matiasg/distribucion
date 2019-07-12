@@ -249,7 +249,8 @@ class TestPaginas(TestCase):
 
         self.client.login(username='autorizado', password='1234')
         response = self.client.get('/materias/administrar', follow=True)
-        self.assertContains(response, 'Administrar turnos')
+        self.assertContains(response, 'administrar alumnos')
+        self.assertContains(response, 'administrar necesidades')
         self.assertEqual(len(response.redirect_chain), 0)
 
     def test_administrar_dirige_bien(self):
@@ -476,5 +477,24 @@ class TestPaginas(TestCase):
         # no existe más
         self.assertFalse(self.turno11 in self.materia1.turno_set.all())
         # redirige bien
-        self.assertEqual(response.redirect_chain[0][0], reverse('materias:administrar_materia',
-                                                                args=(self.materia1.id, self.anno, self.cuatrimestre.name)))
+        self.assertEqual(response.redirect_chain[0][0],
+                         reverse('materias:administrar_materia',
+                                 args=(self.materia1.id, self.anno, self.cuatrimestre.name)))
+
+    def test_cambiar_cargas_publicadas(self):
+        n = Docente.objects.create(na_nombre='nemo', na_apellido='X', telefono='00 0000', email='nemo@nautilus.org',
+                                   cargos=[CargoDedicacion.TitExc.name])
+        m = Docente.objects.create(na_nombre='mario', na_apellido='Y', telefono='00 0000', email='mario@nautilus.org',
+                                   cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
+        cn = Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name, anno=self.anno, cuatrimestre=self.cuatrimestre.name)
+        cm = Carga.objects.create(docente=m, cargo=CargoDedicacion.JTPSim.name, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                             turno=self.turno11)
+        self.client.login(username='autorizado', password='1234')
+        url = reverse('materias:administrar_cargas_publicadas', args=(self.anno, self.cuatrimestre.name))
+        response = self.client.get(url, follow=True)
+        # veo que aparece la carga distribuida y el cargo con su nombre largo
+        self.assertContains(response, reverse('materias:cambiar_una_carga_publicada', args=(cn.id,)))
+        self.assertContains(response, CargoDedicacion[cm.cargo].value)
+        # veo que aparece la carga no distribuida y el cargo
+        self.assertContains(response, reverse('materias:cambiar_una_carga_publicada', args=(cm.id,)))
+        self.assertContains(response, CargoDedicacion[cn.cargo].value)
