@@ -14,6 +14,15 @@
 <form id="cambio_de_carga" action="{% url 'materias:cambiar_una_carga_publicada' carga.id %}" method="post">
     {% csrf_token %}
 
+    <div id="actuar">
+        <div id="cambiar_carga_publicada" value="Salvar">Salvar</div>
+        <input type="hidden" name="salvar">
+    </div>
+
+    <div id="actuar">
+        <a href="{% url 'materias:administrar_cargas_publicadas' carga.anno carga.cuatrimestre %}">Cancelar cambio</a>
+    </div>
+
     <h3>Turno</h3>
     <ul>
         <li>
@@ -28,9 +37,6 @@
             </select>
         </li>
     </ul>
-
-    <input type="button" id="cambiar_carga_publicada" value="Salvar">
-    <input type="hidden" name="salvar">
 
     <div class="cambiar_carga_publicada_dialogo" title="¿Seguro?">
         <p> Esta carga ya está publicada. </p>
