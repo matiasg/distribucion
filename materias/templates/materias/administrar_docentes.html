@@ -5,6 +5,28 @@
 
 <h1>Administrar necesidades docentes de {{ anno }}, cuatrimestre {{ cuatrimestre.value }}</h1>
 
+
+<table>
+    <thead>
+        <tr>
+            <td></td>
+            <td>Necesidades</td>
+            <td>Cargas</td>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for tipo, nyr in necesidades_y_recursos.items %}
+        <tr>
+            <td>{{ tipo.value }}</td>
+            <td>{{ nyr.0 }}</td>
+            <td>{{ nyr.1 }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
 <form action="{% url 'materias:administrar_docentes' anno cuatrimestre.name %}" method="post">
 {% csrf_token %}
 
