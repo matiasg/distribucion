@@ -27,13 +27,13 @@
             <tr>
                 <td>Necesidades</td>
                 {% for tipo, nyr in necesidades_y_recursos.items %}
-                <td><span id=cantidad><mark id={{ nyr.1|bien_o_mal:nyr.0 }}>{{ nyr.0 }}</mark></span></td>
+                <td id=numero><span id=cantidad><mark id={{ nyr.1|bien_o_mal:nyr.0 }}>{{ nyr.0 }}</mark></span></td>
                 {% endfor %}
             </tr>
             <tr>
                 <td>Cargas disponibles</td>
                 {% for tipo, nyr in necesidades_y_recursos.items %}
-                <td><span id=cantidad><mark id={{ nyr.1|bien_o_mal:nyr.0 }}>{{ nyr.1 }}</mark></span></td>
+                <td id=numero><span id=cantidad><mark id={{ nyr.1|bien_o_mal:nyr.0 }}>{{ nyr.1 }}</mark></span></td>
                 {% endfor %}
             </tr>
         </tbody>
