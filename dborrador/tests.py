@@ -6,7 +6,7 @@ from psycopg2.extras import NumericRange
 
 import re
 
-from dborrador.models import Preferencia, Asignacion, Intento
+from dborrador.models import Preferencia, Asignacion, Intento, IntentoRegistrado
 from dborrador.views import hacer_distribucion
 from materias.models import (Docente, Materia, Turno, Cuatrimestres, Cargos, Carga, CargoDedicacion,
                              TipoTurno, TipoMateria, AnnoCuatrimestre)
@@ -280,3 +280,10 @@ class TestModel(TestCase):
         self.assertEqual(set(Asignacion.validas_en(Intento(2, 2))), set())
         self.assertEqual(set(Asignacion.validas_en(Intento(3, 5))), set())
         self.assertEqual(set(Asignacion.validas_en(Intento(3, 2))), set())
+
+    def test_intento_registrado(self):
+        IntentoRegistrado.objects.create(intento=Intento(3, 1).valor, anno=2100, cuatrimestre=Cuatrimestres.P.name)
+        IntentoRegistrado.objects.create(intento=Intento(3, 7).valor, anno=2100, cuatrimestre=Cuatrimestres.P.name)
+        IntentoRegistrado.objects.create(intento=Intento(2, 17).valor, anno=2100, cuatrimestre=Cuatrimestres.P.name)
+        maximo = IntentoRegistrado.maximo_intento(anno=2100, cuatrimestre=Cuatrimestres.P.name)
+        self.assertEqual(maximo, Intento(3, 7))

@@ -4,7 +4,7 @@ from django.contrib.postgres.fields import IntegerRangeField
 from collections import namedtuple
 
 from encuestas.models import PreferenciasDocente
-from materias.models import Turno, Carga, choice_enum, TipoDocentes
+from materias.models import Turno, Carga, choice_enum, TipoDocentes, Cuatrimestres
 
 
 class Intento(namedtuple('Intento', ['algoritmo', 'manual'])):
@@ -59,6 +59,24 @@ class Asignacion(models.Model):
     class Meta:
         verbose_name = 'asignación'
         verbose_name_plural = 'asignaciones'
+
+
+class IntentoRegistrado(models.Model):
+    '''Un modelo para llevar registro de los intentos de distribución'''
+
+    intento = models.IntegerField()
+    anno = models.IntegerField()
+    cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
+    fecha = models.DateTimeField(auto_now=True)
+
+    @classmethod
+    def maximo_intento(cls, anno, cuatrimestre):
+        valor = 0
+        intentos = cls.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
+        if intentos.count() > 0:
+            valor = intentos.aggregate(models.Max('intento'))['intento__max']
+
+        return Intento.de_valor(valor)
 
 
 class Comentario(models.Model):
