@@ -1,11 +1,6 @@
 from django import template
 
-register = template.Library()
+from materias.templatetags.materias_tags import bien_o_mal
 
-@register.filter
-def bien_o_mal(a, b):
-    if a == b:
-        return "bien"
-    if a > b:
-        return "maso"
-    return "mal"
+register = template.Library()
+register.filter('bien_o_mal', bien_o_mal)
