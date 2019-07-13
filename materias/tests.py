@@ -290,6 +290,7 @@ class TestPaginas(TestCase):
                 post[f'{k_field}_{turno.id}'] = getattr(turno, t_attr)
 
         post[f'dificil_{self.turno12.id}'] = 'on'
+        post[f'necesidadprof_{self.turno12.id}'] = 2
         post['cambiar'] = True
         self.client.post(url, post)
 
@@ -297,6 +298,12 @@ class TestPaginas(TestCase):
         nturno12 = Turno.objects.get(pk=self.turno12.id)
         self.assertFalse(nturno11.dificil_de_cubrir)
         self.assertTrue(nturno12.dificil_de_cubrir)
+        self.assertEqual(nturno12.necesidad_prof, 2)
+
+        response = self.client.get(url, follow=True)
+        self.assertContains(response, '<mark id=mal>2</mark>')
+        self.assertContains(response, '<mark id=mal>0</mark>')
+        self.assertContains(response, '<mark id=bien>0</mark>')
 
     def test_administrar_alumnos(self):
         self.client.login(username='autorizado', password='1234')
