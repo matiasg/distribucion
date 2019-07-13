@@ -132,6 +132,26 @@ table .cuerpo tr td {
   padding: 0em 1em 0em 1em;
 }
 
+span#cantidad mark#bien {
+  background: #8d8;
+  opacity: 0.5;
+}
+
+span#cantidad mark#maso {
+  background: #ff4;
+  opacity: 0.7;
+}
+
+span#cantidad mark#mal {
+  background: #f44;
+  opacity: 0.9;
+}
+
+table .cuerpo tr td span#cantidad
+{
+    float: right;
+}
+
 table.contentbold {
   border: 0px;
 }

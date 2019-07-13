@@ -165,6 +165,10 @@ def _acota_intentos_para_ver(anno, cuatrimestre, intento_algoritmo, intento_manu
     return (intento_algoritmo, intento_manual)
 
 
+class InformacionParaTemplate(namedtuple('IPT', 'sin_distribuir necesidades cargas')):
+
+    pass
+
 
 @login_required
 @permission_required('dborrador.add_asignacion')
@@ -240,9 +244,19 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
                                           for carga in cargas]
                                    for tipo, cargas in cargas_sin_asignar.items()}
 
-    context['sin_distribuir'] = cargas_sin_asignar_anotadas
     context['cambiar_docente_url'] = reverse('dborrador:cambiar_docente',
                                              args=(anno, cuatrimestre, intento.algoritmo, intento.manual, 0))[:-1]
+
+    necesidades_por_tipo = {tipo: sum(necesidades_por_turno[turno][tipo] for turno in turnos_ac)
+                            for tipo in TipoDocentes}
+    cargas_por_tipo = {tipo: sum(len(asignaciones_moviles[turno][tipo]) + len(asignaciones_fijas[turno][tipo]) for turno in turnos_ac) \
+                             + len(cargas_sin_asignar[tipo])
+                       for tipo in TipoDocentes}
+
+    context['info_por_tipo'] = {tipo: InformacionParaTemplate(cargas_sin_asignar_anotadas[tipo],
+                                                              necesidades_por_tipo[tipo],
+                                                              cargas_por_tipo[tipo])
+                                for tipo in TipoDocentes}
 
     return render(request, 'dborrador/distribucion.html', context)
 
