@@ -105,7 +105,7 @@ def administrar(request):
                                                                      'cuatrimestres': cuatrimestres})
 
 
-def administrar_general(request, anno, cuatrimestre, key_to_field, url):
+def administrar_general(request, anno, cuatrimestre, key_to_field, url, **kwargs):
     if 'cambiar' in request.POST:
         with transaction.atomic():
 
@@ -139,6 +139,7 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url):
                    'cuatrimestre': Cuatrimestres[cuatrimestre],
                    'materias': materias,
                    'pabellones': list(Pabellon)}
+        context.update(kwargs)
         return render(request, url, context)
 
 
