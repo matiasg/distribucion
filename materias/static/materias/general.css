@@ -1,0 +1,40 @@
+span#cantidad mark#bien {
+  background: #8d8;
+  opacity: 0.5;
+}
+
+span#cantidad mark#maso {
+  background: #ff4;
+  opacity: 0.7;
+}
+
+span#cantidad mark#mal {
+  background: #f44;
+  opacity: 0.9;
+}
+
+td.necesidades {
+  width: 6em;
+}
+
+td.necesidades mark {
+  display: table-cell;
+  padding: 4px;
+}
+
+td.necesidades mark#bien {
+  background: #8d8;
+  opacity: 0.5;
+}
+
+td.necesidades mark#maso {
+  background: #ff4;
+  opacity: 0.7;
+}
+
+td.necesidades mark#mal {
+  background: #f44;
+  opacity: 0.9;
+}
+
+

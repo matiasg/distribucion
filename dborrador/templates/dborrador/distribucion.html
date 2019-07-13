@@ -40,7 +40,7 @@ Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
                 {% for tipo, info_tipo in info_por_tipo.items %}
                 <td>Se necesitan:
                     <span id="cantidad">
-                        <mark id={{ info_tipo.necesidades|bien_o_mal:info_tipo.cargas }}>{{ info_tipo.necesidades }}</mark>
+                        <mark id={{ info_tipo.cargas|bien_o_mal:info_tipo.necesidades }}>{{ info_tipo.necesidades }}</mark>
                     </span>
                 </td>
                 {% endfor %}
@@ -49,7 +49,7 @@ Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
                 {% for tipo, info_tipo in info_por_tipo.items %}
                 <td>Hay para distribuir:
                     <span id="cantidad">
-                        <mark id={{ info_tipo.necesidades|bien_o_mal:info_tipo.cargas }}>{{ info_tipo.cargas }}</mark>
+                       <mark id={{ info_tipo.cargas|bien_o_mal:info_tipo.necesidades }}>{{ info_tipo.cargas }}</mark>
                     </span>
                 </td>
                 {% endfor %}
