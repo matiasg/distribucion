@@ -115,7 +115,7 @@ Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
         </div>
       </td>
       <td class="necesidades">{% for tipo, necesidad in turno.necesidades_insatisfechas.items %}
-        <mark id="{% if necesidad > 0 %}mal{% elif necesidad == 0 %}bien{% else %}maso{% endif %}">
+        <mark id="{{ 0|bien_o_mal:necesidad }}">
           <div class="tooltip">{{ necesidad }}<span class="tooltiptext">{{ tipo.value }}</span></div>
         </mark>
         {% endfor %}
