@@ -13,7 +13,8 @@ span#cantidad mark#mal {
   opacity: 0.9;
 }
 
-td.necesidades {
+td.necesidades,
+th.necesidades {
   width: 6em;
 }
 
