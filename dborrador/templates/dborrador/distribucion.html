@@ -1,6 +1,7 @@
 {% extends "dborrador/base.html" %}
 
 {% load static %}
+{% load dborrador_tags %}
 
 {% block subtitulo %}
 Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
@@ -13,7 +14,7 @@ Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
 <div id="escondible" class="subseccion">
     <div id="titulo">Docentes no distribuidos</div>
     <table>
-        <thead class="encabezado"> {% for tipo, lista in info_por_tipo.items %} <td> {{ tipo.value }} </td> {% endfor %} </thead>
+        <thead class="encabezado"> <tr>{% for tipo, lista in info_por_tipo.items %} <td> {{ tipo.value }} </td> {% endfor %}</tr> </thead>
         <tbody class="cuerpo">
             <tr>
                 {% for tipo, info_tipo in info_por_tipo.items %}
@@ -37,19 +38,20 @@ Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
 
             <tr>
                 {% for tipo, info_tipo in info_por_tipo.items %}
-                <td>Se necesitan: <span id="cantidad">
-                        <mark id="{% if info_tipo.necesidades > info_tipo.cargas %}mal{% elif info_tipo.necesidades == info_tipo.cargas %}bien{% else %}maso{% endif %}">
-                        {{ info_tipo.necesidades }}
-                    </mark>
-                    </span></td>
+                <td>Se necesitan:
+                    <span id="cantidad">
+                        <mark id={{ info_tipo.necesidades|bien_o_mal:info_tipo.cargas }}>{{ info_tipo.necesidades }}</mark>
+                    </span>
+                </td>
                 {% endfor %}
             </tr>
             <tr>
                 {% for tipo, info_tipo in info_por_tipo.items %}
-                <td>Hay para distribuir: <span id="cantidad">
-                        <mark id="{% if info_tipo.necesidades > info_tipo.cargas %}mal{% elif info_tipo.necesidades == info_tipo.cargas %}bien{% else %}maso{% endif %}">
-                        {{ info_tipo.cargas }}
-                    </span></td>
+                <td>Hay para distribuir:
+                    <span id="cantidad">
+                        <mark id={{ info_tipo.necesidades|bien_o_mal:info_tipo.cargas }}>{{ info_tipo.cargas }}</mark>
+                    </span>
+                </td>
                 {% endfor %}
             </tr>
         </tbody>
