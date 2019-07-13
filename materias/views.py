@@ -7,6 +7,7 @@ from django.utils.dateparse import parse_time
 from django.contrib.auth.decorators import permission_required, login_required
 
 from locale import strxfrm
+from collections import Counter
 import logging
 logger = logging.getLogger(__name__)
 
@@ -164,7 +165,18 @@ def administrar_docentes(request, anno, cuatrimestre):
                             'dificil': ('dificil_de_cubrir', bool),
                             }
                     }
-    return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_docentes.html')
+
+    turnos = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
+    necesidades = {tipo: sum(Mapeos.necesidades(turno, tipo) for turno in turnos)
+                   for tipo in TipoDocentes}
+
+    cargas = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
+    recursos = Counter(Mapeos.tipo_de_carga(carga) for carga in cargas)
+
+    necesidades_y_recursos = {tipo: (necesidades[tipo], recursos[tipo]) for tipo in TipoDocentes}
+
+    return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_docentes.html',
+                               necesidades_y_recursos=necesidades_y_recursos)
 
 @login_required
 @permission_required('dborrador.add_asignacion')
