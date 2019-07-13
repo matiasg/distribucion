@@ -1,14 +1,44 @@
 <!DOCTYPE html>
 {% load static %}
+{% load materias_tags %}
+
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
 
 <h1>Administrar necesidades docentes de {{ anno }}, cuatrimestre {{ cuatrimestre.value }}</h1>
+
 
 <form action="{% url 'materias:administrar_docentes' anno cuatrimestre.name %}" method="post">
 {% csrf_token %}
 
     <input type="submit" name="cambiar" value="salvar">
+
+    <table id=cargas_docentes>
+        <thead>
+            <tr>
+                <th class=necesidades></th>
+                {% for tipo in necesidades_y_recursos %}
+                <th class=necesidades>{{ tipo.value }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Necesidades</td>
+                {% for tipo, nyr in necesidades_y_recursos.items %}
+                <td id=numero><span id=cantidad><mark id={{ nyr.1|bien_o_mal:nyr.0 }}>{{ nyr.0 }}</mark></span></td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td>Cargas disponibles</td>
+                {% for tipo, nyr in necesidades_y_recursos.items %}
+                <td id=numero><span id=cantidad><mark id={{ nyr.1|bien_o_mal:nyr.0 }}>{{ nyr.1 }}</mark></span></td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+
 
     {% for tipo, materias_turnos in materias %}
     <div class="seccion">{{ tipo }}</div>
