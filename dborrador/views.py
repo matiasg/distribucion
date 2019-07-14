@@ -433,9 +433,7 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
     else:
         preferencias = Preferencia.objects.filter(preferencia__docente=carga.docente).order_by('peso_normalizado')
 
-        turnos_preferidos = {NoTurno(): float('inf'),
-                             **{p.preferencia.turno: p.peso_normalizado for p in preferencias}
-                             }
+        turnos_preferidos = {p.preferencia.turno: p.peso_normalizado for p in preferencias}
 
         turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all()
         turnos_no_preferidos = sorted(set(turnos_ac) - set(turnos_preferidos),
@@ -451,6 +449,7 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
         context = {'carga': carga,
                    'cargos': list(TipoDocentes),
                    'cargo': Mapeos.tipos_de_cargo(carga.cargo),
+                   'no_turno': NoTurno(),
                    'turnos_preferidos': turnos_preferidos,
                    'turnos_no_preferidos': turnos_no_preferidos,
                    'anno': anno,

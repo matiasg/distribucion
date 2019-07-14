@@ -20,6 +20,8 @@ Cambiar a {{ carga.docente }} de turno
 
         <div id="titulo">Cambiar a</div>
         <select name="cambio_a">
+            <option value="{{ no_turno.id }}" {% if turno.id == asignado.id %}selected{% endif %}>{{ no_turno }}</option>
+
             <optgroup label="Pedidos en la encuesta">
                 {% for turno, peso in turnos_preferidos.items %}
                 <option value="{{ turno.id }}" {% if turno.id == asignado.id %}selected{% endif %}>{{ turno }}
