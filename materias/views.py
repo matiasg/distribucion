@@ -256,7 +256,12 @@ def administrar_cargas_de_un_docente(request, anno, cuatrimestre, docente_id):
             cargas_pedidas = 0
             completo_la_encuesta = False
         cargas = docente.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre)
-        cargas_por_tipo = {cargo: cargas.filter(cargo=cargo).count() for cargo in docente.cargos}
+        cargas_por_tipo = dict(Counter(carga.cargo for carga in cargas))
+        # Corrección para el caso en que un docente no tiene cargas de un cargo.
+        # Esto pasa por ejemplo si hay diferencias entre docente.cargos y cargas.cargo
+        for cargo in docente.cargos:
+            if cargo not in cargas_por_tipo:
+                cargas_por_tipo[cargo] = 0
 
         context = {
             'anno': anno,
