@@ -3,6 +3,10 @@
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
 
+<div id="actuar">
+    <a href="{% url 'materias:administrar' %}">Volver a la página de administración</a>
+</div>
+
 <form action="{% url 'materias:administrar_cargas_docentes' anno cuatrimestre %}" method="post">
 {% csrf_token %}
 
