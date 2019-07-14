@@ -183,7 +183,7 @@ def administrar_docentes(request, anno, cuatrimestre):
 @permission_required('dborrador.add_asignacion')
 def administrar_cargas_docentes(request, anno, cuatrimestre):
     docentes_y_cargas_nuestras = {d: d.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre) for d in Docente.objects.all()}
-    docentes_y_cargas_encuesta = {o.docente: o.cargas for o in OtrosDatos.objects.all()}
+    docentes_y_cargas_encuesta = {o.docente: o.cargas for o in OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all()}
     # calculo diferencias contra encuesta
     diferencias_encuesta = {d: (len(docentes_y_cargas_nuestras[d]),
                                 docentes_y_cargas_encuesta[d],
