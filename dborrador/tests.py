@@ -7,10 +7,10 @@ from psycopg2.extras import NumericRange
 import re
 
 from dborrador.models import Preferencia, Asignacion, Intento, IntentoRegistrado
-from dborrador.views import hacer_distribucion
+from dborrador.views import hacer_distribucion, _cambiar_docente, NoTurno
 from materias.models import (Docente, Materia, Turno, Cuatrimestres, Cargos, Carga, CargoDedicacion,
                              TipoTurno, TipoMateria, AnnoCuatrimestre)
-from materias.misc import TipoDocentes
+from materias.misc import TipoDocentes, Mapeos
 from encuestas.models import PreferenciasDocente, OtrosDatos
 from usuarios.models import Usuario
 
@@ -257,11 +257,39 @@ class TestDistribuir(TestCase):
         self.client.post(cambiar_url,
                          {'cambiar': True, 'cambio_a': self.turno1.id, 'cargo_que_ocupa': TipoDocentes.A2.name},
                          follow=True)
-        asignaciones = Asignacion.validas_en(Intento(0, 1)).filter(carga=self.carga1)
+        asignaciones = Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 1)).filter(carga=self.carga1)
         self.assertEqual(asignaciones.count(), 1)
         asignacion = asignaciones.first()
         self.assertEqual(asignacion.turno, self.turno1)
         self.assertEqual(asignacion.cargo_que_ocupa, TipoDocentes.A2.name)
+
+    def test_cambiar_docente_que_borra_cambios(self):
+        # (0, 0) nada
+        # (0, 1) d1 -> t1
+        # (0, 2) d1 -> t2
+        # (0, 3) d2 -> t1
+        # cambio en (0, 1): d1 -> NoTurno
+        # tienen que estar ambos no distribuidos
+        _cambiar_docente(self.ac.anno, self.ac.cuatrimestre, Intento(0, 0), self.carga1.id, self.turno1.id, Mapeos.tipo_de_carga(self.carga1))
+        self.assertEqual(IntentoRegistrado.maximo_intento(self.ac.anno, self.ac.cuatrimestre), Intento(0, 1))
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 1)).count(), 1)
+
+        _cambiar_docente(self.ac.anno, self.ac.cuatrimestre, Intento(0, 1), self.carga1.id, self.turno2.id, Mapeos.tipo_de_carga(self.carga1))
+        self.assertEqual(IntentoRegistrado.maximo_intento(self.ac.anno, self.ac.cuatrimestre), Intento(0, 2))
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 1)).count(), 1)
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 2)).count(), 1)
+
+        _cambiar_docente(self.ac.anno, self.ac.cuatrimestre, Intento(0, 2), self.carga2.id, self.turno1.id, Mapeos.tipo_de_carga(self.carga2))
+        self.assertEqual(IntentoRegistrado.maximo_intento(self.ac.anno, self.ac.cuatrimestre), Intento(0, 3))
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 1)).count(), 1)
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 2)).count(), 1)
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 3)).count(), 2)
+
+        _cambiar_docente(self.ac.anno, self.ac.cuatrimestre, Intento(0, 1), self.carga1.id, NoTurno().id, Mapeos.tipo_de_carga(self.carga1))
+        self.assertEqual(IntentoRegistrado.maximo_intento(self.ac.anno, self.ac.cuatrimestre), Intento(0, 2))
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 2)).count(), 0)
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 3)).count(), 0)
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 1)).count(), 1)
 
 
 class TestModel(TestCase):
@@ -282,12 +310,12 @@ class TestModel(TestCase):
         asignacion = Asignacion.objects.create(intentos=(comienzo.valor, final.valor),
                                                carga=self.carga, turno=self.turno)
 
-        self.assertEqual(set(Asignacion.validas_en(Intento(2, 5))), {asignacion})
-        self.assertEqual(set(Asignacion.validas_en(Intento(2, 2395))), {asignacion})
-        self.assertEqual(set(Asignacion.validas_en(Intento(3, 1))), {asignacion})
-        self.assertEqual(set(Asignacion.validas_en(Intento(2, 2))), set())
-        self.assertEqual(set(Asignacion.validas_en(Intento(3, 5))), set())
-        self.assertEqual(set(Asignacion.validas_en(Intento(3, 2))), set())
+        self.assertEqual(set(Asignacion.validas_en(2100, Cuatrimestres.P.name, Intento(2, 5))), {asignacion})
+        self.assertEqual(set(Asignacion.validas_en(2100, Cuatrimestres.P.name, Intento(2, 2395))), {asignacion})
+        self.assertEqual(set(Asignacion.validas_en(2100, Cuatrimestres.P.name, Intento(3, 1))), {asignacion})
+        self.assertEqual(set(Asignacion.validas_en(2100, Cuatrimestres.P.name, Intento(2, 2))), set())
+        self.assertEqual(set(Asignacion.validas_en(2100, Cuatrimestres.P.name, Intento(3, 5))), set())
+        self.assertEqual(set(Asignacion.validas_en(2100, Cuatrimestres.P.name, Intento(3, 2))), set())
 
     def test_intento_registrado(self):
         IntentoRegistrado.objects.create(intento=Intento(3, 1).valor, anno=2100, cuatrimestre=Cuatrimestres.P.name)
@@ -295,3 +323,19 @@ class TestModel(TestCase):
         IntentoRegistrado.objects.create(intento=Intento(2, 17).valor, anno=2100, cuatrimestre=Cuatrimestres.P.name)
         maximo = IntentoRegistrado.maximo_intento(anno=2100, cuatrimestre=Cuatrimestres.P.name)
         self.assertEqual(maximo, Intento(3, 7))
+
+    def test_no_se_cofunde_asignaciones_validas(self):
+        comienzo = Intento(2, 4)
+        final = Intento(3, 2)
+        a1 = Asignacion.objects.create(intentos=(comienzo.valor, final.valor),
+                                       carga=self.carga, turno=self.turno)
+        otro_turno = Turno.objects.create(materia=self.materia, anno=2102, cuatrimestre=Cuatrimestres.S.name,
+                                          numero=1, tipo=TipoTurno.T.name,
+                                          necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        otra_carga = Carga.objects.create(docente=self.docente, cargo=CargoDedicacion.TitSim.name,
+                                          anno=2102, cuatrimestre=Cuatrimestres.S.name)
+        a2 = Asignacion.objects.create(intentos=(comienzo.valor, final.valor),
+                                       carga=otra_carga, turno=otro_turno)
+        self.assertEqual(list(Asignacion.validas_en(2100, Cuatrimestres.P.name, Intento(2,5))), [a1])
+        self.assertEqual(list(Asignacion.validas_en(2102, Cuatrimestres.S.name, Intento(2,5))), [a2])
+        self.assertEqual(list(Asignacion.validas_en(2100, Cuatrimestres.S.name, Intento(2,5))), [])

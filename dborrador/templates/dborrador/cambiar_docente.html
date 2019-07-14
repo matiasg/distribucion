@@ -15,7 +15,8 @@ Cambiar a {{ carga.docente }} de turno
 
     <p> <div id="titulo">Actual:</div> {{ asignado }} </p>
 
-    <form action="{% url 'dborrador:cambiar_docente' anno cuatrimestre.name intento_algoritmo intento_manual carga.id %}" method="post">
+    <form id="cambiar_docente"
+        action="{% url 'dborrador:cambiar_docente' anno cuatrimestre.name intento_algoritmo intento_manual carga.id %}" method="post">
         {% csrf_token %}
 
         <div id="titulo">Cambiar a</div>
@@ -56,9 +57,23 @@ Cambiar a {{ carga.docente }} de turno
         </p>
 
         <p>
-        <input type="submit" name="cambiar" value="Hacer el cambio">
-        <input type="submit" name="cancelar" value="cancelar">
+            <div id="actuar">
+                <div id="cambiar_docente" value="cambiar">Hacer el cambio</div>
+                <input type="hidden" name="cambiar">
+            </div>
+            <div id="actuar">
+                <a href="{% url 'dborrador:distribucion' anno cuatrimestre.name intento_algoritmo intento_manual %}">Cancelar</a>
+                </a>
+            </div>
         </p>
+
+        <div id="cambiar_docente_dialogo" title="¿Seguro?">
+            {% if es_maximo_intento %}
+            (obs: No hay nada que se vaya a perder)
+            {% else %}
+            <p> Mirá que perdés lo que viene después </p>
+            {% endif %}
+        </div>
 
     </form>
 

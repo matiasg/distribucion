@@ -226,7 +226,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     context['materias'] = materias
 
     cargas_sin_distribuir = Distribucion.no_distribuidas_por_cargo(anno_cuat)
-    cargas_de_asignaciones_moviles = {a.carga for a in Asignacion.validas_en(intento)}
+    cargas_de_asignaciones_moviles = {a.carga for a in Asignacion.validas_en(anno, cuatrimestre, intento)}
     cargas_sin_asignar = {tipo: sorted(set(cargas_sin_distribuir[tipo]) - cargas_de_asignaciones_moviles,
                                        key=lambda c: c.docente.nombre)
                           for tipo in TipoDocentes}
@@ -359,7 +359,7 @@ def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_man
         logger.warning('Borro %d asignaciones', para_borrar.count())
         para_borrar.delete()
 
-        asignaciones = Asignacion.validas_en(intento).all()
+        asignaciones = Asignacion.validas_en(anno, cuatrimestre, intento).all()
         para_extender = [a for a in asignaciones if not Intento.es_de_algoritmo(a.intentos.lower)]
         for a in para_extender:
             a.intentos = (a.intentos.lower, None)
@@ -396,41 +396,60 @@ def seleccion_tipo_distribuir(request, anno, cuatrimestre, intento_algoritmo, in
     return distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_manual)
 
 
+def _siguiente_intento_manual(intento):
+    return Intento(intento.algoritmo, intento.manual + 1)
+
+def _cambiar_docente(anno, cuatrimestre, intento, carga_id, nuevo_turno_id, cargo_que_ocupa):
+    carga = Carga.objects.get(pk=carga_id)
+    asignaciones = Asignacion.validas_en(anno, cuatrimestre, intento).filter(carga=carga)
+    nuevo_intento = _siguiente_intento_manual(intento)
+
+    with transaction.atomic():
+        # borro instancias de IntentoRegistrado y Asignacion
+        IntentoRegistrado.objects.filter(intento__gt=intento.valor, anno=anno, cuatrimestre=cuatrimestre).delete()
+        Asignacion.objects.filter(intentos__startswith__gt=intento.valor).delete()
+        # cambio las asignaciones que empezaron antes y terminan después
+        for asignacion in Asignacion.validas_en(anno, cuatrimestre, intento).all():
+            if Intento.es_de_algoritmo(asignacion.intentos.lower):
+                asignacion.intentos = (asignacion.intentos.lower, Intento.de_algoritmo(intento.algoritmo + 1).valor)
+            else:
+                asignacion.intentos = (asignacion.intentos.lower, None)
+            asignacion.save()
+        # genero nuevo IntentoRegistrado
+        IntentoRegistrado.objects.create(intento=nuevo_intento.valor, anno=anno, cuatrimestre=cuatrimestre)
+
+    if asignaciones.count():
+        asignacion = asignaciones.first()
+        asignacion.intentos = (asignacion.intentos.lower, nuevo_intento.valor)
+        asignacion.save()
+
+    if nuevo_turno_id >= 0:
+        nuevo_turno = Turno.objects.get(pk=nuevo_turno_id)
+        Asignacion.objects.create(carga=carga,
+                                  turno=nuevo_turno,
+                                  intentos=(nuevo_intento.valor, None),
+                                  cargo_que_ocupa=cargo_que_ocupa.name)
+
+
 @login_required
 @permission_required('dborrador.add_asignacion')
 def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manual, carga_id):
     intento = Intento(intento_algoritmo, intento_manual)
-    carga = Carga.objects.get(pk=carga_id)
-    asignaciones = Asignacion.validas_en(intento).filter(carga=carga)
 
     if 'cambiar' in request.POST:
-        nuevo_intento = Intento(intento.algoritmo, intento.manual + 1)
-        IntentoRegistrado.objects.create(intento=nuevo_intento.valor, anno=anno, cuatrimestre=cuatrimestre)
 
-        if asignaciones.count():
-            asignacion = asignaciones.first()
-            asignacion.intentos = (asignacion.intentos.lower, nuevo_intento.valor)
-            asignacion.save()
-
-        nuevo_turno_id = int(request.POST['cambio_a'])
-        if nuevo_turno_id >= 0:
-            nuevo_turno = Turno.objects.get(pk=nuevo_turno_id)
-            cargo_que_ocupa = TipoDocentes[request.POST['cargo_que_ocupa']]
-            Asignacion.objects.create(carga=carga,
-                                      turno=nuevo_turno,
-                                      intentos=(nuevo_intento.valor, None),
-                                      cargo_que_ocupa=cargo_que_ocupa.name)
-
+        _cambiar_docente(anno, cuatrimestre, intento, carga_id,
+                         nuevo_turno_id=int(request.POST['cambio_a']),
+                         cargo_que_ocupa=TipoDocentes[request.POST['cargo_que_ocupa']],
+                         )
+        nuevo_intento = _siguiente_intento_manual(intento)
         distribucion_url = reverse('dborrador:distribucion',
                                    args=(anno, cuatrimestre, nuevo_intento.algoritmo, nuevo_intento.manual))
         return HttpResponseRedirect(distribucion_url)
 
-    elif 'cancelar' in request.POST:
-        distribucion_url = reverse('dborrador:distribucion',
-                                   args=(anno, cuatrimestre, intento.algoritmo, intento.manual))
-        return HttpResponseRedirect(distribucion_url)
-
     else:
+        carga = Carga.objects.get(pk=carga_id)
+        asignaciones = Asignacion.validas_en(anno, cuatrimestre, intento).filter(carga=carga)
         preferencias = Preferencia.objects.filter(preferencia__docente=carga.docente).order_by('peso_normalizado')
 
         turnos_preferidos = {p.preferencia.turno: p.peso_normalizado for p in preferencias}
@@ -456,6 +475,7 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
                    'cuatrimestre': Cuatrimestres[cuatrimestre],
                    'preferencias': preferencias,
                    'intento_algoritmo': intento_algoritmo,
+                   'es_maximo_intento': IntentoRegistrado.maximo_intento(anno, cuatrimestre) == intento,
                    'intento_manual': intento_manual,
                    'asignado': asignado,
                    **_todos_los_intentos(anno, cuatrimestre, intento_algoritmo),
@@ -466,7 +486,7 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
 
 def publicar(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
     intento = Intento(intento_algoritmo, intento_manual)
-    asignaciones = Asignacion.validas_en(intento).all()
+    asignaciones = Asignacion.validas_en(anno, cuatrimestre, intento).all()
 
     with transaction.atomic():
         for asignacion in asignaciones:
