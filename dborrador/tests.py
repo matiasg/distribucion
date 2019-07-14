@@ -112,21 +112,24 @@ class TestPaginaPrincipal(TestCase):
 class TestVerDistribucion(TestCase):
 
     def setUp(self):
+        self.anno = 2100
+        self.cuatrimestre = Cuatrimestres.P
+
         self.docente1 = Docente.objects.create(na_nombre='juan', email='mail@nada.org',
                                                telefono='1234', cargos=[CargoDedicacion.TitSim.name])
         self.docente2 = Docente.objects.create(na_nombre='jose', email='mail@nade.org',
                                                telefono='1235', cargos=[CargoDedicacion.TitSim.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
-        self.turno1 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+        self.turno1 = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                            numero=1, tipo=TipoTurno.A.name,
                                            necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        self.turno2 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+        self.turno2 = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                            numero=2, tipo=TipoTurno.A.name,
                                            necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
         self.carga1 = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitSim.name,
-                                           anno=2100, cuatrimestre=Cuatrimestres.P.name, turno=self.turno1)
+                                           anno=self.anno, cuatrimestre=self.cuatrimestre.name, turno=self.turno1)
         self.carga2 = Carga.objects.create(docente=self.docente2, cargo=CargoDedicacion.TitSim.name,
-                                           anno=2100, cuatrimestre=Cuatrimestres.P.name)
+                                           anno=self.anno, cuatrimestre=self.cuatrimestre.name)
         self.autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
         permiso = Permission.objects.get(codename='add_asignacion')
         self.autorizado.user_permissions.add(permiso)
@@ -137,12 +140,14 @@ class TestVerDistribucion(TestCase):
         Asignacion.objects.create(intentos=(Intento(1, 0).valor, Intento(2, 0).valor),
                                   carga=self.carga1, turno=self.turno1,
                                   cargo_que_ocupa=TipoDocentes.P.name)
+        IntentoRegistrado.objects.create(intento=Intento(1, 0).valor, anno=self.anno, cuatrimestre=self.cuatrimestre.name)
         response = self.client.get(reverse('dborrador:distribucion',
-                                           args=(2100, Cuatrimestres.P.name, 1, 0)))
+                                           args=(self.anno, self.cuatrimestre.name, 1, 0)),
+                                   follow=True)
         content = response.content.decode()
 
         self.assertContains(response, 'Docentes no distribuidos')
-        self.assertTrue(re.search((f'<a href="/dborrador/cambiar_docente/2100/P/1/0/{self.carga2.id}">'
+        self.assertTrue(re.search((f'<a href="/dborrador/cambiar_docente/{self.anno}/{self.cuatrimestre.name}/1/0/{self.carga2.id}">'
                                    f'\s*{self.docente2.nombre}'), content, flags=re.DOTALL),
                         'No figura un docente no distribuido')
 
@@ -150,6 +155,7 @@ class TestVerDistribucion(TestCase):
         Asignacion.objects.create(intentos=(Intento(1, 0).valor, Intento(2, 0).valor),
                                   carga=self.carga1, turno=self.turno1,
                                   cargo_que_ocupa=TipoDocentes.P.name)
+        IntentoRegistrado.objects.create(intento=Intento(1, 0).valor, anno=self.anno, cuatrimestre=self.cuatrimestre.name)
         now = timezone.now()
         pd1 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1, fecha_encuesta=now)
         pd2 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno2, peso=1, fecha_encuesta=now)
@@ -157,7 +163,8 @@ class TestVerDistribucion(TestCase):
         Preferencia.objects.create(preferencia=pd2, peso_normalizado=0.5)
 
         response = self.client.get(reverse('dborrador:distribucion',
-                                           args=(2100, Cuatrimestres.P.name, 1, 0)))
+                                           args=(self.anno, self.cuatrimestre.name, 1, 0)),
+                                   follow=True)
         content = response.content.decode()
         self.assertTrue(re.search((f'Encuesta de jose\s*:'
                                    f'(<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*'
@@ -170,7 +177,7 @@ class TestVerDistribucion(TestCase):
         pd = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1, fecha_encuesta=now,
                                                 cargo=Cargos.Tit.name)
         Preferencia.objects.create(preferencia=pd, peso_normalizado=1)
-        response = self.client.get(reverse('dborrador:distribucion', args=(2100, Cuatrimestres.P.name, 1, 0)),
+        response = self.client.get(reverse('dborrador:distribucion', args=(self.anno, self.cuatrimestre.name, 1, 0)),
                                    follow=True)
 
         content = response.content.decode()
@@ -188,7 +195,8 @@ class TestVerDistribucion(TestCase):
         Asignacion.objects.create(intentos=(Intento(1, 0).valor, Intento(2, 0).valor),
                                   carga=self.carga1, turno=self.turno1,
                                   cargo_que_ocupa=TipoDocentes.P.name)
-        response = self.client.get(reverse('dborrador:espiar_distribucion', args=(2100, Cuatrimestres.P.name, 1, 0)),
+        IntentoRegistrado.objects.create(intento=Intento(1, 0).valor, anno=self.anno, cuatrimestre=self.cuatrimestre.name)
+        response = self.client.get(reverse('dborrador:espiar_distribucion', args=(self.anno, self.cuatrimestre.name, 1, 0)),
                                    follow=True)
         self.assertContains(response, 'intento 1 : 0')
         self.assertContains(response, self.materia.nombre.upper())
