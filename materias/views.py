@@ -183,6 +183,13 @@ def administrar_docentes(request, anno, cuatrimestre):
 @permission_required('dborrador.add_asignacion')
 def administrar_cargas_docentes(request, anno, cuatrimestre):
     docentes_y_cargas_nuestras = {d: d.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre) for d in Docente.objects.all()}
+    # todos los docentes, con y sin cargas en este cuatrimestre
+    docentes = Docente.objects.all()
+    docentes_con_cargas = {d: cargas for d, cargas in docentes_y_cargas_nuestras.items()
+                           if cargas.count() > 0}
+    docentes_sin_cargas = sorted(set(docentes) - set(docentes_con_cargas),
+                                 key=lambda d: d.na_apellido)
+    # docentes con diferencias con la encuesta
     docentes_y_cargas_encuesta = {o.docente: o.cargas for o in OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all()}
     # calculo diferencias contra encuesta
     diferencias_encuesta = {d: (len(docentes_y_cargas_nuestras[d]),
@@ -204,6 +211,8 @@ def administrar_cargas_docentes(request, anno, cuatrimestre):
 
     context = {'anno': anno,
                'cuatrimestre': cuatrimestre,
+               'docentes_con_cargas': docentes_con_cargas,
+               'docentes_sin_cargas': docentes_sin_cargas,
                'diferencias_encuesta': diferencias_encuesta,
                'docentes_sin_encuesta': docentes_sin_encuesta,
                }
