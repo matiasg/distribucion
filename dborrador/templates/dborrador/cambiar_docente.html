@@ -68,7 +68,11 @@ Cambiar a {{ carga.docente }} de turno
         </p>
 
         <div id="cambiar_docente_dialogo" title="¿Seguro?">
+            {% if es_maximo_intento %}
+            (obs: No hay nada que se vaya a perder)
+            {% else %}
             <p> Mirá que perdés lo que viene después </p>
+            {% endif %}
         </div>
 
     </form>

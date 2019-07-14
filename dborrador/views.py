@@ -456,6 +456,7 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
                    'cuatrimestre': Cuatrimestres[cuatrimestre],
                    'preferencias': preferencias,
                    'intento_algoritmo': intento_algoritmo,
+                   'es_maximo_intento': IntentoRegistrado.maximo_intento(anno, cuatrimestre) == intento,
                    'intento_manual': intento_manual,
                    'asignado': asignado,
                    **_todos_los_intentos(anno, cuatrimestre, intento_algoritmo),
