@@ -425,11 +425,6 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
                                    args=(anno, cuatrimestre, nuevo_intento.algoritmo, nuevo_intento.manual))
         return HttpResponseRedirect(distribucion_url)
 
-    elif 'cancelar' in request.POST:
-        distribucion_url = reverse('dborrador:distribucion',
-                                   args=(anno, cuatrimestre, intento.algoritmo, intento.manual))
-        return HttpResponseRedirect(distribucion_url)
-
     else:
         preferencias = Preferencia.objects.filter(preferencia__docente=carga.docente).order_by('peso_normalizado')
 
