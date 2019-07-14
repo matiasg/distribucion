@@ -251,8 +251,8 @@ class TestDistribuir(TestCase):
         # el formulario apunta a la misma página y hay turnos en el select
         response = self.client.get(cambiar_url, follow=True)
         self.assertContains(response, cambiar_url)
-        link = f'<option value="{self.turno1.id}"  disabled>{self.turno1}</option>'
-        self.assertContains(response, link)
+        link = f'<option value="{self.turno1.id}"\s*>\s*{self.turno1}\s*</option>'
+        self.assertTrue(re.search(link, response.content.decode()))
         # con post se agrega la asignación
         self.client.post(cambiar_url,
                          {'cambiar': True, 'cambio_a': self.turno1.id, 'cargo_que_ocupa': TipoDocentes.A2.name},
