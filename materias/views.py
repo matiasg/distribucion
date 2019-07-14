@@ -158,7 +158,8 @@ def administrar_alumnos(request, anno, cuatrimestre):
 @login_required
 @permission_required('dborrador.add_asignacion')
 def administrar_docentes(request, anno, cuatrimestre):
-    key_to_field = {Turno: {'necesidadprof': ('necesidad_prof', int),
+    key_to_field = {Turno: {'alumnos': ('alumnos', int),
+                            'necesidadprof': ('necesidad_prof', int),
                             'necesidadjtp': ('necesidad_jtp', int),
                             'necesidaday1': ('necesidad_ay1', int),
                             'necesidaday2': ('necesidad_ay2', int),
