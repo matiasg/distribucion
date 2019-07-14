@@ -1,4 +1,5 @@
 $(document).ready(function(){
+    $( "#tabs" ).tabs();
     $( ".borrar_turno_dialogo" ).dialog({ autoOpen: false });
     $( ".borrar_horario_dialogo" ).dialog({ autoOpen: false });
     $( ".cambiar_carga_publicada_dialogo" ).dialog({ autoOpen: false });

@@ -183,7 +183,14 @@ def administrar_docentes(request, anno, cuatrimestre):
 @permission_required('dborrador.add_asignacion')
 def administrar_cargas_docentes(request, anno, cuatrimestre):
     docentes_y_cargas_nuestras = {d: d.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre) for d in Docente.objects.all()}
-    docentes_y_cargas_encuesta = {o.docente: o.cargas for o in OtrosDatos.objects.all()}
+    # todos los docentes, con y sin cargas en este cuatrimestre
+    docentes = Docente.objects.all()
+    docentes_con_cargas = {d: cargas for d, cargas in docentes_y_cargas_nuestras.items()
+                           if cargas.count() > 0}
+    docentes_sin_cargas = sorted(set(docentes) - set(docentes_con_cargas),
+                                 key=lambda d: d.na_apellido)
+    # docentes con diferencias con la encuesta
+    docentes_y_cargas_encuesta = {o.docente: o.cargas for o in OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all()}
     # calculo diferencias contra encuesta
     diferencias_encuesta = {d: (len(docentes_y_cargas_nuestras[d]),
                                 docentes_y_cargas_encuesta[d],
@@ -204,6 +211,8 @@ def administrar_cargas_docentes(request, anno, cuatrimestre):
 
     context = {'anno': anno,
                'cuatrimestre': cuatrimestre,
+               'docentes_con_cargas': docentes_con_cargas,
+               'docentes_sin_cargas': docentes_sin_cargas,
                'diferencias_encuesta': diferencias_encuesta,
                'docentes_sin_encuesta': docentes_sin_encuesta,
                }
@@ -247,7 +256,12 @@ def administrar_cargas_de_un_docente(request, anno, cuatrimestre, docente_id):
             cargas_pedidas = 0
             completo_la_encuesta = False
         cargas = docente.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre)
-        cargas_por_tipo = {cargo: cargas.filter(cargo=cargo).count() for cargo in docente.cargos}
+        cargas_por_tipo = dict(Counter(carga.cargo for carga in cargas))
+        # Corrección para el caso en que un docente no tiene cargas de un cargo.
+        # Esto pasa por ejemplo si hay diferencias entre docente.cargos y cargas.cargo
+        for cargo in docente.cargos:
+            if cargo not in cargas_por_tipo:
+                cargas_por_tipo[cargo] = 0
 
         context = {
             'anno': anno,

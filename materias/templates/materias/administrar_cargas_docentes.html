@@ -3,47 +3,106 @@
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
 
-<form action="{% url 'materias:administrar_cargas_docentes' anno cuatrimestre %}" method="post">
-{% csrf_token %}
+<link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
+<script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
+<script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
+<script src="{% static 'materias/scripts.js' %}"></script>
 
-<h2>Docentes con pedidos distintos a los que tenemos nosotros</h2>
-<table id=cargas_docentes>
-    <thead>
-        <td>Docente</td>
-        <td>Cargos</td>
-        <td>Asignadas</td>
-        <td>Pedidas</td>
-        <td>Comentarios</td>
-    </thead>
 
-    {% for docente, cargas_pedidas in diferencias_encuesta.items %}
-    <tr>
-        <td id=docente>
-            <a href="{% url 'materias:administrar_cargas_un_docente' anno cuatrimestre docente.id %}">{{ docente }}</a>
-        </td>
-        <td>{{ docente.cargos|join:", " }}</td>
-        <td id=numero>{{ cargas_pedidas.0 }}</td>
-        <td id=numero>{{ cargas_pedidas.1 }}</td>
-        <td id=comentario>{{ cargas_pedidas.2.comentario|linebreaksbr }}</td>
-    </tr>
-    {% endfor %}
-</table>
+<div id="actuar">
+    <a href="{% url 'materias:administrar' %}">Volver a la página de administración</a>
+</div>
 
-<h2>Docentes que no completaron la encuesta pero creemos que deberían haberlo hecho</h2>
-<table id="cargas_docentes">
-    <thead>
-        <td>Docente</td>
-        <td>Cargos</td>
-        <td>Asignadas</td>
-    </thead>
+<div id="tabs">
+    <ul>
+        <li><a href="#con_cargas">Con cargas</a></li>
+        <li><a href="#sin_cargas">Sin cargas</a></li>
+        <li><a href="#con_diferencias">Con diferencias</a></li>
+        <li><a href="#sin_encuesta">Sin encuesta</a></li>
+    </ul>
 
-    {% for docente,cargas in docentes_sin_encuesta.items %}
-    <tr>
-        <td id="docente"><a href="{% url 'materias:administrar_cargas_un_docente' anno cuatrimestre docente.id %}">{{ docente }}</a></td>
-        <td>{{ docente.cargos|join:", " }}</td>
-        <td id=numero>{{ cargas }}</td>
-    </tr>
-    {% endfor %}
-</table>
+    <div id="con_cargas">
+        <h2>Docentes con cargas en este cuatrimestre</h2>
+        <table id="cargas_docentes">
+            <thead>
+                <td>Docente</td>
+                <td>Cargos</td>
+                <td>Asignadas</td>
+            </thead>
+            <tbody>
+                {% for docente, cargas in docentes_con_cargas.items %}
+                <tr>
+                    <td id=docente>
+                        <a href="{% url 'materias:administrar_cargas_un_docente' anno cuatrimestre docente.id %}">{{ docente }}</a>
+                    </td>
+                    <td>{{ docente.cargos|join:", " }}</td>
+                    <td>{{ cargas.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-</form>
+    <div id="sin_cargas">
+        <h2>Docentes sin cargas en este cuatrimestre</h2>
+        <table id="cargas_docentes">
+            <thead>
+                <td>Docente</td>
+                <td>Cargos</td>
+            </thead>
+            <tbody>
+                {% for docente in docentes_sin_cargas %}
+                <tr>
+                    <td id=docente>
+                        <a href="{% url 'materias:administrar_cargas_un_docente' anno cuatrimestre docente.id %}">{{ docente }}</a>
+                    </td>
+                    <td>{{ docente.cargos|join:", " }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="con_diferencias">
+        <h2>Docentes con pedidos distintos a los que tenemos nosotros</h2>
+        <table id=cargas_docentes>
+            <thead>
+                <td>Docente</td>
+                <td>Cargos</td>
+                <td>Asignadas</td>
+                <td>Pedidas</td>
+                <td>Comentarios</td>
+            </thead>
+            {% for docente, cargas_pedidas in diferencias_encuesta.items %}
+            <tr>
+                <td id=docente>
+                    <a href="{% url 'materias:administrar_cargas_un_docente' anno cuatrimestre docente.id %}">{{ docente }}</a>
+                </td>
+                <td>{{ docente.cargos|join:", " }}</td>
+                <td id=numero>{{ cargas_pedidas.0 }}</td>
+                <td id=numero>{{ cargas_pedidas.1 }}</td>
+                <td id=comentario>{{ cargas_pedidas.2.comentario|linebreaksbr }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div id="sin_encuesta">
+        <h2>Docentes que no completaron la encuesta pero creemos que deberían haberlo hecho</h2>
+        <table id="cargas_docentes">
+            <thead>
+                <td>Docente</td>
+                <td>Cargos</td>
+                <td>Asignadas</td>
+            </thead>
+            {% for docente,cargas in docentes_sin_encuesta.items %}
+            <tr>
+                <td id="docente"><a href="{% url 'materias:administrar_cargas_un_docente' anno cuatrimestre docente.id %}">{{ docente }}</a></td>
+                <td>{{ docente.cargos|join:", " }}</td>
+                <td id=numero>{{ cargas }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+</div>
