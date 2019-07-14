@@ -13,7 +13,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required, login_required
 
 
-from .models import Preferencia, Asignacion, Comentario, Intento
+from .models import Preferencia, Asignacion, Comentario, Intento, IntentoRegistrado
 from .misc import Distribucion
 from materias.models import (Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria,
                              choice_enum, AnnoCuatrimestre, TipoDocentes,)
@@ -72,29 +72,18 @@ def preparar(request, anno, cuatrimestre):
     return HttpResponseRedirect(distribucion_url)
 
 
-def _todos_los_intentos(intento_algoritmo):
-    asignaciones = Asignacion.objects.all()
+def _todos_los_intentos(anno, cuatrimestre, intento_algoritmo):
+    intentos = IntentoRegistrado.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
 
-    intentos_fin = {a.intentos.upper for a in asignaciones} - {None}
-    intentos_fin = {Intento.de_valor(v) for v in intentos_fin}
-
-    intentos_comienzo = {a.intentos.lower for a in asignaciones} - {None}
-    intentos_comienzo = {Intento.de_valor(v) for v in intentos_comienzo}
-
-    if intentos_comienzo:
-        max_intento = max(i.valor for i in intentos_comienzo)
-        max_intento_algoritmo = max(i.algoritmo for i in intentos_comienzo)
-        intentos_manuales = {i.manual for i in intentos_comienzo if i.algoritmo == intento_algoritmo}
-        max_intento_manual = max(intentos_manuales) if intentos_manuales else 0
-    else:
-        max_intento, max_intento_algoritmo, max_intento_manual = 0, 0, 0
+    intentos_manuales_con_algoritmo = {Intento.de_valor(i.intento).manual
+                                       for i in intentos
+                                       if Intento.de_valor(i.intento).algoritmo == intento_algoritmo}
+    max_intento = IntentoRegistrado.maximo_intento(anno, cuatrimestre)
 
     return {
-        'intentos_fin': intentos_fin,
-        'intentos_comienzo': intentos_comienzo,
-        'max_intento': max_intento,
-        'max_intento_algoritmo': max_intento_algoritmo,
-        'max_intento_manual': max_intento_manual,
+        'max_intento': max_intento.valor,
+        'max_intento_algoritmo': max_intento.algoritmo,
+        'max_intento_manual': max(intentos_manuales_con_algoritmo) if intentos_manuales_con_algoritmo else 0,
     }
 
 
@@ -118,7 +107,7 @@ def espiar_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_
                'intento_manual': intento.manual,
                'intento': intento.valor,
                'tipos': list(TipoDocentes),
-               **_todos_los_intentos(intento.algoritmo),
+               **_todos_los_intentos(anno, cuatrimestre, intento.algoritmo),
                }
 
     obligatoriedades = {TipoMateria.B.name: 'Obligatorias',
@@ -150,8 +139,10 @@ def espiar_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_
 def _acota_intentos_para_ver(anno, cuatrimestre, intento_algoritmo, intento_manual):
     '''devuelve (intento_algoritmo, intento_manual) más cercanos a los de entrada
     de manera que haya asignaciones con ese intento.
+
+    TODO: re-escribirla usando directamente IntentoRegistrado.max_intento()
     '''
-    intentos = _todos_los_intentos(intento_algoritmo)
+    intentos = _todos_los_intentos(anno, cuatrimestre, intento_algoritmo)
 
     if intento_algoritmo < 0:
         return _acota_intentos_para_ver(anno, cuatrimestre, 0, intento_manual)
@@ -194,7 +185,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
                'intento_manual': intento_manual,
                'intento': intento.valor,
                'tipos': list(TipoDocentes),
-               **_todos_los_intentos(intento_algoritmo),
+               **_todos_los_intentos(anno, cuatrimestre, intento_algoritmo),
                }
 
     turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
@@ -329,6 +320,8 @@ def hacer_distribucion(anno_cuat, tipo, intento_algoritmo):
     with transaction.atomic():
 
         logger.info('Voy a poner asignaciones para %s cargas de %s', len(distribucion), tipo.value)
+        IntentoRegistrado.objects.create(intento=intento.valor, anno=anno_cuat.anno, cuatrimestre=anno_cuat.cuatrimestre)
+
         intento_hasta = Intento.de_algoritmo(intento_algoritmo + 1)
         intentos_para_distribuidos = (intento.valor, intento_hasta.valor)
         for carga_id, turno_id in distribucion:
@@ -359,6 +352,9 @@ def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_man
 
     with transaction.atomic():
         intento = Intento(intento_algoritmo, intento_manual)
+
+        IntentoRegistrado.objects.filter(intento__gt=intento.valor, anno=anno, cuatrimestre=cuatrimestre).delete()
+
         para_borrar = Asignacion.objects.filter(intentos__startswith__gt=intento.valor)
         logger.warning('Borro %d asignaciones', para_borrar.count())
         para_borrar.delete()
@@ -409,6 +405,7 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
 
     if 'cambiar' in request.POST:
         nuevo_intento = Intento(intento.algoritmo, intento.manual + 1)
+        IntentoRegistrado.objects.create(intento=nuevo_intento.valor, anno=anno, cuatrimestre=cuatrimestre)
 
         if asignaciones.count():
             asignacion = asignaciones.first()
@@ -457,7 +454,7 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
                    'intento_algoritmo': intento_algoritmo,
                    'intento_manual': intento_manual,
                    'asignado': asignado,
-                   **_todos_los_intentos(intento_algoritmo),
+                   **_todos_los_intentos(anno, cuatrimestre, intento_algoritmo),
                    }
 
         return render(request, 'dborrador/cambiar_docente.html', context)
@@ -475,7 +472,8 @@ def publicar(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
             logger.debug('Estoy publicando: %s', carga)
 
         logger.info('publiqué %d asignaciones', asignaciones.count())
-        borradas, _ = Asignacion.objects.all().delete()
+        IntentoRegistrado.objects.filter(anno=anno, cuatrimestre=cuatrimestre).delete()
+        borradas, _ = Asignacion.objects.filter(carga__anno=anno, carga__cuatrimestre=cuatrimestre).all().delete()
         logger.info('y ahora borré %d de dborrador', borradas)
 
     redirect = reverse('materias:por_anno_y_cuatrimestre', args=(f'{anno}{Cuatrimestres[cuatrimestre].value}',))
