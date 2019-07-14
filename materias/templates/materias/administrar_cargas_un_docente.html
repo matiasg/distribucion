@@ -3,7 +3,7 @@
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
 
-<div class="titulo">Cambio en las cargas docentes de {{ docente }}</div>
+<h1>Cambio en las cargas docentes de {{ docente }}</h1>
 
 <div id="actuar">
     <a href="{% url 'materias:administrar_cargas_docentes' anno cuatrimestre %}">Volver a la página de cargas_docentes</a>
@@ -19,6 +19,8 @@
 
 <form action="{% url 'materias:administrar_cargas_un_docente' anno cuatrimestre docente.id %}" method="post">
     {% csrf_token %}
+
+    <input type=submit name="salvar" value="salvar">
 
     <table id=cargas>
         <thead>
@@ -38,6 +40,4 @@
         </tbody>
 
     </table>
-
-    <input type=submit name="salvar" value="salvar">
 </form>
