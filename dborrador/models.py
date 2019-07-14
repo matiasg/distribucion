@@ -49,8 +49,8 @@ class Asignacion(models.Model):
         return f'{self.carga.docente} -> {self.turno}'
 
     @classmethod
-    def validas_en(cls, intento):
-        return cls.objects.filter(intentos__contains=intento.valor)
+    def validas_en(cls, anno, cuatrimestre, intento):
+        return cls.objects.filter(carga__anno=anno, carga__cuatrimestre=cuatrimestre, intentos__contains=intento.valor)
 
     @property
     def es_manual(self):
