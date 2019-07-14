@@ -396,49 +396,60 @@ def seleccion_tipo_distribuir(request, anno, cuatrimestre, intento_algoritmo, in
     return distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_manual)
 
 
+def _siguiente_intento_manual(intento):
+    return Intento(intento.algoritmo, intento.manual + 1)
+
+def _cambiar_docente(anno, cuatrimestre, intento, carga_id, nuevo_turno_id, cargo_que_ocupa):
+    carga = Carga.objects.get(pk=carga_id)
+    asignaciones = Asignacion.validas_en(intento).filter(carga=carga)
+    nuevo_intento = _siguiente_intento_manual(intento)
+
+    with transaction.atomic():
+        # borro instancias de IntentoRegistrado y Asignacion
+        IntentoRegistrado.objects.filter(intento__gt=intento.valor, anno=anno, cuatrimestre=cuatrimestre).delete()
+        Asignacion.objects.filter(intentos__startswith__gt=intento.valor).delete()
+        # cambio las asignaciones que empezaron antes y terminan después
+        for asignacion in Asignacion.validas_en(intento).all():
+            if Intento.es_de_algoritmo(asignacion.intentos.lower):
+                asignacion.intentos = (asignacion.intentos.lower, Intento.de_algoritmo(intento.algoritmo + 1).valor)
+            else:
+                asignacion.intentos = (asignacion.intentos.lower, None)
+            asignacion.save()
+        # genero nuevo IntentoRegistrado
+        IntentoRegistrado.objects.create(intento=nuevo_intento.valor, anno=anno, cuatrimestre=cuatrimestre)
+
+    if asignaciones.count():
+        asignacion = asignaciones.first()
+        asignacion.intentos = (asignacion.intentos.lower, nuevo_intento.valor)
+        asignacion.save()
+
+    if nuevo_turno_id >= 0:
+        nuevo_turno = Turno.objects.get(pk=nuevo_turno_id)
+        Asignacion.objects.create(carga=carga,
+                                  turno=nuevo_turno,
+                                  intentos=(nuevo_intento.valor, None),
+                                  cargo_que_ocupa=cargo_que_ocupa.name)
+
+
 @login_required
 @permission_required('dborrador.add_asignacion')
 def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manual, carga_id):
     intento = Intento(intento_algoritmo, intento_manual)
-    carga = Carga.objects.get(pk=carga_id)
-    asignaciones = Asignacion.validas_en(intento).filter(carga=carga)
 
     if 'cambiar' in request.POST:
-        nuevo_intento = Intento(intento.algoritmo, intento.manual + 1)
 
-        with transaction.atomic():
-            # borro instancias de IntentoRegistrado y Asignacion
-            IntentoRegistrado.objects.filter(intento__gt=intento.valor, anno=anno, cuatrimestre=cuatrimestre).delete()
-            Asignacion.objects.filter(intentos__startswith__gt=intento.valor).delete()
-            # cambio las asignaciones que empezaron antes y terminan después
-            for asignacion in Asignacion.validas_en(intento).all():
-                if Intento.es_de_algoritmo(asignacion.intentos.lower):
-                    asignacion.intentos = (asignacion.intentos.lower, Intento.de_algoritmo(intento.algoritmo + 1).valor)
-                else:
-                    asignacion.intentos = (asignacion.intentos.lower, None)
-                asignacion.save()
-            # genero nuevo IntentoRegistrado
-            IntentoRegistrado.objects.create(intento=nuevo_intento.valor, anno=anno, cuatrimestre=cuatrimestre)
-
-        if asignaciones.count():
-            asignacion = asignaciones.first()
-            asignacion.intentos = (asignacion.intentos.lower, nuevo_intento.valor)
-            asignacion.save()
-
-        nuevo_turno_id = int(request.POST['cambio_a'])
-        if nuevo_turno_id >= 0:
-            nuevo_turno = Turno.objects.get(pk=nuevo_turno_id)
-            cargo_que_ocupa = TipoDocentes[request.POST['cargo_que_ocupa']]
-            Asignacion.objects.create(carga=carga,
-                                      turno=nuevo_turno,
-                                      intentos=(nuevo_intento.valor, None),
-                                      cargo_que_ocupa=cargo_que_ocupa.name)
-
+        _cambiar_docente(anno, cuatrimestre, intento, carga_id,
+                         nuevo_turno_id=int(request.POST['cambio_a']),
+                         cargo_que_ocupa=TipoDocentes[request.POST['cargo_que_ocupa']],
+                         )
+        nuevo_intento = _siguiente_intento_manual(intento)
         distribucion_url = reverse('dborrador:distribucion',
                                    args=(anno, cuatrimestre, nuevo_intento.algoritmo, nuevo_intento.manual))
         return HttpResponseRedirect(distribucion_url)
 
     else:
+        carga = Carga.objects.get(pk=carga_id)
+        asignaciones = Asignacion.validas_en(intento).filter(carga=carga)
         preferencias = Preferencia.objects.filter(preferencia__docente=carga.docente).order_by('peso_normalizado')
 
         turnos_preferidos = {p.preferencia.turno: p.peso_normalizado for p in preferencias}
