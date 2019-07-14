@@ -5,6 +5,10 @@
 
 <div class="titulo">Cambio en las cargas docentes de {{ docente }}</div>
 
+<div id="actuar">
+    <a href="{% url 'materias:administrar_cargas_docentes' anno cuatrimestre %}">Volver a la página de cargas_docentes</a>
+</div>
+
 <div class="subtitulo">
     Cargo{{ docente.cargos|length|pluralize }}: {% for cargo in docente.cargos %}{{ cargo }}{% endfor %}
 </div>
