@@ -405,7 +405,20 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
 
     if 'cambiar' in request.POST:
         nuevo_intento = Intento(intento.algoritmo, intento.manual + 1)
-        IntentoRegistrado.objects.create(intento=nuevo_intento.valor, anno=anno, cuatrimestre=cuatrimestre)
+
+        with transaction.atomic():
+            # borro instancias de IntentoRegistrado y Asignacion
+            IntentoRegistrado.objects.filter(intento__gt=intento.valor, anno=anno, cuatrimestre=cuatrimestre).delete()
+            Asignacion.objects.filter(intentos__startswith__gt=intento.valor).delete()
+            # cambio las asignaciones que empezaron antes y terminan después
+            for asignacion in Asignacion.validas_en(intento).all():
+                if Intento.es_de_algoritmo(asignacion.intentos.lower):
+                    asignacion.intentos = (asignacion.intentos.lower, Intento.de_algoritmo(intento.algoritmo + 1).valor)
+                else:
+                    asignacion.intentos = (asignacion.intentos.lower, None)
+                asignacion.save()
+            # genero nuevo IntentoRegistrado
+            IntentoRegistrado.objects.create(intento=nuevo_intento.valor, anno=anno, cuatrimestre=cuatrimestre)
 
         if asignaciones.count():
             asignacion = asignaciones.first()
