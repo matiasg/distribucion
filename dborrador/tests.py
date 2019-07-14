@@ -7,7 +7,7 @@ from psycopg2.extras import NumericRange
 import re
 
 from dborrador.models import Preferencia, Asignacion, Intento, IntentoRegistrado
-from dborrador.views import hacer_distribucion, _cambiar_docente
+from dborrador.views import hacer_distribucion, _cambiar_docente, NoTurno
 from materias.models import (Docente, Materia, Turno, Cuatrimestres, Cargos, Carga, CargoDedicacion,
                              TipoTurno, TipoMateria, AnnoCuatrimestre)
 from materias.misc import TipoDocentes, Mapeos
@@ -270,9 +270,26 @@ class TestDistribuir(TestCase):
         # (0, 3) d2 -> t1
         # cambio en (0, 1): d1 -> NoTurno
         # tienen que estar ambos no distribuidos
-        intento = Intento(0, 0)
-        _cambiar_docente(self.ac.anno, self.ac.cuatrimestre, intento, self.carga1.id, self.turno1.id, Mapeos.tipo_de_carga(self.carga1))
+        _cambiar_docente(self.ac.anno, self.ac.cuatrimestre, Intento(0, 0), self.carga1.id, self.turno1.id, Mapeos.tipo_de_carga(self.carga1))
         self.assertEqual(IntentoRegistrado.maximo_intento(self.ac.anno, self.ac.cuatrimestre), Intento(0, 1))
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 1)).count(), 1)
+
+        _cambiar_docente(self.ac.anno, self.ac.cuatrimestre, Intento(0, 1), self.carga1.id, self.turno2.id, Mapeos.tipo_de_carga(self.carga1))
+        self.assertEqual(IntentoRegistrado.maximo_intento(self.ac.anno, self.ac.cuatrimestre), Intento(0, 2))
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 1)).count(), 1)
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 2)).count(), 1)
+
+        _cambiar_docente(self.ac.anno, self.ac.cuatrimestre, Intento(0, 2), self.carga2.id, self.turno1.id, Mapeos.tipo_de_carga(self.carga2))
+        self.assertEqual(IntentoRegistrado.maximo_intento(self.ac.anno, self.ac.cuatrimestre), Intento(0, 3))
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 1)).count(), 1)
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 2)).count(), 1)
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 3)).count(), 2)
+
+        _cambiar_docente(self.ac.anno, self.ac.cuatrimestre, Intento(0, 1), self.carga1.id, NoTurno().id, Mapeos.tipo_de_carga(self.carga1))
+        self.assertEqual(IntentoRegistrado.maximo_intento(self.ac.anno, self.ac.cuatrimestre), Intento(0, 2))
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 2)).count(), 0)
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 3)).count(), 0)
+        self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 1)).count(), 1)
 
 
 class TestModel(TestCase):
