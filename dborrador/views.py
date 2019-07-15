@@ -558,10 +558,10 @@ def exportar_excel(request, anno, cuatrimestre, intento_algoritmo, intento_manua
     font_style = xlwt.XFStyle()
     for materia, turnos in info.items():
         for turno in turnos:
-            ws.write(fila, 0, materia, font_style)
-            for col, dato in enumerate(turno):
-                ws.write(fila, col, dato, font_style)
             fila += 1
+            ws.write(fila, 0, materia, font_style)
+            for col, dato in enumerate(turno, 1):
+                ws.write(fila, col, dato, font_style)
 
     wb.save(response)
     return response
