@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict, namedtuple
 from time import monotonic
 from locale import strxfrm
+import csv
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -15,7 +16,7 @@ from django.contrib.auth.decorators import permission_required, login_required
 
 from .models import Preferencia, Asignacion, Comentario, Intento, IntentoRegistrado
 from .misc import Distribucion
-from materias.models import (Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria,
+from materias.models import (Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria, TipoTurno,
                              choice_enum, AnnoCuatrimestre, TipoDocentes,)
 from materias.misc import Mapeos, NoTurno
 from encuestas.models import PreferenciasDocente, OtrosDatos
@@ -482,6 +483,42 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
                    }
 
         return render(request, 'dborrador/cambiar_docente.html', context)
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def exportar_csv(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="distribucion.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['materia', 'tipo', 'numero', 'docentes'])
+
+    turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
+    anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
+    intento = Intento(intento_algoritmo, intento_manual)
+
+    asignaciones = Asignacion.validas_en(anno, cuatrimestre, intento)
+    asignaciones_fijas = Distribucion.ya_distribuidas_por_cargo(anno_cuat)
+
+    for obligatoriedad in TipoMateria:
+        tmaterias = Materia.objects.filter(obligatoriedad=obligatoriedad.name)
+
+        for materia in tmaterias:
+            for turno in sorted(materia.turno_set.filter(anno=anno, cuatrimestre=cuatrimestre)):
+
+                docentes = [a.carga.docente.nombre for a in asignaciones.filter(turno=turno).all()]
+                docentes += [c.docente.nombre for c in turno.carga_set.all()]
+
+                logger.info('docentes: %s', docentes)
+
+                writer.writerow([
+                    materia.nombre,
+                    TipoTurno[turno.tipo].value,
+                    turno.numero,
+                    ' - '.join(docentes)
+                ])
+    return response
+
 
 
 def publicar(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
