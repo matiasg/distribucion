@@ -504,12 +504,11 @@ def exportar_csv(request, anno, cuatrimestre, intento_algoritmo, intento_manual)
         tmaterias = Materia.objects.filter(obligatoriedad=obligatoriedad.name)
 
         for materia in tmaterias:
+            logger.info('exporto %s', materia.nombre)
             for turno in sorted(materia.turno_set.filter(anno=anno, cuatrimestre=cuatrimestre)):
 
                 docentes = [a.carga.docente.nombre for a in asignaciones.filter(turno=turno).all()]
                 docentes += [c.docente.nombre for c in turno.carga_set.all()]
-
-                logger.info('docentes: %s', docentes)
 
                 writer.writerow([
                     materia.nombre,
