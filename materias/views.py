@@ -95,6 +95,8 @@ def administrar(request):
         return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
     elif 'turnos_docentes' in request.POST:
         return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
+    elif 'exportar_informacion' in request.POST:
+        return HttpResponseRedirect(reverse('materias:exportar_informacion', args=(anno, cuatrimestre)))
     elif 'cargas_docentes' in request.POST:
         return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
     elif 'cargas_docentes_publicadas' in request.POST:
@@ -403,3 +405,9 @@ def borrar_horario(request, horario_id):
     turno = horario.turno
     horario.delete()
     return HttpResponseRedirect(reverse('materias:cambiar_turno', args=(turno.id,)))
+
+
+@login_required
+@permission_required('materias.add_turno')
+def exportar_informacion(request, anno, cuatrimestre):
+    pass
