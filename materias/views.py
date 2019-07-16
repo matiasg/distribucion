@@ -1,4 +1,4 @@
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.shortcuts import render
 from django.db import transaction
@@ -410,4 +410,39 @@ def borrar_horario(request, horario_id):
 @login_required
 @permission_required('materias.add_turno')
 def exportar_informacion(request, anno, cuatrimestre):
-    pass
+    if 'info_anual' in request.POST:
+        import xlwt
+        response = HttpResponse(content_type='application/ms-excel')
+        response['Content-Disposition'] = 'attachment; filename="turnos_{{ anno }}.xls"'
+
+        wb = xlwt.Workbook(encoding='utf-8')
+        ws = wb.add_sheet('Distribucion')
+
+        fila = 0
+        font_style = xlwt.XFStyle()
+        font_style.font.bold = True
+        # poner acá encabezados
+        font_style = xlwt.XFStyle()
+        turnos = Turno.objects.filter(anno=anno)
+        materias = Materia.objects.order_by('obligatoriedad', 'nombre')
+
+        for materia in materias:
+            for cuatrimestre in Cuatrimestres:
+                for turno in turnos.filter(materia=materia, cuatrimestre=cuatrimestre.name):
+                    fila += 1
+                    ws.write(fila, 0, materia.nombre, font_style)
+                    ws.write(fila, 1, cuatrimestre.value, font_style)
+                    ws.write(fila, 2, TipoTurno[turno.tipo].value, font_style)
+                    ws.write(fila, 3, turno.horarios_info().diayhora, font_style)
+                    ws.write(fila, 4, turno.alumnos, font_style)
+                    ws.write(fila, 5, ' - '.join(c.docente.nombre for c in turno.carga_set.all()), font_style)
+
+        wb.save(response)
+        return response
+
+    else:
+        context = {
+            'anno': anno,
+            'cuatrimestre': cuatrimestre,
+        }
+        return render(request, 'materias/exportar_informacion.html', context)

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<form action="{% url 'materias:exportar_informacion' anno cuatrimestre %}" method="post">
+{% csrf_token %}
+
+        <ul>
+            <li>
+                <input type="submit" name="info_anual" value="Exportar las materias de {{ anno }}">
+            </li>
+        </ul>
+
+</form>
