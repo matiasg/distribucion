@@ -75,9 +75,9 @@ class TipoTurno(Enum):
 
 
 class Cuatrimestres(Enum):
+    V = 'V'
     P = '1'
     S = '2'
-    V = 'V'
 
 
 class TipoMateria(Enum):
