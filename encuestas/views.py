@@ -125,14 +125,14 @@ def _modificar_contexto_con_datos_request(context, datos):
     context['docente_selected'] = int(datos['docente'])
 
 
-def encuesta(request, anno, cuatrimestre, tipo_docente):
-    context = _generar_contexto(anno, cuatrimestre, tipo_docente)
+def encuesta(request, anno, cuatrimestres, tipo_docente):
+    context = _generar_contexto(anno, cuatrimestres, tipo_docente)
     try:
         docente = Docente.objects.get(pk=request.POST['docente'])
     except (ValueError, KeyError, Turno.DoesNotExist):
         return render(request, 'encuestas/encuesta.html', context)
     try:
-        opciones, otros_datos = checkear_y_salvar(request.POST, anno, cuatrimestre)
+        opciones, otros_datos = checkear_y_salvar(request.POST, anno, cuatrimestres)
         return render(request,
                       'encuestas/final.html',
                       context={'opciones': opciones, 'docente': docente,
