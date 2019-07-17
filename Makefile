@@ -15,6 +15,7 @@ build:
 rebuild:
 	docker build -t distribucion . --no-cache
 	docker-compose build
+	echo -e "sugerencia 1: correr \n\ndocker-compose run --rm web python manage.py migrate"
 
 empezar:
 	docker-compose up

@@ -1,4 +1,4 @@
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.shortcuts import render
 from django.db import transaction
@@ -7,7 +7,7 @@ from django.utils.dateparse import parse_time
 from django.contrib.auth.decorators import permission_required, login_required
 
 from locale import strxfrm
-from collections import Counter
+from collections import Counter, namedtuple
 import logging
 logger = logging.getLogger(__name__)
 
@@ -95,6 +95,8 @@ def administrar(request):
         return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
     elif 'turnos_docentes' in request.POST:
         return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
+    elif 'exportar_informacion' in request.POST:
+        return HttpResponseRedirect(reverse('materias:exportar_informacion', args=(anno, cuatrimestre)))
     elif 'cargas_docentes' in request.POST:
         return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
     elif 'cargas_docentes_publicadas' in request.POST:
@@ -403,3 +405,73 @@ def borrar_horario(request, horario_id):
     turno = horario.turno
     horario.delete()
     return HttpResponseRedirect(reverse('materias:cambiar_turno', args=(turno.id,)))
+
+
+@login_required
+@permission_required('materias.add_turno')
+def exportar_informacion(request, anno, cuatrimestre):
+    if 'info_anual' in request.POST:
+        import xlwt
+        response = HttpResponse(content_type='application/ms-excel')
+        response['Content-Disposition'] = f'attachment; filename="turnos_{anno}.xls"'
+
+        wb = xlwt.Workbook(encoding='utf-8')
+        ws = wb.add_sheet('Distribucion')
+
+        xlwt.add_palette_colour("verano", 0x21)
+        wb.set_colour_RGB(0x21, 0xff, 0xff, 0xcc)
+        xlwt.add_palette_colour("primero", 0x22)
+        wb.set_colour_RGB(0x22, 0xcc, 0xff, 0x99)
+        xlwt.add_palette_colour("segundo", 0x23)
+        wb.set_colour_RGB(0x23, 0xdc, 0xe6, 0xf2)
+        estilos = {
+            Cuatrimestres.V: xlwt.easyxf('pattern: pattern solid, fore_colour verano'),
+            Cuatrimestres.P: xlwt.easyxf('pattern: pattern solid, fore_colour primero'),
+            Cuatrimestres.S: xlwt.easyxf('pattern: pattern solid, fore_colour segundo'),
+        }
+
+        Columna = namedtuple('Columna', 'nombre ancho funcion')
+        columnas = [Columna('materia', 40, lambda c, m, t: m.nombre),
+                    Columna('cuat', 4, lambda c, m, t: c.value),
+                    Columna('turno', 12, lambda c, m, t: TipoTurno[t.tipo].value),
+                    Columna('horario', 18, lambda c, m, t: t.horarios_info().diayhora),
+                    Columna('alumnos', 4, lambda c, m, t: t.alumnos),
+                    Columna('docentes', 100, lambda c, m, t: ' - '.join(c.docente.nombre for c in turno.carga_set.all())),
+                    Columna('jtp', 5, lambda c, m, t: t.necesidad_jtp if t.tipo != TipoTurno.T.name else ''),
+                    Columna('ay1', 5, lambda c, m, t: t.necesidad_ay1 if t.tipo != TipoTurno.T.name else ''),
+                    Columna('ay2', 5, lambda c, m, t: t.necesidad_ay2 if t.tipo != TipoTurno.T.name else ''),
+                    ]
+
+        fila = 0
+        font_style = xlwt.XFStyle()
+        font_style.font.bold = True
+        for col, columna in enumerate(columnas):
+            ws.write(fila, col, columna.nombre, font_style)
+            wscol = ws.col(col)
+            wscol.width = columna.ancho * 256
+
+        font_style = xlwt.XFStyle()
+        turnos = Turno.objects.filter(anno=anno)
+        materias = Materia.objects.order_by('obligatoriedad', 'nombre')
+
+        for materia in materias:
+            turnos_materia = turnos.filter(materia=materia)
+            if turnos_materia.count() > 0:
+                ws.write(fila + 1, 0, materia.nombre, font_style)
+
+                for cuatrimestre in Cuatrimestres:
+                    estilo = estilos[cuatrimestre]
+                    for turno in turnos.filter(materia=materia, cuatrimestre=cuatrimestre.name):
+                        fila += 1
+                        for col, columna in enumerate(columnas[1:], 1):
+                            ws.write(fila, col, columna.funcion(cuatrimestre, materia, turno), estilo)
+
+        wb.save(response)
+        return response
+
+    else:
+        context = {
+            'anno': anno,
+            'cuatrimestre': cuatrimestre,
+        }
+        return render(request, 'materias/exportar_informacion.html', context)

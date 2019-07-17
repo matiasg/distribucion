@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict, namedtuple
 from time import monotonic
 from locale import strxfrm
+import csv
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -15,7 +16,7 @@ from django.contrib.auth.decorators import permission_required, login_required
 
 from .models import Preferencia, Asignacion, Comentario, Intento, IntentoRegistrado
 from .misc import Distribucion
-from materias.models import (Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria,
+from materias.models import (Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria, TipoTurno,
                              choice_enum, AnnoCuatrimestre, TipoDocentes,)
 from materias.misc import Mapeos, NoTurno
 from encuestas.models import PreferenciasDocente, OtrosDatos
@@ -482,6 +483,88 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
                    }
 
         return render(request, 'dborrador/cambiar_docente.html', context)
+
+
+def _datos_para_exportar(anno, cuatrimestre, intento_algoritmo, intento_manual):
+    turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
+    anno_cuat = AnnoCuatrimestre(anno, cuatrimestre)
+    intento = Intento(intento_algoritmo, intento_manual)
+
+    asignaciones = Asignacion.validas_en(anno, cuatrimestre, intento)
+    asignaciones_fijas = Distribucion.ya_distribuidas_por_cargo(anno_cuat)
+
+    info = {}
+    for obligatoriedad in TipoMateria:
+        tmaterias = Materia.objects.order_by('obligatoriedad', 'nombre')
+
+        for materia in tmaterias:
+            logger.info('exporto %s', materia.nombre)
+
+            turnos_materia = []
+
+            for turno in sorted(materia.turno_set.filter(anno=anno, cuatrimestre=cuatrimestre)):
+
+                docentes = [a.carga.docente.nombre for a in asignaciones.filter(turno=turno).all()]
+                docentes += [c.docente.nombre for c in turno.carga_set.all()]
+
+                turnos_materia.append([
+                    TipoTurno[turno.tipo].value,
+                    turno.numero,
+                    ' - '.join(docentes)
+                ])
+
+            if turnos_materia:
+                info[materia.nombre] = turnos_materia
+
+    columnas = ['materia', 'tipo', 'numero', 'docentes']
+    return columnas, info
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def exportar_csv(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="distribucion.csv"'
+    writer = csv.writer(response)
+
+    columnas, info = _datos_para_exportar(anno, cuatrimestre, intento_algoritmo, intento_manual)
+    writer.writerow(columnas)
+
+    for materia, turnos in info.items():
+        for turno in turnos:
+            writer.writerow([materia, *turno])
+
+    return response
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def exportar_excel(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
+    import xlwt
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="distribucion.xls"'
+
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('Distribucion')
+
+    fila = 0
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+
+    columnas, info = _datos_para_exportar(anno, cuatrimestre, intento_algoritmo, intento_manual)
+    for col, nombre in enumerate(columnas):
+        ws.write(fila, col, nombre, font_style)
+
+    font_style = xlwt.XFStyle()
+    for materia, turnos in info.items():
+        for turno in turnos:
+            fila += 1
+            ws.write(fila, 0, materia, font_style)
+            for col, dato in enumerate(turno, 1):
+                ws.write(fila, col, dato, font_style)
+
+    wb.save(response)
+    return response
 
 
 def publicar(request, anno, cuatrimestre, intento_algoritmo, intento_manual):

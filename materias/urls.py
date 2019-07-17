@@ -21,6 +21,8 @@ urlpatterns = [
     path('<str:anno_cuat>', views.por_anno_y_cuatrimestre, name='por_anno_y_cuatrimestre'),
     path('administrar_materia/<int:materia_id>/<int:anno>/<str:cuatrimestre>',
          views.administrar_materia, name='administrar_materia'),
+    path('exportar_informacion/<int:anno>/<str:cuatrimestre>',
+         views.exportar_informacion, name='exportar_informacion'),
     path('borrar_turno/<int:turno_id>', views.borrar_turno, name='borrar_turno'),
     path('cambiar_turno/<int:turno_id>', views.cambiar_turno, name='cambiar_turno'),
     path('borrar_horario/<int:horario_id>', views.borrar_horario, name='borrar_horario'),
