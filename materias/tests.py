@@ -505,3 +505,11 @@ class TestPaginas(TestCase):
         # veo que aparece la carga no distribuida y el cargo
         self.assertContains(response, reverse('materias:cambiar_una_carga_publicada', args=(cm.id,)))
         self.assertContains(response, CargoDedicacion[cn.cargo].value)
+
+    def test_exportar_materias_a_excel(self):
+        self.client.login(username='autorizado', password='1234')
+        response = self.client.post(reverse('materias:exportar_informacion', args=(self.anno, self.cuatrimestre.name)),
+                                    {'info_anual': True},
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/ms-excel')
