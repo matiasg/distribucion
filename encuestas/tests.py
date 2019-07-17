@@ -196,3 +196,7 @@ class TestEncuesta(TestCase):
         materias = re.findall('materia(.),', response.content.decode())
         self.assertEqual(materias, [f'{materia}' for opcion in range(5)
                                                  for materia in orden])
+
+    def test_encuesta_mas_de_un_cuatri(self):
+        response = self.client.get(reverse('encuestas:encuesta', args=(2100, 'VPS', 'P')), follow=True)
+        self.assertEqual(response.status_code, 200)
