@@ -7,7 +7,7 @@ from django.utils.dateparse import parse_time
 from django.contrib.auth.decorators import permission_required, login_required
 
 from locale import strxfrm
-from collections import Counter
+from collections import Counter, namedtuple
 import logging
 logger = logging.getLogger(__name__)
 
@@ -430,15 +430,25 @@ def exportar_informacion(request, anno, cuatrimestre):
             Cuatrimestres.S: xlwt.easyxf('pattern: pattern solid, fore_colour segundo'),
         }
 
+        Columna = namedtuple('Columna', 'nombre ancho funcion')
+        columnas = [Columna('materia', 40, lambda c, m, t: m.nombre),
+                    Columna('cuat', 4, lambda c, m, t: c.value),
+                    Columna('turno', 12, lambda c, m, t: TipoTurno[t.tipo].value),
+                    Columna('horario', 18, lambda c, m, t: t.horarios_info().diayhora),
+                    Columna('alumnos', 4, lambda c, m, t: t.alumnos),
+                    Columna('docentes', 100, lambda c, m, t: ' - '.join(c.docente.nombre for c in turno.carga_set.all())),
+                    Columna('jtp', 5, lambda c, m, t: t.necesidad_jtp if t.tipo != TipoTurno.T.name else ''),
+                    Columna('ay1', 5, lambda c, m, t: t.necesidad_ay1 if t.tipo != TipoTurno.T.name else ''),
+                    Columna('ay2', 5, lambda c, m, t: t.necesidad_ay2 if t.tipo != TipoTurno.T.name else ''),
+                    ]
+
         fila = 0
         font_style = xlwt.XFStyle()
         font_style.font.bold = True
-        for col, (nombre, ancho) in enumerate([('materia', 40), ('cuat', 4),
-                                               ('turno', 12), ('horario', 18),
-                                               ('alumnos', 4), ('docentes', 100)]):
-            ws.write(fila, col, nombre, font_style)
-            columna = ws.col(col)
-            columna.width = ancho * 256
+        for col, columna in enumerate(columnas):
+            ws.write(fila, col, columna.nombre, font_style)
+            wscol = ws.col(col)
+            wscol.width = columna.ancho * 256
 
         font_style = xlwt.XFStyle()
         turnos = Turno.objects.filter(anno=anno)
@@ -453,11 +463,8 @@ def exportar_informacion(request, anno, cuatrimestre):
                     estilo = estilos[cuatrimestre]
                     for turno in turnos.filter(materia=materia, cuatrimestre=cuatrimestre.name):
                         fila += 1
-                        ws.write(fila, 1, cuatrimestre.value, estilo)
-                        ws.write(fila, 2, TipoTurno[turno.tipo].value, estilo)
-                        ws.write(fila, 3, turno.horarios_info().diayhora, estilo)
-                        ws.write(fila, 4, turno.alumnos, estilo)
-                        ws.write(fila, 5, ' - '.join(c.docente.nombre for c in turno.carga_set.all()), estilo)
+                        for col, columna in enumerate(columnas[1:], 1):
+                            ws.write(fila, col, columna.funcion(cuatrimestre, materia, turno), estilo)
 
         wb.save(response)
         return response
