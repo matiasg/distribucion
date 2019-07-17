@@ -13,7 +13,7 @@
 
 <div id="titulo">Encuesta para el cuatrimestre {{ cuatrimestre_value }} de {{ anno }}</div>
 
-<form action="{% url 'encuestas:encuesta' anno cuatrimestre tipo_docente %}" method="post">
+<form action="{% url 'encuestas:encuesta' anno cuatrimestres tipo_docente %}" method="post">
 {% csrf_token %}
 
 <p>
@@ -27,27 +27,30 @@
     </select>
 </p>
 
-<p>
-    <div id="subtitulo">Turnos que debe cubrir:</div>
-    <input type="number" name="cargas" min=0 max=3 value={{ cargas }}>
-</p>
 
-<p>
-<div id="subtitulo">Turnos preferidos</div>
-{% for i, lista_corta, elegido, peso in opciones %}
-    <div id="seleccion">
-        <select name="opcion{{ i }}">
-            {% for turno in turnos %}
-            <option value="{{ turno.id }}"
-                    {% if lista_corta and not turno.dificil_de_cubrir %}disabled{% endif %}
-                    {% if turno.id == elegido %}selected{% endif %}>
-            {{ turno.texto }}
-            </option>
-            {% endfor %}
-        </select>
-        Peso: <input type="number" name="peso{{ forloop.counter }}" min=0 max={{ maximo_peso }} value={{ peso }}>
-    </div>
-</p>
+{% for cuatrimestre, infocuat in opciones_por_cuatrimestre.items %}
+    <p>
+        <div id="subtitulo">Turnos que debe cubrir en el cuatrimestre {{ cuatrimestre.value }}:</div>
+        <input type="number" name="cargas" min=0 max=3 value={{ cargas }}>
+    </p>
+
+    <p>
+    <div id="subtitulo">Turnos preferidos</div>
+    {% for i, lista_corta, elegido, peso in infocuat.opciones %}
+        <div id="seleccion">
+            <select name="opcion{{ i }}">
+                {% for turno in infocuat.turnos %}
+                <option value="{{ turno.id }}"
+                        {% if lista_corta and not turno.dificil_de_cubrir %}disabled{% endif %}
+                        {% if turno.id == elegido %}selected{% endif %}>
+                {{ turno.texto }}
+                </option>
+                {% endfor %}
+            </select>
+            Peso: <input type="number" name="peso{{ forloop.counter }}" min=0 max={{ maximo_peso }} value={{ peso }}>
+        </div>
+    </p>
+    {% endfor %}
 {% endfor %}
 
 <p>

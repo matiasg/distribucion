@@ -45,16 +45,16 @@ class TestMapeos(TestCase):
         self.assertTrue(set(cardeds).issuperset(some_expected))
 
     def test_docentes_de_tipo(self):
-        docs = Mapeos.docentes_de_tipo(TipoDocentes.P)
+        docs = Mapeos.docentes_de_tipo(TipoDocentes.P, 2100)
         self.assertEqual(set(docs), {self.n, self.m})
 
-        docs = Mapeos.docentes_de_tipo(TipoDocentes.J)
+        docs = Mapeos.docentes_de_tipo(TipoDocentes.J, 2100)
         self.assertEqual(set(docs), set())
 
-        docs = Mapeos.docentes_de_tipo(TipoDocentes.A1)
+        docs = Mapeos.docentes_de_tipo(TipoDocentes.A1, 2100)
         self.assertEqual(set(docs), {self.n})
 
-        docs = Mapeos.docentes_de_tipo(TipoDocentes.A2)
+        docs = Mapeos.docentes_de_tipo(TipoDocentes.A2, 2100)
         self.assertEqual(set(docs), set())
 
     def test_docentes_y_cargas(self):

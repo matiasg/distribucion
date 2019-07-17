@@ -71,10 +71,10 @@ class Mapeos:
         return el_mapa[cargodedicacion[:3]]
 
     @staticmethod
-    def docentes_de_tipo(tipo):
-        '''TipoDocentes -> [docente]'''
+    def docentes_de_tipo(tipo, anno):
+        '''TipoDocentes -> anno -> [docente]'''
         cardeds = Mapeos.cargos_de_tipos(tipo)
-        return Docente.objects.filter(cargos__overlap=cardeds)
+        return {carga.docente for carga in Carga.objects.filter(cargo__in=cardeds, anno=anno)}
 
     @staticmethod
     def docentes_y_cargas(tipo, ac):

@@ -81,6 +81,16 @@ def index(request):
 DocenteParaEncuesta = namedtuple('DocenteParaEncuesta', ['id', 'nombre'])
 TurnoParaEncuesta = namedtuple('TurnoParaEncuesta', ['id', 'texto', 'dificil_de_cubrir'])
 OpcionesParaEncuesta = namedtuple('OpcionesParaEncuesta', ['numero', 'lista_corta', 'turno_elegido', 'peso'])
+OpcionesPorCuatrimestre = namedtuple('OpcionesPorCuatrimestre', ['opciones', 'turnos'])
+
+
+def _generar_docentes(anno, tipo_docente):
+    tipo = TipoDocentes[tipo_docente]
+    docentes = [DocenteParaEncuesta(-1, '')]
+    docentes += [DocenteParaEncuesta(docente.id, docente.nombre)
+                 for docente in sorted(Mapeos.docentes_de_tipo(tipo, anno),
+                                       key=lambda d: d.nombre)]
+    return docentes
 
 
 def _generar_contexto(anno, cuatrimestre, tipo_docente):
@@ -91,24 +101,10 @@ def _generar_contexto(anno, cuatrimestre, tipo_docente):
     turnos += [TurnoParaEncuesta(turno.id, f'{turno} ({turno.horarios_info().diayhora})', turno.dificil_de_cubrir)
                for turno in sorted(turnos_ac, key=lambda t: (strxfrm(t.materia.nombre), t.numero))]
 
-    docentes = [DocenteParaEncuesta(-1, '')]
-    docentes += [DocenteParaEncuesta(docente.id, docente.nombre)
-                 for docente in sorted(Mapeos.docentes_de_tipo(tipo), key=lambda d: d.nombre)]
-
     opciones = [OpcionesParaEncuesta(i, i <= 2, -1, 1)
                 for i in range(1, 6)]  # las opciones 1 y 2 tienen que ser de las difíciles
-    context = {'opciones': opciones,
-               'turnos': turnos,
-               'docentes': docentes,
-               'docente_selected': -1,
-               'anno': anno,
-               'cuatrimestre': cuatrimestre,
-               'cuatrimestre_value': Cuatrimestres[cuatrimestre].value,
-               'tipo_docente': tipo_docente,
-               'maximo_peso': 20,
-               'cargas': 1, 'email': '', 'telefono': '', 'comentario': ''
-               }
-    return context
+
+    return OpcionesPorCuatrimestre(opciones, turnos)
 
 
 def _modificar_contexto_con_datos_request(context, datos):
@@ -126,11 +122,25 @@ def _modificar_contexto_con_datos_request(context, datos):
 
 
 def encuesta(request, anno, cuatrimestres, tipo_docente):
-    context = _generar_contexto(anno, cuatrimestres, tipo_docente)
+
     try:
         docente = Docente.objects.get(pk=request.POST['docente'])
     except (ValueError, KeyError, Turno.DoesNotExist):
+        opciones_por_cuatrimestre = {Cuatrimestres[cuatri]: _generar_contexto(anno, cuatri, tipo_docente)
+                                     for cuatri in cuatrimestres}
+        context = {
+            'docentes': _generar_docentes(anno, tipo_docente),
+            'opciones_por_cuatrimestre': opciones_por_cuatrimestre,
+            'anno': anno,
+            'cuatrimestres': cuatrimestres,
+            'tipo_docente': tipo_docente,
+            'maximo_peso': 20,
+            'email': '', 'telefono': '', 'comentario': '',
+            'docente_selected': -1,
+            'cargas': 1,
+        }
         return render(request, 'encuestas/encuesta.html', context)
+
     try:
         opciones, otros_datos = checkear_y_salvar(request.POST, anno, cuatrimestres)
         return render(request,
