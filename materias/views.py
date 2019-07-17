@@ -418,11 +418,27 @@ def exportar_informacion(request, anno, cuatrimestre):
         wb = xlwt.Workbook(encoding='utf-8')
         ws = wb.add_sheet('Distribucion')
 
+        xlwt.add_palette_colour("verano", 0x21)
+        wb.set_colour_RGB(0x21, 0xff, 0xff, 0xcc)
+        xlwt.add_palette_colour("primero", 0x22)
+        wb.set_colour_RGB(0x22, 0xcc, 0xff, 0x99)
+        xlwt.add_palette_colour("segundo", 0x23)
+        wb.set_colour_RGB(0x23, 0xdc, 0xe6, 0xf2)
+        estilos = {
+            Cuatrimestres.V: xlwt.easyxf('pattern: pattern solid, fore_colour verano'),
+            Cuatrimestres.P: xlwt.easyxf('pattern: pattern solid, fore_colour primero'),
+            Cuatrimestres.S: xlwt.easyxf('pattern: pattern solid, fore_colour segundo'),
+        }
+
         fila = 0
         font_style = xlwt.XFStyle()
         font_style.font.bold = True
-        for col, nombre in enumerate(['materia', 'cuatrimestre', 'turno', 'horario', 'alumnos', 'docentes']):
+        for col, (nombre, ancho) in enumerate([('materia', 40), ('cuat', 4),
+                                               ('turno', 12), ('horario', 18),
+                                               ('alumnos', 4), ('docentes', 100)]):
             ws.write(fila, col, nombre, font_style)
+            columna = ws.col(col)
+            columna.width = ancho * 256
 
         font_style = xlwt.XFStyle()
         turnos = Turno.objects.filter(anno=anno)
@@ -434,13 +450,14 @@ def exportar_informacion(request, anno, cuatrimestre):
                 ws.write(fila + 1, 0, materia.nombre, font_style)
 
                 for cuatrimestre in Cuatrimestres:
+                    estilo = estilos[cuatrimestre]
                     for turno in turnos.filter(materia=materia, cuatrimestre=cuatrimestre.name):
                         fila += 1
-                        ws.write(fila, 1, cuatrimestre.value, font_style)
-                        ws.write(fila, 2, TipoTurno[turno.tipo].value, font_style)
-                        ws.write(fila, 3, turno.horarios_info().diayhora, font_style)
-                        ws.write(fila, 4, turno.alumnos, font_style)
-                        ws.write(fila, 5, ' - '.join(c.docente.nombre for c in turno.carga_set.all()), font_style)
+                        ws.write(fila, 1, cuatrimestre.value, estilo)
+                        ws.write(fila, 2, TipoTurno[turno.tipo].value, estilo)
+                        ws.write(fila, 3, turno.horarios_info().diayhora, estilo)
+                        ws.write(fila, 4, turno.alumnos, estilo)
+                        ws.write(fila, 5, ' - '.join(c.docente.nombre for c in turno.carga_set.all()), estilo)
 
         wb.save(response)
         return response
