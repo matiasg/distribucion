@@ -47,8 +47,9 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
     otros_datos.save()
 
     #  PreferenciasDocente
+    opciones = {}
     for cuatrimestre in cuatrimestres:
-        opciones = []
+        opciones_cuat = []
         for opcion in range(1, 6):
             opcion_id = int(datos[f'opcion{cuatrimestre}{opcion}'])
             if opcion_id >= 0:
@@ -70,7 +71,8 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
                         pref.peso = peso
                         pref.fecha_encuesta = fecha_encuesta
                         pref.save()
-                opciones.append(pref)
+                opciones_cuat.append(pref)
+        opciones[Cuatrimestres[cuatrimestre]] = opciones_cuat
     return opciones, otros_datos
 
 
