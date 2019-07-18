@@ -18,7 +18,7 @@ import logging.config
 logger = logging.getLogger(__name__)
 
 
-def checkear_y_salvar(datos, anno, cuatrimestre):
+def checkear_y_salvar(datos, anno, cuatrimestres):
     fecha_encuesta = timezone.now()
 
     # chequeos
@@ -36,7 +36,7 @@ def checkear_y_salvar(datos, anno, cuatrimestre):
 
     # OtrosDatos
     docente = Docente.objects.get(pk=datos['docente'])
-    otros_datos, _ = OtrosDatos.objects.get_or_create(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
+    otros_datos, _ = OtrosDatos.objects.get_or_create(docente=docente, anno=anno, cuatrimestre=cuatrimestres[0],
                                                       defaults={'fecha_encuesta': fecha_encuesta,
                                                                 'cargas': 0, 'comentario': ''})
     otros_datos.fecha_encuesta = fecha_encuesta
@@ -47,29 +47,30 @@ def checkear_y_salvar(datos, anno, cuatrimestre):
     otros_datos.save()
 
     #  PreferenciasDocente
-    opciones = []
-    for opcion in range(1, 6):
-        opcion_id = int(datos['opcion{}'.format(opcion)])
-        if opcion_id >= 0:
-            turno = Turno.objects.get(pk=opcion_id)
-            peso = float(datos['peso{}'.format(opcion)])
-            logger.debug('miro preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
-                         docente, turno, peso, fecha_encuesta)
+    for cuatrimestre in cuatrimestres:
+        opciones = []
+        for opcion in range(1, 6):
+            opcion_id = int(datos[f'opcion{cuatrimestre}{opcion}'])
+            if opcion_id >= 0:
+                turno = Turno.objects.get(pk=opcion_id)
+                peso = float(datos[f'peso{cuatrimestre}{opcion}'])
+                logger.debug('miro preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
+                             docente, turno, peso, fecha_encuesta)
 
-            pref, creada = PreferenciasDocente.objects.get_or_create(docente=docente, turno=turno,
-                                                                     defaults={'peso': peso,
-                                                                               'fecha_encuesta': fecha_encuesta})
-            if creada:
-                logger.info('Agrego preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
-                            docente, turno, peso, fecha_encuesta)
-            else:
-                if pref.peso != peso:
-                    logger.warning('Le cambio el peso a la preferencia de %s por %s. De %s a %s',
-                                   docente, turno, pref.peso, peso)
-                    pref.peso = peso
-                    pref.fecha_encuesta = fecha_encuesta
-                    pref.save()
-            opciones.append(pref)
+                pref, creada = PreferenciasDocente.objects.get_or_create(docente=docente, turno=turno,
+                                                                         defaults={'peso': peso,
+                                                                                   'fecha_encuesta': fecha_encuesta})
+                if creada:
+                    logger.info('Agrego preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
+                                docente, turno, peso, fecha_encuesta)
+                else:
+                    if pref.peso != peso:
+                        logger.warning('Le cambio el peso a la preferencia de %s por %s. De %s a %s',
+                                       docente, turno, pref.peso, peso)
+                        pref.peso = peso
+                        pref.fecha_encuesta = fecha_encuesta
+                        pref.save()
+                opciones.append(pref)
     return opciones, otros_datos
 
 
@@ -108,12 +109,15 @@ def _generar_contexto(anno, cuatrimestre, tipo_docente):
 
 
 def _modificar_contexto_con_datos_request(context, datos):
-    nuevas_opciones = []
-    for opcion, dificil, _, _ in context['opciones']:
-        elegido = int(datos[f'opcion{opcion}'])
-        peso = datos[f'peso{opcion}']
-        nuevas_opciones.append(OpcionesParaEncuesta(opcion, dificil, elegido, peso))
-    context['opciones'] = nuevas_opciones
+    nuevas_opciones_turnos = {}
+    for cuatrimestre, opciones_turnos_cuat in context['opciones_por_cuatrimestre'].items():
+        opciones_cuatrimestre = []
+        for opcion, dificil, _, _ in opciones_turnos_cuat.opciones:
+            elegido = int(datos[f'opcion{cuatrimestre.name}{opcion}'])
+            peso = datos[f'peso{cuatrimestre.name}{opcion}']
+            opciones_cuatrimestre.append(OpcionesParaEncuesta(opcion, dificil, elegido, peso))
+        nuevas_opciones_turnos[cuatrimestre] = OpcionesPorCuatrimestre(opciones_cuatrimestre, opciones_turnos_cuat.turnos)
+    context['opciones_por_cuatrimestre'] = nuevas_opciones_turnos
 
     for campo in ['cargas', 'email', 'telefono', 'comentario']:
         context[campo] = datos[campo]
@@ -122,23 +126,23 @@ def _modificar_contexto_con_datos_request(context, datos):
 
 
 def encuesta(request, anno, cuatrimestres, tipo_docente):
+    opciones_por_cuatrimestre = {Cuatrimestres[cuatri]: _generar_contexto(anno, cuatri, tipo_docente)
+                                 for cuatri in cuatrimestres}
+    context = {
+        'docentes': _generar_docentes(anno, tipo_docente),
+        'opciones_por_cuatrimestre': opciones_por_cuatrimestre,
+        'anno': anno,
+        'cuatrimestres': cuatrimestres,
+        'tipo_docente': tipo_docente,
+        'maximo_peso': 20,
+        'email': '', 'telefono': '', 'comentario': '',
+        'docente_selected': -1,
+        'cargas': 1,
+    }
 
     try:
         docente = Docente.objects.get(pk=request.POST['docente'])
     except (ValueError, KeyError, Turno.DoesNotExist):
-        opciones_por_cuatrimestre = {Cuatrimestres[cuatri]: _generar_contexto(anno, cuatri, tipo_docente)
-                                     for cuatri in cuatrimestres}
-        context = {
-            'docentes': _generar_docentes(anno, tipo_docente),
-            'opciones_por_cuatrimestre': opciones_por_cuatrimestre,
-            'anno': anno,
-            'cuatrimestres': cuatrimestres,
-            'tipo_docente': tipo_docente,
-            'maximo_peso': 20,
-            'email': '', 'telefono': '', 'comentario': '',
-            'docente_selected': -1,
-            'cargas': 1,
-        }
         return render(request, 'encuestas/encuesta.html', context)
 
     try:

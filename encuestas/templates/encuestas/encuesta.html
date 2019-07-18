@@ -38,7 +38,7 @@
     <div id="subtitulo">Turnos preferidos</div>
     {% for i, lista_corta, elegido, peso in infocuat.opciones %}
         <div id="seleccion">
-            <select name="opcion{{ i }}">
+            <select name="opcion{{ cuatrimestre.name }}{{ i }}">
                 {% for turno in infocuat.turnos %}
                 <option value="{{ turno.id }}"
                         {% if lista_corta and not turno.dificil_de_cubrir %}disabled{% endif %}
@@ -47,7 +47,7 @@
                 </option>
                 {% endfor %}
             </select>
-            Peso: <input type="number" name="peso{{ forloop.counter }}" min=0 max={{ maximo_peso }} value={{ peso }}>
+            Peso: <input type="number" name="peso{{ cuatrimestre.name }}{{ i }}" min=0 max={{ maximo_peso }} value={{ peso }}>
         </div>
     </p>
     {% endfor %}
