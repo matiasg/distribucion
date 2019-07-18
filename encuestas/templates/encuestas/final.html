@@ -8,8 +8,10 @@
 <h2>Se salvaron estas opciones para {{ docente }}</h2>
 
 <table border="1" cellspacing="0" cellpadding="5">
-    {% for opcion in opciones %}
-    <tr><td>{{ opcion.turno }}</td><td>Peso: {{ opcion.peso }}</td></tr>
+    {% for cuatrimestre, opciones_cuat in opciones.items %}
+        {% for opcion in opciones_cuat %}
+        <tr><td>{{ opcion.turno }}</td><td>Peso: {{ opcion.peso }}</td></tr>
+        {% endfor %}
     {% endfor %}
 </table>
 
