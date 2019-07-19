@@ -17,7 +17,7 @@
 {% csrf_token %}
 
 <p>
-    <div id="pregunta">Nombre:</div>
+    <div id="pregunta">Docente:</div>
     <select name="docente">
         {% for docente in docentes %}
         <option value="{{ docente.id }}"
