@@ -127,6 +127,11 @@ def _modificar_contexto_con_datos_request(context, datos):
     context['docente_selected'] = int(datos['docente'])
 
 
+def _encuesta_con_mensaje_de_error(request, context, mensaje):
+        messages.error(request, mensaje)
+        _modificar_contexto_con_datos_request(context, request.POST)
+        return render(request, 'encuestas/encuesta.html', context)
+
 def encuesta(request, anno, cuatrimestres, tipo_docente):
     opciones_por_cuatrimestre = {Cuatrimestres[cuatri]: _generar_contexto(anno, cuatri, tipo_docente)
                                  for cuatri in cuatrimestres}
@@ -144,9 +149,10 @@ def encuesta(request, anno, cuatrimestres, tipo_docente):
 
     try:
         docente = Docente.objects.get(pk=request.POST['docente'])
-    except (ValueError, KeyError, Turno.DoesNotExist):
+    except (ValueError, KeyError):
         return render(request, 'encuestas/encuesta.html', context)
-
+    except Docente.DoesNotExist:
+        return _encuesta_con_mensaje_de_error(request, context, "No me dijiste quién sos")
     try:
         opciones, otros_datos = checkear_y_salvar(request.POST, anno, cuatrimestres)
         return render(request,
@@ -156,6 +162,4 @@ def encuesta(request, anno, cuatrimestres, tipo_docente):
                                'telefono': otros_datos.telefono,
                                'comentario': otros_datos.comentario})
     except ValidationError as e:
-        messages.error(request, e.message)
-        _modificar_contexto_con_datos_request(context, request.POST)
-        return render(request, 'encuestas/encuesta.html', context)
+        return _encuesta_con_mensaje_de_error(request, context, e.message)
