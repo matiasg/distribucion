@@ -18,14 +18,31 @@ import logging.config
 logger = logging.getLogger(__name__)
 
 
+def _turnos_minimos_por_cuatrimestre(cuatrimestre, docente):
+    minimos = {
+        Cuatrimestres.V.name: 2,
+        Cuatrimestres.P.name: 4,
+        Cuatrimestres.S.name: 4
+    }
+    # TODO: queremos que dependa del docente?
+    return minimos[cuatrimestre]
+
 def checkear_y_salvar(datos, anno, cuatrimestres):
     fecha_encuesta = timezone.now()
+    docente = Docente.objects.get(pk=datos['docente'])
 
     # chequeos
-    cuenta = Counter(datos.get(f'opcion{o}', '-1') for o in range(1, 6))
-    cuenta.pop('-1', None)  # descarto opciones no completadas
-    if any(v > 1 for v in cuenta.values()):
-        raise ValidationError('Hay turnos repetidos', code='invalid')
+    for c in cuatrimestres:
+        cuenta = Counter(datos.get(f'opcion{c}{o}', '-1')
+                         for o in range(1, 6))
+        cuenta.pop('-1', None)  # descarto opciones no completadas
+        if any(v > 1 for v in cuenta.values()):
+            raise ValidationError('Hay turnos repetidos', code='invalid')
+
+        cargas = datos[f'cargas{c}']
+        minimo = _turnos_minimos_por_cuatrimestre(c, docente)
+        if cargas > 0 and sum(cuenta.values()) < minimo:
+            raise ValidationError(f'La cantidad mínima de turnos para el cuatrimestre {c} es {minimo}')
 
     email = datos['email']
     telefono = datos['telefono']
@@ -35,7 +52,6 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
     telefono_validator(telefono)
 
     # OtrosDatos
-    docente = Docente.objects.get(pk=datos['docente'])
     otros_datos, _ = OtrosDatos.objects.get_or_create(docente=docente, anno=anno, cuatrimestre=cuatrimestres[0],
                                                       defaults={'fecha_encuesta': fecha_encuesta,
                                                                 'cargas': 0, 'comentario': ''})

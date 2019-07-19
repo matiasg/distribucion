@@ -28,7 +28,15 @@ class TestEncuesta(TestCase):
                                                   necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0,
                                                   dificil_de_cubrir=True)
         self.otros_datos = {'telefono': '+54911 1234-5678', 'email': 'nadie@gmail.com', 'comentario': '',
-                            'cargas': 1}
+                            f'cargas{Cuatrimestres.P.name}': 1}
+
+    def test_pocos_turnos(self):
+        datos = self.otros_datos
+        datos['docente'] = self.docente.id
+        datos[f'opcion{Cuatrimestres.P.name}1'] = str(self.turno.id)
+        datos[f'peso{Cuatrimestres.P.name}1'] = 2
+        with self.assertRaises(ValidationError):
+            checkear_y_salvar(datos, self.anno, f'{Cuatrimestres.P.name}')
 
     def test_sin_docente(self):
         datos = self.otros_datos
