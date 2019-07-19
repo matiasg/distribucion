@@ -27,6 +27,14 @@ def _turnos_minimos_por_cuatrimestre(cuatrimestre, docente):
     # TODO: queremos que dependa del docente?
     return minimos[cuatrimestre]
 
+def _nombre_cuat_error(cuatrimestre):
+    nombres = {
+        Cuatrimestres.V.name: 'de verano',
+        Cuatrimestres.P.name: '1',
+        Cuatrimestres.S.name: '2'
+    }
+    return nombres[cuatrimestre]
+
 def checkear_y_salvar(datos, anno, cuatrimestres):
     fecha_encuesta = timezone.now()
     docente = Docente.objects.get(pk=datos['docente'])
@@ -39,10 +47,10 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
         if any(v > 1 for v in cuenta.values()):
             raise ValidationError('Hay turnos repetidos', code='invalid')
 
-        cargas = datos[f'cargas{c}']
+        cargas = int(datos[f'cargas{c}'])
         minimo = _turnos_minimos_por_cuatrimestre(c, docente)
         if cargas > 0 and sum(cuenta.values()) < minimo:
-            raise ValidationError(f'La cantidad mínima de turnos para el cuatrimestre {c} es {minimo}')
+            raise ValidationError(f'La cantidad mínima de turnos para el cuatrimestre {_nombre_cuat_error(c)} es {minimo}')
 
     email = datos['email']
     telefono = datos['telefono']
@@ -123,6 +131,7 @@ def _generar_contexto(anno, cuatrimestre, tipo_docente):
     opciones = [OpcionesParaEncuesta(i, i <= 2, -1, 1)
                 for i in range(1, 6)]  # las opciones 1 y 2 tienen que ser de las difíciles
 
+
     return OpcionesPorCuatrimestre(opciones, turnos)
 
 
@@ -134,10 +143,12 @@ def _modificar_contexto_con_datos_request(context, datos):
             elegido = int(datos[f'opcion{cuatrimestre.name}{opcion}'])
             peso = datos[f'peso{cuatrimestre.name}{opcion}']
             opciones_cuatrimestre.append(OpcionesParaEncuesta(opcion, dificil, elegido, peso))
-        nuevas_opciones_turnos[cuatrimestre] = OpcionesPorCuatrimestre(opciones_cuatrimestre, opciones_turnos_cuat.turnos)
+        nuevas_opciones_turnos[cuatrimestre] = OpcionesPorCuatrimestre(opciones_cuatrimestre,
+                                                                       opciones_turnos_cuat.turnos)
     context['opciones_por_cuatrimestre'] = nuevas_opciones_turnos
 
-    for campo in ['cargas', 'email', 'telefono', 'comentario']:
+    cargas_cuatrimestre = [f'cargas{c.name}' for c in context['opciones_por_cuatrimestre']]
+    for campo in ['email', 'telefono', 'comentario', *cargas_cuatrimestre]:
         context[campo] = datos[campo]
 
     context['docente_selected'] = int(datos['docente'])
@@ -151,6 +162,7 @@ def _encuesta_con_mensaje_de_error(request, context, mensaje):
 def encuesta(request, anno, cuatrimestres, tipo_docente):
     opciones_por_cuatrimestre = {Cuatrimestres[cuatri]: _generar_contexto(anno, cuatri, tipo_docente)
                                  for cuatri in cuatrimestres}
+
     context = {
         'docentes': _generar_docentes(anno, tipo_docente),
         'opciones_por_cuatrimestre': opciones_por_cuatrimestre,
@@ -160,7 +172,9 @@ def encuesta(request, anno, cuatrimestres, tipo_docente):
         'maximo_peso': 20,
         'email': '', 'telefono': '', 'comentario': '',
         'docente_selected': -1,
-        'cargas': 1,
+        f'cargas{Cuatrimestres.V.name}': 0,
+        f'cargas{Cuatrimestres.P.name}': 1,
+        f'cargas{Cuatrimestres.S.name}': 1,
     }
 
     try:

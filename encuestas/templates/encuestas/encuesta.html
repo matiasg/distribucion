@@ -41,7 +41,12 @@
             {% endif %}
         </div>
         <div id=pregunta>Cantidad de turnos a cubrir:
-        <input id=cargas type="number" name="cargas" min=0 max=3 value={{ cargas }}>
+            <input id=cargas type="number" name="cargas{{ cuatrimestre.name }}" min=0 max=3 value=
+            {% if cuatrimestre.name == "P" %} {{ cargasP }}
+            {% elif cuatrimestre.name == "S" %} {{ cargasS }}
+            {% else %} {{ cargasV }}
+            {% endif %}
+            >
         </div>
     </p>
 
