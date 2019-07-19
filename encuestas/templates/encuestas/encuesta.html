@@ -11,13 +11,13 @@
 </div>
 {% endif %}
 
-<div id="titulo">Encuesta para el cuatrimestre {{ cuatrimestre_value }} de {{ anno }}</div>
+<div id="titulo">Encuesta para {{ anno }}</div>
 
 <form action="{% url 'encuestas:encuesta' anno cuatrimestres tipo_docente %}" method="post">
 {% csrf_token %}
 
 <p>
-    <div id="subtitulo">Nombre:</div>
+    <div id="pregunta">Nombre:</div>
     <select name="docente">
         {% for docente in docentes %}
         <option value="{{ docente.id }}"
@@ -27,15 +27,26 @@
     </select>
 </p>
 
+<hr>
 
 {% for cuatrimestre, infocuat in opciones_por_cuatrimestre.items %}
     <p>
-        <div id="subtitulo">Turnos que debe cubrir en el cuatrimestre {{ cuatrimestre.value }}:</div>
-        <input type="number" name="cargas" min=0 max=3 value={{ cargas }}>
+        <div id="subtitulo">Preferencias para el
+            {% if cuatrimestre.name == "P" %}
+            primer cuatrimestre
+            {% elif cuatrimestre.name == "S" %}
+            segundo cuatrimestre
+            {% else %}
+            cuatrimestre de verano
+            {% endif %}
+        </div>
+        <div id=pregunta>Cantidad de turnos a cubrir:
+        <input id=cargas type="number" name="cargas" min=0 max=3 value={{ cargas }}>
+        </div>
     </p>
 
     <p>
-    <div id="subtitulo">Turnos preferidos</div>
+    <div id="pregunta">Turnos preferidos</div>
     {% for i, lista_corta, elegido, peso in infocuat.opciones %}
         <div id="seleccion">
             <select name="opcion{{ cuatrimestre.name }}{{ i }}">
@@ -47,10 +58,13 @@
                 </option>
                 {% endfor %}
             </select>
-            Peso: <input type="number" name="peso{{ cuatrimestre.name }}{{ i }}" min=0 max={{ maximo_peso }} value={{ peso }}>
+            Peso: <input id=peso type="number" name="peso{{ cuatrimestre.name }}{{ i }}" min=0 max={{ maximo_peso }} value={{ peso }}>
         </div>
     </p>
     {% endfor %}
+
+<hr>
+
 {% endfor %}
 
 <p>
