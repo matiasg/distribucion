@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 from .models import (Materia, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
                      TipoDocentes, Docente, CargoDedicacion, Carga, Pabellon, Dias)
 from .misc import Mapeos, NoTurno
-from encuestas.models import PreferenciasDocente, CargasPedidas
+from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
 
 
 def index(request):
@@ -196,7 +196,7 @@ def administrar_cargas_docentes(request, anno, cuatrimestre):
     # calculo diferencias contra encuesta
     diferencias_encuesta = {d: (len(docentes_y_cargas_nuestras[d]),
                                 docentes_y_cargas_encuesta[d],
-                                CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=d).first())
+                                OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=d).first())
                             for d in sorted(set(docentes_y_cargas_nuestras) & set(docentes_y_cargas_encuesta),
                                             key=lambda d: strxfrm(d.apellido_nombre))
                             if len(docentes_y_cargas_nuestras[d]) != docentes_y_cargas_encuesta[d]

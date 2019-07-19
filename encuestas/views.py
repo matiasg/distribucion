@@ -63,7 +63,6 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
     otros_datos, _ = OtrosDatos.objects.get_or_create(docente=docente, anno=anno, cuatrimestre=cuatrimestres[0],
                                                       defaults={'fecha_encuesta': fecha_encuesta, 'comentario': ''})
     otros_datos.fecha_encuesta = fecha_encuesta
-    otros_datos.cargas = datos['cargas']
     otros_datos.email = email
     otros_datos.telefono = telefono
     otros_datos.comentario = datos['comentario']
@@ -76,7 +75,7 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
         # CargasPedidas
         cargas = int(datos[f'cargas{cuatrimestre}'])
         cargas_pedidas, _ = CargasPedidas.objects.get_or_create(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
-                                                                defaults={'fecha_encuesta': fecha_encuesta})
+                                                                defaults={'fecha_encuesta': fecha_encuesta, 'cargas': 1})
         cargas_pedidas.cargas = cargas
         cargas_pedidas.save()
 
