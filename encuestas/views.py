@@ -8,7 +8,7 @@ from django.core.validators import EmailValidator
 
 from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres, TipoDocentes
 from materias.misc import Mapeos
-from encuestas.models import PreferenciasDocente, OtrosDatos, telefono_validator
+from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas, telefono_validator
 
 from locale import strxfrm
 from collections import Counter, namedtuple
@@ -61,8 +61,7 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
 
     # OtrosDatos
     otros_datos, _ = OtrosDatos.objects.get_or_create(docente=docente, anno=anno, cuatrimestre=cuatrimestres[0],
-                                                      defaults={'fecha_encuesta': fecha_encuesta,
-                                                                'cargas': 0, 'comentario': ''})
+                                                      defaults={'fecha_encuesta': fecha_encuesta, 'comentario': ''})
     otros_datos.fecha_encuesta = fecha_encuesta
     otros_datos.cargas = datos['cargas']
     otros_datos.email = email
@@ -70,9 +69,17 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
     otros_datos.comentario = datos['comentario']
     otros_datos.save()
 
+
     #  PreferenciasDocente
     opciones = {}
     for cuatrimestre in cuatrimestres:
+        # CargasPedidas
+        cargas = int(datos[f'cargas{cuatrimestre}'])
+        cargas_pedidas, _ = CargasPedidas.objects.get_or_create(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
+                                                                defaults={'fecha_encuesta': fecha_encuesta})
+        cargas_pedidas.cargas = cargas
+        cargas_pedidas.save()
+
         opciones_cuat = []
         for opcion in range(1, 6):
             opcion_id = int(datos[f'opcion{cuatrimestre}{opcion}'])
