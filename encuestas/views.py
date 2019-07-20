@@ -34,6 +34,18 @@ def administrar_habilitadas(request):
     return render(request, 'encuestas/administrar_habilitadas.html', context)
 
 
+@login_required
+@permission_required('dborrador.add_asignacion')
+def agregar_habilitacion(request):
+    pass
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def cambiar_habilitacion(request, habilitacion_id):
+    pass
+
+
 def _turnos_minimos_por_cuatrimestre(cuatrimestre, docente):
     minimos = {
         Cuatrimestres.V.name: 2,

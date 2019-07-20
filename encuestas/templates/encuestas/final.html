@@ -17,7 +17,7 @@
         cuatrimestre de verano
         {% endif %}
     </div>
-    <table border="1" cellspacing="0" cellpadding="5">
+    <table>
             {% for opcion in opciones_cuat %}
             <tr><td>{{ opcion.turno.str_corto }} ({{ opcion.turno.horarios_info.diayhora }})</td><td>Peso: {{ opcion.peso }}</td></tr>
             {% endfor %}

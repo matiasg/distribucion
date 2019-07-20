@@ -1,6 +1,7 @@
 from django.db import models
 from simple_history.models import HistoricalRecords
 from django.core.validators import MaxValueValidator, RegexValidator
+from django.utils import timezone
 from enum import Enum
 
 from materias.models import Turno, Docente, Cuatrimestres, Cargos, TipoDocentes, choice_enum
@@ -55,14 +56,18 @@ class EncuestasHabilitadas(models.Model):
 
     class Meta:
         unique_together = [['anno', 'cuatrimestres', 'tipo_docente']]
+        ordering = ['anno', 'tipo_docente']
 
     def cuatrimestres_str(self):
         return '|'.join(Cuatrimestres[c].value for c in self.cuatrimestres)
 
+    def tipo_str(self):
+        return TipoDocentes[self.tipo_docente].value
+
     def es_valida_ahora(self, momento=None):
         if momento is None:
             momento = timezone.now()
-        return habilitacion.desde <= momento <= habilitacion.hasta
+        return self.desde <= momento <= self.hasta
 
     @staticmethod
     def esta_habilitada(anno, cuatrimestres, tipo_docente, momento):

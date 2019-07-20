@@ -7,11 +7,30 @@
 </head>
 
 <body>
-    <ol>
+    <table>
+        <thead>
+            <tr>
+                <td>Año</td>
+                <td>Cuatrimestres</td>
+                <td>Para</td>
+                <td>Desde</td>
+                <td>Hasta</td>
+                <td>En vigencia</td>
+                <td>Cambiar</td>
+            </tr>
+        </thead>
         {% for habi in habilitadas %}
-        <li>{{ habi.anno }}, Cuat{{ habi.cuatrimestres|length|pluralize }} {{ habi.cuatrimestres_str }},
-            desde {{ habi.desde|date:"d/m/Y H:i" }} hasta {{ habi.hasta|date:"d/m/Y H:i" }}</li>
+        <tr>
+            <td>{{ habi.anno }}</td>
+            <td>{{ habi.cuatrimestres_str }}</td>
+            <td>{{ habi.tipo_str }}</td>
+            <td>{{ habi.desde|date:"d/m/Y H:i" }}</td>
+            <td>{{ habi.hasta|date:"d/m/Y H:i" }}</td>
+            <td>{% if habi.es_valida_ahora %}✔{% else %}✘{% endif %}</td>
+            <td><a href="{% url 'encuestas:cambiar_habilitacion' habi.id %}">Cambiar</a></td>
+        </tr>
         {% endfor %}
-    </ol>
+    </table>
+    <a href="{% url 'encuestas:agregar_habilitacion' %}">Habilitar otra encuesta</a>
 </body>
 

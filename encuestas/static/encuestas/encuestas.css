@@ -29,6 +29,16 @@ div#seleccion
   font-size: large;
 }
 
+table {
+  border: 2px solid black;
+  border-collapse: collapse;
+}
+
+table tr td {
+  padding: 5px;
+  border: 1px solid black;
+}
+
 hr {
   display: block;
   margin-top: 2em;
