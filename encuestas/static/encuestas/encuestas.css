@@ -1,3 +1,7 @@
+body {
+  background-image: url("bg2.jpg");
+}
+
 .messages
 {
   font-size: 24px;
