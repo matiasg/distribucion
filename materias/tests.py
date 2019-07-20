@@ -9,7 +9,7 @@ from django.utils import timezone
 from materias.models import (Cargos, Carga, Dedicaciones, CargoDedicacion, Docente,
                              Materia, Turno, TipoMateria, TipoTurno, Dias, Cuatrimestres,
                              Horario, Pabellon)
-from encuestas.models import PreferenciasDocente, OtrosDatos
+from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
 from usuarios.models import Usuario
 from django.contrib.auth.models import Permission
 from django.urls import reverse
@@ -366,8 +366,11 @@ class TestPaginas(TestCase):
         PreferenciasDocente.objects.create(docente=n, turno=self.turno11,
                                            cargo=Cargos.Tit.name, peso=2, fecha_encuesta=now)
         OtrosDatos.objects.create(docente=n, fecha_encuesta=now,
-                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name, cargas=2,
+                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                   comentario='_esto deberia aparecer_')
+        CargasPedidas.objects.create(docente=n, fecha_encuesta=now,
+                                     anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                     cargas=2)
 
         response = self.client.get(f'/materias/administrar_cargas_docentes/{self.anno}/{self.cuatrimestre.name}', follow=True)
         self.assertContains(response, '>nemo X<')
@@ -387,9 +390,12 @@ class TestPaginas(TestCase):
                                   anno=self.anno, cuatrimestre=self.cuatrimestre.name)
         c2 = Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name,
                                   anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-        OtrosDatos.objects.create(docente=n, fecha_encuesta=timezone.now(),
-                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name,
-                                  cargas=2)
+        now = timezone.now()
+        OtrosDatos.objects.create(docente=n, fecha_encuesta=now,
+                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name)
+        CargasPedidas.objects.create(docente=n, fecha_encuesta=now,
+                                     anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                     cargas=2)
         cm = Carga.objects.create(docente=m, cargo=CargoDedicacion.TitExc.name,
                                   anno=self.anno, cuatrimestre=self.cuatrimestre.name)
 
