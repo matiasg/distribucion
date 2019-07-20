@@ -1,14 +1,16 @@
 from django.test import TestCase
 from django.test.utils import setup_test_environment
+from django.utils import timezone
 from django.urls import reverse
 from django.forms import ValidationError
 
 import re
+import datetime
 
 from materias.models import (Docente, Carga, Cargos, Materia, Turno, TipoTurno, TipoMateria,
                              CargoDedicacion, Cuatrimestres)
 from materias.misc import TipoDocentes
-from .models import PreferenciasDocente, OtrosDatos, CargasPedidas
+from .models import PreferenciasDocente, OtrosDatos, CargasPedidas, EncuestasHabilitadas
 from .views import checkear_y_salvar
 
 
@@ -29,6 +31,10 @@ class TestEncuesta(TestCase):
                                                   dificil_de_cubrir=True)
         self.otros_datos = {'telefono': '+54911 1234-5678', 'email': 'nadie@gmail.com', 'comentario': '',
                             f'cargas{Cuatrimestres.P.name}': 1}
+        now = timezone.now()
+        for tipo in TipoDocentes:
+            EncuestasHabilitadas.objects.create(anno=self.anno, cuatrimestres=Cuatrimestres.P.name, tipo_docente=tipo.name,
+                                                desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
 
     def test_pocos_turnos(self):
         datos = self.otros_datos
@@ -101,21 +107,29 @@ class TestEncuesta(TestCase):
             checkear_y_salvar(datos, self.anno, Cuatrimestres.P.name)
 
     def test_titulo_correcto(self):
-        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.P.name, 'J')))
+        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.P.name, TipoDocentes.J.name)))
         self.assertEqual(response.request['PATH_INFO'], f'/encuestas/encuesta/{self.anno}/P/J')
         self.assertTrue(re.search('Preferencias para el\s*primer cuatrimestre', response.content.decode(), re.DOTALL))
 
     def test_turnos_correctos(self):
-        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.P.name, 'J')))
+        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.P.name, TipoDocentes.J.name)))
         self.assertContains(response, self.turno.materia.nombre)
 
     def test_turnos_otros_cuatrimestres(self):
-        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.S.name, 'J')))
+        now = timezone.now()
+        EncuestasHabilitadas.objects.create(anno=self.anno, cuatrimestres=Cuatrimestres.S.name,
+                                            tipo_docente=TipoDocentes.J.name,
+                                            desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
+        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.S.name, TipoDocentes.J.name)))
         self.assertNotContains(response, self.turno.materia.nombre)
 
     def test_turnos_otros_annos(self):
+        now = timezone.now()
+        EncuestasHabilitadas.objects.create(anno=self.anno+1, cuatrimestres=Cuatrimestres.P.name,
+                                            tipo_docente=TipoDocentes.J.name,
+                                            desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
         response = self.client.get(reverse('encuestas:encuesta',
-                                           args=(str(self.anno + 1), Cuatrimestres.P.name, 'J')))
+                                           args=(str(self.anno + 1), Cuatrimestres.P.name, TipoDocentes.J.name)))
         self.assertNotContains(response, self.turno.materia.nombre)
 
     def test_turnos_repetidos(self):
@@ -184,15 +198,20 @@ class TestEncuesta(TestCase):
     def test_orden_materias_y_turnos(self):
         desorden = [4, 1, 3, 5, 2]
         orden = sorted(desorden)
+        anno = 2107
 
         for materia in desorden:
             m = Materia.objects.create(nombre=f'materia{materia}', obligatoriedad=TipoMateria.B.name)
             for turno in desorden:
-                Turno.objects.create(materia=m, anno=2107, cuatrimestre=Cuatrimestres.P.name,
+                Turno.objects.create(materia=m, anno=anno, cuatrimestre=Cuatrimestres.P.name,
                                      numero=turno, tipo=TipoTurno.T.name,
                                      necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
 
-        response = self.client.get(f'/encuestas/encuesta/2107/{Cuatrimestres.P.name}/{TipoDocentes.P.name}')
+        now = timezone.now()
+        EncuestasHabilitadas.objects.create(anno=anno, cuatrimestres=Cuatrimestres.P.name,
+                                            tipo_docente=TipoDocentes.P.name,
+                                            desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
+        response = self.client.get(f'/encuestas/encuesta/{anno}/{Cuatrimestres.P.name}/{TipoDocentes.P.name}')
 
         materias = re.findall('materia([0-9]),', response.content.decode())
         self.assertEqual(materias, [f'{materia}' for opcion in range(5)
@@ -209,19 +228,34 @@ class TestEncuesta(TestCase):
     def test_orden_materias_argentina(self):
         desorden = ['b', 'á', 'ñ', 'ü', 't']
         orden = ['á', 'b', 'ñ', 't', 'ü']
+        anno = 2107
 
         for materia in desorden:
             m = Materia.objects.create(nombre=f'materia{materia}', obligatoriedad=TipoMateria.B.name)
-            Turno.objects.create(materia=m, anno=2107, cuatrimestre=Cuatrimestres.P.name,
+            Turno.objects.create(materia=m, anno=anno, cuatrimestre=Cuatrimestres.P.name,
                                  numero=1, tipo=TipoTurno.T.name,
                                  necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
 
-        response = self.client.get(f'/encuestas/encuesta/2107/{Cuatrimestres.P.name}/{TipoDocentes.P.name}')
+        now = timezone.now()
+        EncuestasHabilitadas.objects.create(anno=anno, cuatrimestres=Cuatrimestres.P.name,
+                                            tipo_docente=TipoDocentes.P.name,
+                                            desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
+        response = self.client.get(f'/encuestas/encuesta/{anno}/{Cuatrimestres.P.name}/{TipoDocentes.P.name}')
 
         materias = re.findall('materia(.),', response.content.decode())
         self.assertEqual(materias, [f'{materia}' for opcion in range(5)
                                                  for materia in orden])
 
     def test_encuesta_mas_de_un_cuatri(self):
-        response = self.client.get(reverse('encuestas:encuesta', args=(2100, 'VPS', 'P')), follow=True)
+        now = timezone.now()
+        EncuestasHabilitadas.objects.create(anno=self.anno, cuatrimestres=f'{Cuatrimestres.V.name}{Cuatrimestres.P.name}{Cuatrimestres.S.name}',
+                                            tipo_docente=TipoDocentes.P.name,
+                                            desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
+        response = self.client.get(reverse('encuestas:encuesta', args=(self.anno,
+                                                                       f'{Cuatrimestres.V.name}{Cuatrimestres.P.name}{Cuatrimestres.S.name}',
+                                                                       'P')), follow=True)
         self.assertEqual(response.status_code, 200)
+
+    def test_encuesta_no_habilitada(self):
+        response = self.client.get(reverse('encuestas:encuesta', args=(2100, 'VPS', 'P')), follow=True)
+        self.assertEqual(response.status_code, 403)

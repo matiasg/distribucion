@@ -1,4 +1,4 @@
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
@@ -8,7 +8,7 @@ from django.core.validators import EmailValidator
 
 from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres, TipoDocentes
 from materias.misc import Mapeos
-from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas, telefono_validator
+from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas, EncuestasHabilitadas, telefono_validator
 
 from locale import strxfrm
 from collections import Counter, namedtuple
@@ -165,7 +165,17 @@ def _encuesta_con_mensaje_de_error(request, context, mensaje):
         _modificar_contexto_con_datos_request(context, request.POST)
         return render(request, 'encuestas/encuesta.html', context)
 
+
 def encuesta(request, anno, cuatrimestres, tipo_docente):
+    # chequeo que esté habilitada
+    now = timezone.now()
+    try:
+        habilitacion = EncuestasHabilitadas.objects.get(anno=anno, cuatrimestres=cuatrimestres,
+                                                        tipo_docente=tipo_docente)
+        assert habilitacion.desde <= now <= habilitacion.hasta
+    except (EncuestasHabilitadas.DoesNotExist, AssertionError):
+        return HttpResponse(status=403, content="La encuesta que querés llenar no está habilitada.")
+
     opciones_por_cuatrimestre = {Cuatrimestres[cuatri]: _generar_contexto(anno, cuatri, tipo_docente)
                                  for cuatri in cuatrimestres}
 
