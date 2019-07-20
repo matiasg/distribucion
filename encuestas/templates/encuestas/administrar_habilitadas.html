@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'encuestas/encuestas.css' %}">
+
+<head>
+    Página para habilitar/deshabilitar encuestas
+</head>
+
+<body>
+    <ol>
+        {% for habi in habilitadas %}
+        <li>{{ habi.anno }}, Cuat{{ habi.cuatrimestres|length|pluralize }} {{ habi.cuatrimestres_str }},
+            desde {{ habi.desde|date:"d/m/Y H:i" }} hasta {{ habi.hasta|date:"d/m/Y H:i" }}</li>
+        {% endfor %}
+    </ol>
+</body>
+

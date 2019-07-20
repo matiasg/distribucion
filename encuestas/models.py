@@ -56,10 +56,18 @@ class EncuestasHabilitadas(models.Model):
     class Meta:
         unique_together = [['anno', 'cuatrimestres', 'tipo_docente']]
 
+    def cuatrimestres_str(self):
+        return '|'.join(Cuatrimestres[c].value for c in self.cuatrimestres)
+
+    def es_valida_ahora(self, momento=None):
+        if momento is None:
+            momento = timezone.now()
+        return habilitacion.desde <= momento <= habilitacion.hasta
+
     @staticmethod
     def esta_habilitada(anno, cuatrimestres, tipo_docente, momento):
         try:
             habilitacion = EncuestasHabilitadas.objects.get(anno=anno, cuatrimestres=cuatrimestres, tipo_docente=tipo_docente)
-            return habilitacion.desde <= momento <= habilitacion.hasta
-        except:
+            return habilitacion.es_valida_ahora(momento)
+        except EncuestasHabilitadas.DoesNotExist:
             return False

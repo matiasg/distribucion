@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.forms import ValidationError
 from django.contrib import messages
+from django.contrib.auth.decorators import permission_required, login_required
 from django.core.validators import EmailValidator
 
 from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres, TipoDocentes
@@ -16,6 +17,21 @@ from enum import Enum
 import logging
 import logging.config
 logger = logging.getLogger(__name__)
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def index(request):
+    return render(request, 'encuestas/administrar.html')
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def administrar_habilitadas(request):
+    context = {
+        'habilitadas': EncuestasHabilitadas.objects.all(),
+    }
+    return render(request, 'encuestas/administrar_habilitadas.html', context)
 
 
 def _turnos_minimos_por_cuatrimestre(cuatrimestre, docente):
@@ -106,11 +122,6 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
     return opciones, otros_datos
 
 
-def index(request):
-    raise Http404('Todavía no hay contenido para esta página')
-
-
-
 DocenteParaEncuesta = namedtuple('DocenteParaEncuesta', ['id', 'nombre'])
 TurnoParaEncuesta = namedtuple('TurnoParaEncuesta', ['id', 'texto', 'dificil_de_cubrir'])
 OpcionesParaEncuesta = namedtuple('OpcionesParaEncuesta', ['numero', 'lista_corta', 'turno_elegido', 'peso'])
@@ -167,13 +178,7 @@ def _encuesta_con_mensaje_de_error(request, context, mensaje):
 
 
 def encuesta(request, anno, cuatrimestres, tipo_docente):
-    # chequeo que esté habilitada
-    now = timezone.now()
-    try:
-        habilitacion = EncuestasHabilitadas.objects.get(anno=anno, cuatrimestres=cuatrimestres,
-                                                        tipo_docente=tipo_docente)
-        assert habilitacion.desde <= now <= habilitacion.hasta
-    except (EncuestasHabilitadas.DoesNotExist, AssertionError):
+    if not EncuestasHabilitadas.esta_habilitada(anno, cuatrimestres, tipo_docente, timezone.now()):
         return HttpResponse(status=403, content="La encuesta que querés llenar no está habilitada.")
 
     opciones_por_cuatrimestre = {Cuatrimestres[cuatri]: _generar_contexto(anno, cuatri, tipo_docente)
