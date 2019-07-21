@@ -46,9 +46,14 @@ def borrar_habilitacion(request, habilitacion_id):
 @login_required
 @permission_required('dborrador.add_asignacion')
 def agregar_habilitacion(request):
-    now = timezone.now()
-    nueva_habilitacion = EncuestasHabilitadas.objects.create(anno=now.year, desde=now, hasta=now)
-    return HttpResponseRedirect(reverse('encuestas:cambiar_habilitacion', args=(nueva_habilitacion.id,)))
+    if request.method == 'POST':
+        form = HabilitacionDeEncuestaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse('encuestas:administrar_habilitadas'))
+    else:
+        context = {'form': HabilitacionDeEncuestaForm()}
+        return render(request, 'encuestas/agregar_habilitacion.html', context)
 
 
 @login_required

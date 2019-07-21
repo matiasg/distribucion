@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'encuestas/encuestas.css' %}">
+
+<head>
+    <h2>
+        Agregar una nueva habilitación de encuestas
+    </h2>
+    <link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
+    <script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
+    <script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
+    <script src="{% static 'encuestas/scripts.js' %}"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.min.css" integrity="sha256-DOS9W6NR+NFe1fUhEE0PGKY/fubbUCnOfTje2JMDw3Y=" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.full.min.js" integrity="sha256-FEqEelWI3WouFOo2VWP/uJfs1y8KJ++FLh2Lbqc8SJk=" crossorigin="anonymous"></script>
+</script>
+</head>
+
+<body>
+    <form action="{% url 'encuestas:agregar_habilitacion' %}" method="post">
+    {% csrf_token %}
+    {{ form.as_table }}
+    <input type="submit" value="salvar">
+    <a href="{% url 'encuestas:administrar_habilitadas' %}">Cancelar</a>
+    </form>
+</body>
+
