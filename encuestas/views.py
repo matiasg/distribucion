@@ -30,6 +30,11 @@ def index(request):
 @login_required
 @permission_required('dborrador.add_asignacion')
 def administrar_habilitadas(request):
+    if request.method == 'POST':
+        for k, v in request.POST.items():
+            if k.startswith('borrar'):
+                habilitacion_id = int(k[len('borrar'):])
+                EncuestasHabilitadas.objects.get(pk=habilitacion_id).delete()
     context = {
         'habilitadas': EncuestasHabilitadas.objects.all(),
     }
