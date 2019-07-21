@@ -37,12 +37,12 @@
             <td>{{ habi.desde|date:"d/m/Y H:i" }}</td>
             <td>{{ habi.hasta|date:"d/m/Y H:i" }}</td>
             <td>{% if habi.es_valida_ahora %}✔{% else %}✘{% endif %}</td>
-            <td><a href="{% url 'encuestas:cambiar_habilitacion' habi.id %}">Cambiar</a></td>
+            <td><a id=actuar href="{% url 'encuestas:cambiar_habilitacion' habi.id %}">Cambiar</a></td>
             <td><button id=actuar class="borrar_habilitacion" data-habilitacion="{{ habi.id }}">Borrar</td>
         </tr>
         {% endfor %}
     </table>
-    <a href="{% url 'encuestas:agregar_habilitacion' %}">Habilitar otra encuesta</a>
+    <a id=actuar href="{% url 'encuestas:agregar_habilitacion' %}">Habilitar otra encuesta</a>
 
 <div class="borrar_habilitacion_dialogo" url="{% url 'encuestas:borrar_habilitacion' 31415926535 %}">
     ¿Confirmás que querés borrar esta habilitación?

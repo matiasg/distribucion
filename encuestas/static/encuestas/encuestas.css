@@ -32,6 +32,7 @@ div#seleccion
 table {
   border: 2px solid black;
   border-collapse: collapse;
+  margin: 2em;
 }
 
 table tr td,
@@ -68,6 +69,10 @@ input#cargas
 {
   width: 4em;
   font-size: large;
+}
+
+a#actuar {
+  text-decoration: none;
 }
 
 #actuar {
