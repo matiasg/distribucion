@@ -20,6 +20,7 @@ $(document).ready(function(){
 });
 $(document).ready(function(){
     try {
+        jQuery.datetimepicker.setLocale('es');
         $(".datepicker").datetimepicker({
             format: "d/m/Y H:i",
         });
