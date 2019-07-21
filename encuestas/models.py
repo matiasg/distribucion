@@ -62,7 +62,7 @@ class EncuestasHabilitadas(models.Model):
         return '|'.join(Cuatrimestres[c].value for c in self.cuatrimestres)
 
     def tipo_str(self):
-        return TipoDocentes[self.tipo_docente].value
+        return TipoDocentes[self.tipo_docente].value if self.tipo_docente else ''
 
     def es_valida_ahora(self, momento=None):
         if momento is None:
