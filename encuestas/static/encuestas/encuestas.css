@@ -69,3 +69,7 @@ input#cargas
   width: 4em;
   font-size: large;
 }
+
+#actuar {
+  background-color: transparent;
+}

@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 {% load static %}
 <link rel="stylesheet" type="text/css" href="{% static 'encuestas/encuestas.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
 
 <head>
-    Página para habilitar/deshabilitar encuestas
+    <h1>
+        Habilitar/deshabilitar encuestas
+    </h1>
 
     <link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
     <script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
@@ -35,7 +38,7 @@
             <td>{{ habi.hasta|date:"d/m/Y H:i" }}</td>
             <td>{% if habi.es_valida_ahora %}✔{% else %}✘{% endif %}</td>
             <td><a href="{% url 'encuestas:cambiar_habilitacion' habi.id %}">Cambiar</a></td>
-            <td><button id="borrar_habilitacion" data-habilitacion="{{ habi.id }}">Borrar</td>
+            <td><button id=actuar class="borrar_habilitacion" data-habilitacion="{{ habi.id }}">Borrar</td>
         </tr>
         {% endfor %}
     </table>

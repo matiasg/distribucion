@@ -1,6 +1,6 @@
 $(document).ready(function(){
     $( ".borrar_habilitacion_dialogo" ).dialog({ autoOpen: false });
-    $( "button#borrar_habilitacion" ).click(function() {
+    $( "button.borrar_habilitacion" ).click(function() {
         var boton = $(this)[0]
         var habi = boton.getAttribute('data-habilitacion');
         $( ".borrar_habilitacion_dialogo" ).dialog("open");
