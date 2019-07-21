@@ -13,3 +13,9 @@ class HabilitacionDeEncuestaForm(ModelForm):
     class Meta:
         model = EncuestasHabilitadas
         fields = '__all__'
+        labels = {
+            'anno': 'Año',
+        }
+        widgets = {
+            'anno': widgets.NumberInput(attrs={'max': 2100, 'min': 2010, 'class': 'anno'})
+        }

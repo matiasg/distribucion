@@ -58,7 +58,6 @@ def cambiar_habilitacion(request, habilitacion_id):
     if request.method == 'POST':
         form = HabilitacionDeEncuestaForm(request.POST, instance=habilitacion)
         if form.is_valid():
-            logger.info('salvando?')
             form.save()
             return HttpResponseRedirect(reverse('encuestas:administrar_habilitadas'))
         else:

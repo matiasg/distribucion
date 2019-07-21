@@ -71,6 +71,10 @@ input#cargas
   font-size: large;
 }
 
+input.anno {
+  width: 5em;
+}
+
 a#actuar {
   text-decoration: none;
 }
