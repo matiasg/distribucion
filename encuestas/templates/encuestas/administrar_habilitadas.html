@@ -4,39 +4,45 @@
 
 <head>
     Página para habilitar/deshabilitar encuestas
+
+    <link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
+    <script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
+    <script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
+    <script src="{% static 'encuestas/scripts.js' %}"></script>
 </head>
 
 <body>
-
-    <form action="{% url 'encuestas:administrar_habilitadas' %}" method="post">
     {% csrf_token %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Año</th>
-                    <th>Cuatrimestres</th>
-                    <th>Para</th>
-                    <th>Desde</th>
-                    <th>Hasta</th>
-                    <th>En vigencia</th>
-                    <th>Cambiar</th>
-                    <th>Borrar</th>
-                </tr>
-            </thead>
-            {% for habi in habilitadas %}
+    <table>
+        <thead>
             <tr>
-                <td>{{ habi.anno }}</td>
-                <td>{{ habi.cuatrimestres_str }}</td>
-                <td>{{ habi.tipo_str }}</td>
-                <td>{{ habi.desde|date:"d/m/Y H:i" }}</td>
-                <td>{{ habi.hasta|date:"d/m/Y H:i" }}</td>
-                <td>{% if habi.es_valida_ahora %}✔{% else %}✘{% endif %}</td>
-                <td><a href="{% url 'encuestas:cambiar_habilitacion' habi.id %}">Cambiar</a></td>
-                <td><input type="submit" name="borrar{{ habi.id }}" value="Borrar"></td>
+                <th>Año</th>
+                <th>Cuatrimestres</th>
+                <th>Para</th>
+                <th>Desde</th>
+                <th>Hasta</th>
+                <th>En vigencia</th>
+                <th>Cambiar</th>
+                <th>Borrar</th>
             </tr>
-            {% endfor %}
-        </table>
-        <a href="{% url 'encuestas:agregar_habilitacion' %}">Habilitar otra encuesta</a>
-    </form>
+        </thead>
+        {% for habi in habilitadas %}
+        <tr>
+            <td>{{ habi.anno }}</td>
+            <td>{{ habi.cuatrimestres_str }}</td>
+            <td>{{ habi.tipo_str }}</td>
+            <td>{{ habi.desde|date:"d/m/Y H:i" }}</td>
+            <td>{{ habi.hasta|date:"d/m/Y H:i" }}</td>
+            <td>{% if habi.es_valida_ahora %}✔{% else %}✘{% endif %}</td>
+            <td><a href="{% url 'encuestas:cambiar_habilitacion' habi.id %}">Cambiar</a></td>
+            <td><button id="borrar_habilitacion" data-habilitacion="{{ habi.id }}">Borrar</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <a href="{% url 'encuestas:agregar_habilitacion' %}">Habilitar otra encuesta</a>
+
+<div class="borrar_habilitacion_dialogo" url="{% url 'encuestas:borrar_habilitacion' 31415926535 %}">
+    ¿Confirmás que querés borrar esta habilitación?
+</div>
 
 </body>
