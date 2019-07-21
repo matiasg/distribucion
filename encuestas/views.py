@@ -9,7 +9,9 @@ from django.core.validators import EmailValidator
 
 from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres, TipoDocentes
 from materias.misc import Mapeos
-from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas, EncuestasHabilitadas, telefono_validator
+from encuestas.models import (PreferenciasDocente, OtrosDatos, CargasPedidas, EncuestasHabilitadas,
+                              GrupoCuatrimestral, telefono_validator)
+from encuestas.forms import HabilitacionDeEncuestaForm
 
 from locale import strxfrm
 from collections import Counter, namedtuple
@@ -43,7 +45,21 @@ def agregar_habilitacion(request):
 @login_required
 @permission_required('dborrador.add_asignacion')
 def cambiar_habilitacion(request, habilitacion_id):
-    pass
+    habilitacion =  EncuestasHabilitadas.objects.get(pk=habilitacion_id)
+    if request.method == 'POST':
+        form = HabilitacionDeEncuestaForm(request.POST, instance=habilitacion)
+        if form.is_valid():
+            logger.info('salvando?')
+            form.save()
+            return HttpResponseRedirect(reverse('encuestas:administrar_habilitadas'))
+        else:
+            logger.error(form.errors)
+
+    else:
+        form = HabilitacionDeEncuestaForm(instance=habilitacion)
+
+    context = {'form': form, 'habilitacion': habilitacion}
+    return render(request, 'encuestas/cambiar_habilitacion.html', context)
 
 
 def _turnos_minimos_por_cuatrimestre(cuatrimestre, docente):

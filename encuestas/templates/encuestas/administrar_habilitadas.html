@@ -17,6 +17,7 @@
                 <td>Hasta</td>
                 <td>En vigencia</td>
                 <td>Cambiar</td>
+                <td>Borrar</td>
             </tr>
         </thead>
         {% for habi in habilitadas %}
@@ -28,6 +29,7 @@
             <td>{{ habi.hasta|date:"d/m/Y H:i" }}</td>
             <td>{% if habi.es_valida_ahora %}✔{% else %}✘{% endif %}</td>
             <td><a href="{% url 'encuestas:cambiar_habilitacion' habi.id %}">Cambiar</a></td>
+            <td><input type="button" name="borrar{{ habi.id }}" value="Borrar"></td>
         </tr>
         {% endfor %}
     </table>
