@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<head>
+<h2>
+    Juntar materias que por error figuran como dos distintas
+</h2>
+</head>
+
+<body>
+    <form action="{% url 'materias:juntar_materias' %}" method="post"></form>
+    {% csrf_token %}
+
+    {% for obligatoriedad, o_materias in materias.items %}
+    <hr>
+    <h4>Tipo: {{ obligatoriedad.value }}</h4>
+    <ul>
+        {% for materia in o_materias %}
+        <li>
+            <input type="checkbox" name="juntar_{{ materia.id }}">
+            {{ materia }}
+        </li>
+        {% endfor %}
+    </ul>
+
+    {% endfor %}
+</body>

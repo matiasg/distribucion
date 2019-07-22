@@ -97,6 +97,8 @@ def administrar(request):
         return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
     elif 'exportar_informacion' in request.POST:
         return HttpResponseRedirect(reverse('materias:exportar_informacion', args=(anno, cuatrimestre)))
+    elif 'juntar_materias' in request.POST:
+        return HttpResponseRedirect(reverse('materias:juntar_materias'))
     elif 'cargas_docentes' in request.POST:
         return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
     elif 'cargas_docentes_publicadas' in request.POST:
@@ -407,6 +409,18 @@ def borrar_horario(request, horario_id):
     turno = horario.turno
     horario.delete()
     return HttpResponseRedirect(reverse('materias:cambiar_turno', args=(turno.id,)))
+
+
+@login_required
+@permission_required('materias.add_turno')
+def juntar_materias(request):
+    materias = {}
+    for obligatoriedad in TipoMateria:
+        materias[obligatoriedad] = Materia.objects.filter(obligatoriedad=obligatoriedad.name).order_by('nombre')
+    context = {
+        'materias': materias,
+    }
+    return render(request, 'materias/juntar_materias.html', context=context)
 
 
 @login_required
