@@ -56,6 +56,7 @@ class CargoDedicacion(Enum):
         return [f'{cargo.name}{ded.name}' for ded in Dedicaciones]
 
 
+@total_ordering
 class TipoDocentes(Enum):
 
     P = 'Profesor'

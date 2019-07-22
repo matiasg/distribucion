@@ -430,13 +430,19 @@ def exportar_informacion(request, anno, cuatrimestre):
             Cuatrimestres.S: xlwt.easyxf('pattern: pattern solid, fore_colour segundo'),
         }
 
+        def docentes_por_cargo(cargas):
+            return ' - '.join(f'{c.docente.nombre} ({Mapeos.tipo_de_carga(c).name})'
+                              for c in sorted(sorted(cargas, key=lambda c: strxfrm(c.docente.na_apellido)),
+                                              key=lambda c: Mapeos.tipo_de_carga(c),
+                                              reverse=True))
+
         Columna = namedtuple('Columna', 'nombre ancho funcion')
         columnas = [Columna('materia', 40, lambda c, m, t: m.nombre),
                     Columna('cuat', 4, lambda c, m, t: c.value),
                     Columna('turno', 12, lambda c, m, t: TipoTurno[t.tipo].value),
                     Columna('horario', 18, lambda c, m, t: t.horarios_info().diayhora),
                     Columna('alumnos', 4, lambda c, m, t: t.alumnos),
-                    Columna('docentes', 100, lambda c, m, t: ' - '.join(c.docente.nombre for c in turno.carga_set.all())),
+                    Columna('docentes', 100, lambda c, m, t: docentes_por_cargo(turno.carga_set.all())),
                     Columna('jtp', 5, lambda c, m, t: t.necesidad_jtp if t.tipo != TipoTurno.T.name else ''),
                     Columna('ay1', 5, lambda c, m, t: t.necesidad_ay1 if t.tipo != TipoTurno.T.name else ''),
                     Columna('ay2', 5, lambda c, m, t: t.necesidad_ay2 if t.tipo != TipoTurno.T.name else ''),
