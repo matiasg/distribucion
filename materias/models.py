@@ -133,6 +133,10 @@ class Turno(models.Model):
         return (f'{self.materia.nombre}, cuat {Cuatrimestres[self.cuatrimestre].value} {self.anno}, '
                 f'{TipoTurno[self.tipo].value}{numero}')
 
+    def str_corto(self):
+        numero = f' {self.numero}' if self.numero else ''
+        return f'{self.materia.nombre}, {TipoTurno[self.tipo].value}{numero}'
+
     def horarios_info(self):
 
         def join(lst):

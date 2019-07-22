@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'encuestas/encuestas.css' %}">
+
+<head>
+    <h2>
+        Página para administrar encuestas
+    </h2>
+</head>
+
+<body>
+    <a href="{% url 'encuestas:administrar_habilitadas' %}">(Des)habilitar encuestas</a>
+</body>

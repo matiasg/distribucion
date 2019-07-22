@@ -20,7 +20,7 @@ django.setup()
 from materias.models import (Materia, Turno, Horario, Docente, Carga, Cuatrimestres, TipoMateria, TipoTurno,
                              Cargos, Dedicaciones, CargoDedicacion, Dias, TipoDocentes, get_key_enum)
 from materias.misc import Mapeos
-from encuestas.models import PreferenciasDocente, OtrosDatos
+from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
 from dborrador.models import Asignacion
 from tools.current_html_to_db import maymin, convierte_a_horarios
 
@@ -39,10 +39,12 @@ def borra_datos_de_anno_y_cuatrimestre():
     cb = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
     eb = PreferenciasDocente.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre.name).delete()
     ob = OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
+    cp = CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre.name).delete()
     logger.info('Borré datos de turnos: %s', tb)
     logger.info('Borré datos de cargas: %s', cb)
     logger.info('Borré datos de preferencias: %s', eb)
     logger.info('Borré otros datos de encuestas: %s', ob)
+    logger.info('Borré cargas pedidas de encuestas: %s', cp)
 
 
 class LectorDeCsv:
@@ -278,8 +280,14 @@ def main():
                 cuatrimestre=cuatrimestre.name,
                 email=datos['email'],
                 telefono=datos['telefono'],
-                cargas=datos['cargas'],
                 comentario=f'General: {datos["observaciones_generales"]}.\nCuatrimestre: {datos["observaciones_particulares"]}'
+            )
+            CargasPedidas.objects.create(
+                docente=docente,
+                fecha_encuesta=fecha_encuesta,
+                anno=anno,
+                cuatrimestre=cuatrimestre.name,
+                cargas=datos['cargas'],
             )
 
             docente.email = datos['email']

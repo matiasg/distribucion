@@ -37,7 +37,7 @@ class TestPreparar(TestCase):
         self.pref1 = PreferenciasDocente.objects.create(docente=self.docente, turno=self.turno1, peso=1, fecha_encuesta=now)
         self.pref2 = PreferenciasDocente.objects.create(docente=self.docente, turno=self.turno2, peso=3, fecha_encuesta=now)
         OtrosDatos.objects.create(docente=self.docente, fecha_encuesta=now, comentario='',
-                                  cargas=1, email='', telefono='', anno=2100, cuatrimestre=Cuatrimestres.P.name)
+                                  email='', telefono='', anno=2100, cuatrimestre=Cuatrimestres.P.name)
 
     def test_no_falla_si_no_hay_preferencias(self):
         response = self.client.get('/dborrador/preparar/2100/P', follow=True)

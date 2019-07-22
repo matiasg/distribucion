@@ -1,3 +1,7 @@
+body {
+  background-image: url("bg2.jpg");
+}
+
 .messages
 {
   font-size: 24px;
@@ -8,7 +12,7 @@ div#titulo
 {
   font-weight: bolder;
   font-size: xx-large;
-  color: #104040;
+  color: #204040;
   margin-bottom: 20px;
 }
 
@@ -16,7 +20,8 @@ div#subtitulo
 {
   font-weight: bold;
   font-size: x-large;
-  color: #207070;
+  color: #204040;
+  padding-bottom: 0.5em;
 }
 
 div#seleccion
@@ -24,8 +29,56 @@ div#seleccion
   font-size: large;
 }
 
+table {
+  border: 2px solid black;
+  border-collapse: collapse;
+  margin: 2em;
+}
+
+table tr td,
+table tr th {
+  padding: 5px;
+  border: 1px solid black;
+  text-align: center;
+}
+
+hr {
+  display: block;
+  margin-top: 2em;
+  margin-bottom: 2em;
+  margin-left: auto;
+  margin-right: auto;
+  border-style: inset;
+  border-width: 2px;
+}
+
 dl dt
 {
   font-weight: bold;
   font-size: larger;
+}
+
+div#pregunta
+{
+  font-size: large;
+  padding-top: 0.5em;
+}
+
+div#seleccion input#peso,
+input#cargas
+{
+  width: 4em;
+  font-size: large;
+}
+
+input.anno {
+  width: 5em;
+}
+
+a#actuar {
+  text-decoration: none;
+}
+
+#actuar {
+  background-color: transparent;
 }

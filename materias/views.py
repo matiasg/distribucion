@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 from .models import (Materia, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
                      TipoDocentes, Docente, CargoDedicacion, Carga, Pabellon, Dias)
 from .misc import Mapeos, NoTurno
-from encuestas.models import OtrosDatos, PreferenciasDocente
+from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
 
 
 def index(request):
@@ -192,7 +192,7 @@ def administrar_cargas_docentes(request, anno, cuatrimestre):
     docentes_sin_cargas = sorted(set(docentes) - set(docentes_con_cargas),
                                  key=lambda d: d.na_apellido)
     # docentes con diferencias con la encuesta
-    docentes_y_cargas_encuesta = {o.docente: o.cargas for o in OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all()}
+    docentes_y_cargas_encuesta = {cp.docente: cp.cargas for cp in CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all()}
     # calculo diferencias contra encuesta
     diferencias_encuesta = {d: (len(docentes_y_cargas_nuestras[d]),
                                 docentes_y_cargas_encuesta[d],
@@ -252,9 +252,9 @@ def administrar_cargas_de_un_docente(request, anno, cuatrimestre, docente_id):
 
     else:
         try:
-            cargas_pedidas = OtrosDatos.objects.get(anno=anno, cuatrimestre=cuatrimestre, docente=docente).cargas
+            cargas_pedidas = CargasPedidas.objects.get(anno=anno, cuatrimestre=cuatrimestre, docente=docente).cargas
             completo_la_encuesta = True
-        except OtrosDatos.DoesNotExist:
+        except CargasPedidas.DoesNotExist:
             cargas_pedidas = 0
             completo_la_encuesta = False
         cargas = docente.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre)

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'encuestas/encuestas.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+
+<head>
+    <h1>
+        Habilitar/deshabilitar encuestas
+    </h1>
+
+    <link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
+    <script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
+    <script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
+    <script src="{% static 'encuestas/scripts.js' %}"></script>
+</head>
+
+<body>
+    {% csrf_token %}
+    <table>
+        <thead>
+            <tr>
+                <th>Año</th>
+                <th>Cuatrimestres</th>
+                <th>Para</th>
+                <th>Desde</th>
+                <th>Hasta</th>
+                <th>En vigencia</th>
+                <th>Cambiar</th>
+                <th>Borrar</th>
+            </tr>
+        </thead>
+        {% for habi in habilitadas %}
+        <tr>
+            <td>{{ habi.anno }}</td>
+            <td>{{ habi.cuatrimestres_str }}</td>
+            <td>{{ habi.tipo_str }}</td>
+            <td>{{ habi.desde|date:"d/m/Y H:i" }}</td>
+            <td>{{ habi.hasta|date:"d/m/Y H:i" }}</td>
+            <td>{% if habi.es_valida_ahora %}✔{% else %}✘{% endif %}</td>
+            <td><a id=actuar href="{% url 'encuestas:cambiar_habilitacion' habi.id %}">Cambiar</a></td>
+            <td><button id=actuar class="borrar_habilitacion" data-habilitacion="{{ habi.id }}">Borrar</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <a id=actuar href="{% url 'encuestas:agregar_habilitacion' %}">Habilitar otra encuesta</a>
+
+<div class="borrar_habilitacion_dialogo" url="{% url 'encuestas:borrar_habilitacion' 31415926535 %}">
+    ¿Confirmás que querés borrar esta habilitación?
+</div>
+
+</body>

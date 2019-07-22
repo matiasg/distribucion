@@ -7,11 +7,22 @@
 
 <h2>Se salvaron estas opciones para {{ docente }}</h2>
 
-<table border="1" cellspacing="0" cellpadding="5">
-    {% for opcion in opciones %}
-    <tr><td>{{ opcion.turno }}</td><td>Peso: {{ opcion.peso }}</td></tr>
+    {% for cuatrimestre, opciones_cuat in opciones.items %}
+    <div id=pregunta>Opciones para el
+        {% if cuatrimestre.name == "P" %}
+        primer cuatrimestre
+        {% elif cuatrimestre.name == "S" %}
+        segundo cuatrimestre
+        {% else %}
+        cuatrimestre de verano
+        {% endif %}
+    </div>
+    <table>
+            {% for opcion in opciones_cuat %}
+            <tr><td>{{ opcion.turno.str_corto }} ({{ opcion.turno.horarios_info.diayhora }})</td><td>Peso: {{ opcion.peso }}</td></tr>
+            {% endfor %}
+    </table>
     {% endfor %}
-</table>
 
 <h2>Otros datos guardados</h2>
 <dl>
