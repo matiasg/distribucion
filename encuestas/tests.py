@@ -181,6 +181,7 @@ class TestEncuesta(TestCase):
         self.assertEqual(od.comentario, 'pero qué corno')
         self.assertEqual(od.telefono,  '+54911 1234-5678')
         self.assertEqual(od.email,  'juan@dm.uba.ar')
+        self.assertContains(response, 'Gracias')
 
         cp = CargasPedidas.objects.get(anno=self.anno, cuatrimestre=c, docente=self.docente)
         self.assertEqual(cp.cargas, 1)
@@ -259,3 +260,21 @@ class TestEncuesta(TestCase):
     def test_encuesta_no_habilitada(self):
         response = self.client.get(reverse('encuestas:encuesta', args=(2100, 'VPS', 'P')), follow=True)
         self.assertEqual(response.status_code, 403)
+
+    def test_encuesta_sin_docente_declarado(self):
+        c = Cuatrimestres.P.name
+        opciones = {}
+        for opcion in range(1, 6):
+            turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
+                                         numero=1, tipo=TipoTurno.T.name,
+                                         necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+            opciones[f'opcion{c}{opcion}'] = turno.id
+            opciones[f'peso{c}{opcion}'] = 0
+        response = self.client.post(f'/encuestas/encuesta/{self.anno}/{c}/{TipoDocentes.P.name}',
+                                    {'docente': -1,
+                                     **opciones,
+                                     'telefono': '+54911 1234-5678', 'email': 'juan@dm.uba.ar',
+                                     f'cargas{c}': 1, 'comentario': 'pero qué corno'},
+                                    follow=True)
+        self.assertNotContains(response, 'Gracias')
+        self.assertContains(response, '[error]  No me dijiste quién sos')
