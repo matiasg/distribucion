@@ -7,8 +7,8 @@ from locale import strxfrm
 from django.utils import timezone
 
 from materias.models import (Cargos, Carga, Dedicaciones, CargoDedicacion, Docente,
-                             Materia, Turno, TipoMateria, TipoTurno, Dias, Cuatrimestres,
-                             Horario, Pabellon)
+                             Materia, AliasDeMateria, Turno, TipoMateria, TipoTurno, Dias,
+                             Cuatrimestres, Horario, Pabellon)
 from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
 from usuarios.models import Usuario
 from django.contrib.auth.models import Permission
@@ -263,6 +263,7 @@ class TestPaginas(TestCase):
             'cargas_docentes_publicadas': 'materias/administrar_cargas_publicadas',
             'administrar_encuestas': 'encuestas/administrar_habilitadas',
             'dborrador': 'dborrador/distribucion',
+            'juntar_materias': 'materias/juntar_materias',
         }
         for boton, url in botones_urls.items():
             response = self.client.post('/materias/administrar',
@@ -523,3 +524,32 @@ class TestPaginas(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/ms-excel')
+
+    def test_juntar_materias(self):
+        self.client.login(username='autorizado', password='1234')
+        duplicada = Materia.objects.create(nombre='lacán 3', obligatoriedad=TipoMateria.B.name)
+        # priemro consultamos la página
+        response = self.client.get(reverse('materias:juntar_materias'))
+        for materia in [self.materia1, self.materia2, self.materia3,  duplicada]:
+            self.assertContains(response, materia.nombre)
+        # le decimos de juntar materias
+        response = self.client.post(reverse('materias:juntar_materias'),
+                                    {f'juntar_{self.materia3.id}': True, f'juntar_{duplicada.id}': True})
+        for materia, debe_estar in {self.materia1: False, self.materia2: False, self.materia3: True,  duplicada: True}.items():
+            if debe_estar:
+                self.assertContains(response, materia.nombre)
+            else:
+                self.assertNotContains(response, materia.nombre)
+        # pido juntarlas
+        dict_nec = {'necesidad_prof': 0, 'necesidad_jtp': 0, 'necesidad_ay1': 0, 'necesidad_ay2': 0}
+        turno = Turno.objects.create(materia=self.materia3, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                     numero=2, tipo=TipoTurno.T.name, **dict_nec)
+        response = self.client.post(reverse('materias:juntar_materias'),
+                                    {f'juntar_{self.materia3.id}': True, f'juntar_{duplicada.id}': True,
+                                     'nombre': f'nombre_{duplicada.id}',
+                                     'confirmar': True})
+        self.assertEqual(Materia.objects.count(), 3)
+        self.assertEqual(AliasDeMateria.objects.count(), 1)
+        self.assertEqual(AliasDeMateria.objects.first().materia, duplicada)
+        turno = Turno.objects.get(pk=turno.id)
+        self.assertEqual(turno.materia, duplicada)

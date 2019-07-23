@@ -114,6 +114,11 @@ class Materia(models.Model):
         return self.nombre
 
 
+class AliasDeMateria(models.Model):
+    nombre = models.CharField(max_length=120)
+    materia = models.ForeignKey(Materia, on_delete=models.CASCADE)
+
+
 class Turno(models.Model):
     materia = models.ForeignKey(Materia, on_delete=models.CASCADE)
     anno = models.IntegerField()

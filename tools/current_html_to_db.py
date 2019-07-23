@@ -19,7 +19,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "distribucion.settings")
 import django
 django.setup()
 
-from materias.models import (Materia, Turno, Horario, Docente, Carga,
+from materias.models import (Materia, AliasDeMateria, Turno, Horario, Docente, Carga,
                              Cuatrimestres, TipoMateria, TipoTurno, Cargos, CargoDedicacion, Dias, get_key_enum)
 
 # logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
@@ -101,8 +101,16 @@ def salva_datos(html, anno, cuatrimestre):
         else:
             nombre_materia = maymin(parte.find('thead').text)
             logger.info('Analizando: %s', nombre_materia)
-            materia, _ = Materia.objects.get_or_create(nombre=nombre_materia,
-                                                       obligatoriedad=tipo_de_materia.name)
+
+            try:
+                materia = Materia.objects.get(nombre=nombre_materia, obligatoriedad=tipo_de_materia.name)
+            except Materia.DoesNotExist:
+                try:
+                    alias = AliasDeMateria.objects.get(nombre=nombre_materia)
+                    materia = alias.materia
+                except AliasDeMateria.DoesNotExist:
+                    materia = Materia.objects.create(nombre=nombre_materia, obligatoriedad=tipo_de_materia.name)
+                    logger.warning('Creé una nueva materia: %s', materia)
 
             for turno_html in parte.find_all('tr'):
                 rows = turno_html.find_all('td')

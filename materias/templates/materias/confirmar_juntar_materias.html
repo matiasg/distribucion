@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<head>
+<h2>
+    Confirmación
+</h2>
+</head>
+
+<body>
+    <h3>Tabla de turnos de las materias que seleccionaste</h3>
+
+    <table id=cargas_docentes>
+        <thead>
+            <tr>
+                <th></th>
+                {% for cuatri in turnos_juntos %}
+                <th class=separado>{{ cuatri.1 }} {{ cuatri.0 }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        {% for mate, cuatris in turnos.items %}
+        <tr>
+            <td>{{ mate }}</td>
+            {% for cuatri in turnos_juntos %}
+            <td>{% if cuatri in cuatris %}si{% endif %}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if esta_bien %}
+    <form action="{% url 'materias:juntar_materias' %}" method=post>
+    {% csrf_token %}
+
+    <p>
+        Los turnos no se intersecan. Se pueden juntar.
+    </p>
+
+    <p>
+        ¿Qué nombre va a quedar?
+        <select id="nombre" name="nombre">
+            {% for materia in materias %}
+            <option value="nombre_{{ materia.id }}">{{ materia.nombre }}</option>
+            {% endfor %}
+        </select>
+        {% for materia in materias %}
+        <input type="hidden" name="juntar_{{ materia.id }}">
+        {% endfor %}
+    </p>
+    <p>
+        ¿Confirmás que los querés juntar?
+        <input id=actuar type="submit" name="confirmar" value="Sí, quiero">
+    </p>
+
+    </form>
+    {% else %}
+    No se pueden juntar así nomás. Los cuatrimestres en que se dictaron
+    tienen coincidencias.
+    {% endif %}
+
+    <div id="actuar">
+        <a href="{% url 'materias:juntar_materias' %}">Cancelar</a>
+    </div>
+
+</body>
