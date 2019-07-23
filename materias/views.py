@@ -11,7 +11,7 @@ from collections import Counter, namedtuple
 import logging
 logger = logging.getLogger(__name__)
 
-from .models import (Materia, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
+from .models import (Materia, AliasDeMateria, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
                      TipoDocentes, Docente, CargoDedicacion, Carga, Pabellon, Dias)
 from .misc import Mapeos, NoTurno
 from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
@@ -414,13 +414,55 @@ def borrar_horario(request, horario_id):
 @login_required
 @permission_required('materias.add_turno')
 def juntar_materias(request):
-    materias = {}
-    for obligatoriedad in TipoMateria:
-        materias[obligatoriedad] = Materia.objects.filter(obligatoriedad=obligatoriedad.name).order_by('nombre')
-    context = {
-        'materias': materias,
-    }
-    return render(request, 'materias/juntar_materias.html', context=context)
+    if request.method == 'POST':
+        para_juntar = {Materia.objects.get(pk=int(k.split('_')[-1]))
+                       for k, v in request.POST.items()
+                       if k.startswith('juntar')}
+
+        if 'confirmar' in request.POST:
+            logger.info('Materias para juntar %s', para_juntar)
+            queda_id = int(request.POST['nombre'].split('_')[-1])
+            queda = Materia.objects.get(pk=queda_id)
+
+            with transaction.atomic():
+                for materia in para_juntar:
+                    if materia != queda:
+                        for turno in materia.turno_set.all():
+                            logger.info('cambio turno %s a %s', turno, queda)
+                            turno.materia = queda
+                            turno.save()
+                        AliasDeMateria.objects.create(materia=queda, nombre=materia.nombre)
+                        materia.delete()
+
+            return HttpResponseRedirect(reverse('materias:juntar_materias'))
+
+        else:
+            if not para_juntar:
+                logger.warning('pusieron juntar pero sin ninguna materia')
+                return HttpResponseRedirect(reverse('materias:juntar_materias'))
+
+
+            turnos = {materia: {(t.anno, t.cuatrimestre) for t in materia.turno_set.all()} for materia in para_juntar}
+            turnos_planos = Counter(cuat for turno in turnos.values() for cuat in turno)
+            turnos_juntos = set.union(*turnos.values())
+            logger.info('Turnos juntos: %s', turnos_juntos)
+
+            context = {
+                'materias': para_juntar,
+                'turnos': turnos,
+                'turnos_juntos': sorted(turnos_juntos),
+                'esta_bien': max(turnos_planos.values()) == 1,
+            }
+            return render(request, 'materias/confirmar_juntar_materias.html', context=context)
+
+    else:
+        materias = {obligatoriedad: Materia.objects.filter(obligatoriedad=obligatoriedad.name).order_by('nombre')
+                    for obligatoriedad in TipoMateria}
+        context = {
+            'materias': materias,
+        }
+        return render(request, 'materias/juntar_materias.html', context=context)
+
 
 
 @login_required

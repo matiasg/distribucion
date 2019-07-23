@@ -38,6 +38,10 @@ td.necesidades mark#mal {
   opacity: 0.9;
 }
 
+th.separado {
+  width: 8em;
+}
+
 #actuar,
 li input {
   -webkit-transition-duration: 0.4s; /* Safari */

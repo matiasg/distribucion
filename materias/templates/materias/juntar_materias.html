@@ -11,20 +11,26 @@
 </head>
 
 <body>
-    <form action="{% url 'materias:juntar_materias' %}" method="post"></form>
-    {% csrf_token %}
+    <div id="actuar">
+        <a href="{% url 'materias:administrar' %}">Volver a administrar materias</a>
+    </div>
 
-    {% for obligatoriedad, o_materias in materias.items %}
-    <hr>
-    <h4>Tipo: {{ obligatoriedad.value }}</h4>
-    <ul>
-        {% for materia in o_materias %}
-        <li>
-            <input type="checkbox" name="juntar_{{ materia.id }}">
-            {{ materia }}
-        </li>
+    <form action="{% url 'materias:juntar_materias' %}" method="post">
+        {% csrf_token %}
+
+        {% for obligatoriedad, o_materias in materias.items %}
+        <hr>
+        <h4>Tipo: {{ obligatoriedad.value }}</h4>
+        <ul>
+            {% for materia in o_materias %}
+            <li>
+                <input type="checkbox" name="juntar_{{ materia.id }}">
+                {{ materia }}
+            </li>
+            {% endfor %}
+        </ul>
+
         {% endfor %}
-    </ul>
-
-    {% endfor %}
+        <input id=actuar type="submit" name="juntemos" value="juntar">
+    </form>
 </body>
