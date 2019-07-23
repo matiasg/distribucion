@@ -7,8 +7,8 @@ from locale import strxfrm
 from django.utils import timezone
 
 from materias.models import (Cargos, Carga, Dedicaciones, CargoDedicacion, Docente,
-                             Materia, Turno, TipoMateria, TipoTurno, Dias, Cuatrimestres,
-                             Horario, Pabellon)
+                             Materia, AliasDeMateria, Turno, TipoMateria, TipoTurno, Dias,
+                             Cuatrimestres, Horario, Pabellon)
 from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
 from usuarios.models import Usuario
 from django.contrib.auth.models import Permission
@@ -519,3 +519,27 @@ class TestPaginas(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/ms-excel')
+
+    def test_juntar_materias(self):
+        self.client.login(username='autorizado', password='1234')
+        duplicada = Materia.objects.create(nombre='lacán 3', obligatoriedad=TipoMateria.B.name)
+        # priemro consultamos la página
+        response = self.client.get(reverse('materias:juntar_materias'))
+        for materia in [self.materia1, self.materia2, self.materia3,  duplicada]:
+            self.assertContains(response, materia.nombre)
+        # le decimos de juntar materias
+        response = self.client.post(reverse('materias:juntar_materias'),
+                                    {f'juntar_{self.materia3.id}': True, f'juntar_{duplicada.id}': True})
+        for materia, debe_estar in {self.materia1: False, self.materia2: False, self.materia3: True,  duplicada: True}.items():
+            if debe_estar:
+                self.assertContains(response, materia.nombre)
+            else:
+                self.assertNotContains(response, materia.nombre)
+        # pido juntarlas
+        response = self.client.post(reverse('materias:juntar_materias'),
+                                    {f'juntar_{self.materia3.id}': True, f'juntar_{duplicada.id}': True,
+                                     'nombre': f'nombre_{duplicada.id}',
+                                     'confirmar': True})
+        self.assertEqual(Materia.objects.count(), 3)
+        self.assertEqual(AliasDeMateria.objects.count(), 1)
+        self.assertEqual(AliasDeMateria.objects.first().materia, duplicada)
