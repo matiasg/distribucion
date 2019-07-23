@@ -256,17 +256,21 @@ class TestPaginas(TestCase):
     def test_administrar_dirige_bien(self):
         self.client.login(username='autorizado', password='1234')
         botones_urls = {
-            'turnos_docentes': 'administrar_docentes',
-            'turnos_alumnos': 'administrar_alumnos',
-            'cargas_docentes': 'administrar_cargas_docentes',
+            'turnos_docentes': 'materias/administrar_docentes',
+            'turnos_alumnos': 'materias/administrar_alumnos',
+            'cargas_docentes': 'materias/administrar_cargas_docentes',
+            'exportar_informacion': 'materias/exportar_informacion',
+            'cargas_docentes_publicadas': 'materias/administrar_cargas_publicadas',
+            'administrar_encuestas': 'encuestas/administrar_habilitadas',
+            'dborrador': 'dborrador/distribucion',
         }
         for boton, url in botones_urls.items():
             response = self.client.post('/materias/administrar',
                                         {boton: True, 'anno': self.anno, 'cuatrimestre': self.cuatrimestre.name},
                                         follow=True)
-            self.assertEqual(response.redirect_chain[-1],
-                             (f'/materias/{url}/{self.anno}/{self.cuatrimestre.name}', 302),
-                             f'No está redirigiendo bien a {url}')
+            ultima = response.redirect_chain[-1]
+            self.assertTrue(ultima[0].startswith(f'/{url}'))
+            self.assertEqual(ultima[1], 302, f'No está redirigiendo bien a {url}')
 
     def test_administrar_docentes(self):
         self.client.login(username='autorizado', password='1234')
