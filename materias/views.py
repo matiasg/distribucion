@@ -451,7 +451,7 @@ def juntar_materias(request):
                 'materias': para_juntar,
                 'turnos': turnos,
                 'turnos_juntos': sorted(turnos_juntos),
-                'esta_bien': max(turnos_planos.values()) == 1,
+                'esta_bien': max(turnos_planos.values()) == 1 if turnos_planos else True,
             }
             return render(request, 'materias/confirmar_juntar_materias.html', context=context)
 
