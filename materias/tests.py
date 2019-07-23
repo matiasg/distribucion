@@ -541,6 +541,9 @@ class TestPaginas(TestCase):
             else:
                 self.assertNotContains(response, materia.nombre)
         # pido juntarlas
+        dict_nec = {'necesidad_prof': 0, 'necesidad_jtp': 0, 'necesidad_ay1': 0, 'necesidad_ay2': 0}
+        turno = Turno.objects.create(materia=self.materia3, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                     numero=2, tipo=TipoTurno.T.name, **dict_nec)
         response = self.client.post(reverse('materias:juntar_materias'),
                                     {f'juntar_{self.materia3.id}': True, f'juntar_{duplicada.id}': True,
                                      'nombre': f'nombre_{duplicada.id}',
@@ -548,3 +551,5 @@ class TestPaginas(TestCase):
         self.assertEqual(Materia.objects.count(), 3)
         self.assertEqual(AliasDeMateria.objects.count(), 1)
         self.assertEqual(AliasDeMateria.objects.first().materia, duplicada)
+        turno = Turno.objects.get(pk=turno.id)
+        self.assertEqual(turno.materia, duplicada)
