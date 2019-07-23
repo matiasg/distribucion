@@ -263,6 +263,7 @@ class TestPaginas(TestCase):
             'cargas_docentes_publicadas': 'materias/administrar_cargas_publicadas',
             'administrar_encuestas': 'encuestas/administrar_habilitadas',
             'dborrador': 'dborrador/distribucion',
+            'juntar_materias': 'materias/juntar_materias',
         }
         for boton, url in botones_urls.items():
             response = self.client.post('/materias/administrar',
