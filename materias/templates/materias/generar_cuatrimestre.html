@@ -28,7 +28,7 @@
         Año:
         <select name="anno">
             {% for a in annos %}
-            <option value="{{ a }}">{{ a }}</option>
+            <option value="anno_{{ a }}">{{ a }}</option>
             {% endfor %}
         </select>
     </p>
@@ -37,7 +37,7 @@
         Cuatrimestre:
         <select name="cuatrimestre">
             {% for c in cuatrimestres %}
-            <option value="{{ c.name }}" {% if c == cuatrimestre %}selected{% endif %}>{{ c.value }}</option>
+            <option value="cuat_{{ c.name }}" {% if c == cuatrimestre %}selected{% endif %}>{{ c.value }}</option>
             {% endfor %}
         </select>
     </p>
