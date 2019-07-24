@@ -61,7 +61,8 @@ li input:hover {
   color: white;
 }
 
-#actuar a {
+#actuar a,
+a #actuar {
   text-decoration: none;
   color: black;
 }

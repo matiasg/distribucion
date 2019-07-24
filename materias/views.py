@@ -97,6 +97,8 @@ def administrar(request):
         return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
     elif 'exportar_informacion' in request.POST:
         return HttpResponseRedirect(reverse('materias:exportar_informacion', args=(anno, cuatrimestre)))
+    elif 'generar_cuatrimestre' in request.POST:
+        return HttpResponseRedirect(reverse('materias:generar_cuatrimestre', args=(anno, cuatrimestre)))
     elif 'juntar_materias' in request.POST:
         return HttpResponseRedirect(reverse('materias:juntar_materias'))
     elif 'cargas_docentes' in request.POST:
@@ -539,3 +541,38 @@ def exportar_informacion(request, anno, cuatrimestre):
             'cuatrimestre': cuatrimestre,
         }
         return render(request, 'materias/exportar_informacion.html', context)
+
+
+@login_required
+@permission_required('materias.add_turno')
+def generar_cuatrimestre(request, anno, cuatrimestre):
+    if request.method == 'POST':
+        n_anno = int(request.POST['anno'])
+        n_cuatrimestre = Cuatrimestres[request.POST['cuatrimestre']]
+        logger.info('Voy a copiar a: %s, cuat: %s', n_anno, n_cuatrimestre)
+        with transaction.atomic():
+            for turno in Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre):
+                tipo_materia = turno.materia.obligatoriedad
+                if f'copiar_{tipo_materia}' in request.POST:
+                    nturno, creado = Turno.objects.get_or_create(materia=turno.materia, anno=n_anno, cuatrimestre=n_cuatrimestre.name,
+                                                                 numero=turno.numero, subnumero=turno.subnumero, tipo=turno.tipo,
+                                                                 defaults={'necesidad_prof': turno.necesidad_prof,
+                                                                           'necesidad_jtp': turno.necesidad_jtp,
+                                                                           'necesidad_ay1': turno.necesidad_ay1,
+                                                                           'necesidad_ay2': turno.necesidad_ay2,
+                                                                           'dificil_de_cubrir': turno.dificil_de_cubrir})
+                    if creado:
+                        logger.info('Generé un nuevo turno: %s', nturno)
+                        for horario in turno.horario_set.all():
+                            nhorario = Horario.objects.create(turno=nturno, dia=horario.dia, comienzo=horario.comienzo, final=horario.final)
+        return HttpResponseRedirect(reverse('materias:administrar'))
+
+    else:
+        context = {
+            'anno': anno,
+            'annos': list(range(anno + 1, anno + 3)),
+            'cuatrimestre': Cuatrimestres[cuatrimestre],
+            'cuatrimestres': list(Cuatrimestres),
+            'tipos': list(TipoMateria),
+        }
+        return render(request, 'materias/generar_cuatrimestre.html', context)
