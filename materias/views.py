@@ -583,4 +583,26 @@ def generar_cuatrimestre(request, anno, cuatrimestre):
 @login_required
 @permission_required('dborrador.add_asignacion')
 def generar_cargas_docentes(request, anno, cuatrimestre):
-    pass
+    if request.method == 'POST':
+        n_anno = int(request.POST['anno'])
+        n_cuatrimestre = Cuatrimestres[request.POST['cuatrimestre']]
+        logger.info('Voy a copiar a: %s, cuat: %s', n_anno, n_cuatrimestre)
+        with transaction.atomic():
+            cargas_ac = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
+            for tipo in TipoDocentes:
+                if not f'copiar_{tipo.name}' in request.POST:
+                    continue
+                for carga in Mapeos.cargas_de_tipo(cargas_ac, tipo):
+                    Carga.objects.create(docente=carga.docente, cargo=carga.cargo,
+                                         anno=n_anno, cuatrimestre=n_cuatrimestre.name)
+                    logger.debug('generé una carga para %s de %s', carga.docente, carga.cargo)
+        return HttpResponseRedirect(reverse('materias:administrar'))
+    else:
+        context = {
+            'anno': anno,
+            'annos': list(range(anno + 1, anno + 3)),
+            'cuatrimestre': Cuatrimestres[cuatrimestre],
+            'cuatrimestres': list(Cuatrimestres),
+            'tipos': list(TipoDocentes),
+        }
+        return render(request, 'materias/generar_cargas.html', context)

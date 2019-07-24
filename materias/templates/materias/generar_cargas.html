@@ -7,7 +7,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
-    <h2>Generar materias para un nuevo cuatrimestre a partir del cuat. {{ cuatrimestre.value }} de {{ anno }}</h2>
+    <h2>Generar cargas docentes para un nuevo cuatrimestre a partir del cuat. {{ cuatrimestre.value }} de {{ anno }}</h2>
 </head>
 
 <body>
@@ -18,7 +18,7 @@
 
     <hr>
 
-    <form action="{% url 'materias:generar_cuatrimestre' anno cuatrimestre.name %}" method="post">
+    <form action="{% url 'materias:generar_cargas_docentes' anno cuatrimestre.name %}" method="post">
     {% csrf_token %}
 
     <h2>
@@ -46,8 +46,8 @@
     <p>
         {% for t in tipos %}
         <br>
-        <input type="checkbox" name="copiar_{{ t.name }}" {% if t.name == "B" %}checked{% endif %}>
-        Copiar materias de tipo "{{ t.value }}"
+        <input type="checkbox" name="copiar_{{ t.name }}" checked>
+        Copiar cargas de "{{ t.value }}"
         {% endfor %}
     </p>
 
@@ -56,4 +56,5 @@
     </p>
 
     </form>
+
 </body>
