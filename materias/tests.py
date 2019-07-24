@@ -553,3 +553,31 @@ class TestPaginas(TestCase):
         self.assertEqual(AliasDeMateria.objects.first().materia, duplicada)
         turno = Turno.objects.get(pk=turno.id)
         self.assertEqual(turno.materia, duplicada)
+
+    def test_copiar_turnos(self):
+        # agrego una materia optativa
+        dict_nec = {'necesidad_prof': 0, 'necesidad_jtp': 0, 'necesidad_ay1': 0, 'necesidad_ay2': 0}
+        materia4 = Materia.objects.create(nombre='lacan 4', obligatoriedad=TipoMateria.N.name)
+        turno41 = Turno.objects.create(materia=materia4, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                       numero=1, tipo=TipoTurno.T.name, **dict_nec)
+
+        self.client.login(username='autorizado', password='1234')
+        response = self.client.get(reverse('materias:generar_cuatrimestre', args=(self.anno, self.cuatrimestre.name)))
+        self.assertContains(response, f'value="{self.cuatrimestre.name}" selected>{self.cuatrimestre.value}')
+        response = self.client.post(reverse('materias:generar_cuatrimestre', args=(self.anno, self.cuatrimestre.name)),
+                                    {'anno': self.anno+1, 'cuatrimestre': self.cuatrimestre.name,
+                                     f'copiar_{TipoMateria.B.name}': True,
+                                     f'copiar_{TipoMateria.R.name}': True})
+        for tipo in (TipoMateria.B, TipoMateria.R):
+            self.assertEqual(
+                Turno.objects.filter(anno=self.anno, cuatrimestre=self.cuatrimestre.name, materia__obligatoriedad=tipo.name).count(),
+                Turno.objects.filter(anno=self.anno+1, cuatrimestre=self.cuatrimestre.name, materia__obligatoriedad=tipo.name).count())
+
+        self.assertEqual(Turno.objects.filter(anno=self.anno,
+                                              cuatrimestre=self.cuatrimestre.name,
+                                              materia__obligatoriedad=TipoMateria.N.name).count(),
+                         1)
+        self.assertEqual(Turno.objects.filter(anno=self.anno+1,
+                                              cuatrimestre=self.cuatrimestre.name,
+                                              materia__obligatoriedad=TipoMateria.N.name).count(),
+                         0)
