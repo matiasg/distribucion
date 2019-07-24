@@ -95,6 +95,8 @@ def administrar(request):
             return HttpResponseRedirect(reverse('materias:exportar_informacion', args=(anno, cuatrimestre)))
         elif 'generar_cuatrimestre' in request.POST:
             return HttpResponseRedirect(reverse('materias:generar_cuatrimestre', args=(anno, cuatrimestre)))
+        elif 'generar_cargas_docentes' in request.POST:
+            return HttpResponseRedirect(reverse('materias:generar_cargas_docentes', args=(anno, cuatrimestre)))
         elif 'juntar_materias' in request.POST:
             return HttpResponseRedirect(reverse('materias:juntar_materias'))
         elif 'cargas_docentes' in request.POST:
@@ -576,3 +578,9 @@ def generar_cuatrimestre(request, anno, cuatrimestre):
             'tipos': list(TipoMateria),
         }
         return render(request, 'materias/generar_cuatrimestre.html', context)
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def generar_cargas_docentes(request, anno, cuatrimestre):
+    pass
