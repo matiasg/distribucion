@@ -81,37 +81,37 @@ def filtra_materias(**kwargs):
 @login_required
 @permission_required('materias.view_docente')
 def administrar(request):
-    try:
+    if request.method == 'POST':
         anno = int(request.POST['anno'])
         cuatrimestre = request.POST['cuatrimestre']
         annos = [anno]
         cuatrimestres = [Cuatrimestres[cuatrimestre]]
-    except:
-        anno_actual = timezone.now().year
-        annos = [anno_actual, anno_actual + 1]
-        cuatrimestres = [c for c in Cuatrimestres]
 
-    if 'turnos_alumnos' in request.POST:
-        return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
-    elif 'turnos_docentes' in request.POST:
-        return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
-    elif 'exportar_informacion' in request.POST:
-        return HttpResponseRedirect(reverse('materias:exportar_informacion', args=(anno, cuatrimestre)))
-    elif 'generar_cuatrimestre' in request.POST:
-        return HttpResponseRedirect(reverse('materias:generar_cuatrimestre', args=(anno, cuatrimestre)))
-    elif 'juntar_materias' in request.POST:
-        return HttpResponseRedirect(reverse('materias:juntar_materias'))
-    elif 'cargas_docentes' in request.POST:
-        return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
-    elif 'cargas_docentes_publicadas' in request.POST:
-        return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas', args=(anno, cuatrimestre)))
-    elif 'administrar_encuestas' in request.POST:
-        return HttpResponseRedirect(reverse('encuestas:administrar_habilitadas'))
-    elif 'dborrador' in request.POST:
-        return HttpResponseRedirect(reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0)))
+        if 'turnos_alumnos' in request.POST:
+            return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
+        elif 'turnos_docentes' in request.POST:
+            return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
+        elif 'exportar_informacion' in request.POST:
+            return HttpResponseRedirect(reverse('materias:exportar_informacion', args=(anno, cuatrimestre)))
+        elif 'generar_cuatrimestre' in request.POST:
+            return HttpResponseRedirect(reverse('materias:generar_cuatrimestre', args=(anno, cuatrimestre)))
+        elif 'juntar_materias' in request.POST:
+            return HttpResponseRedirect(reverse('materias:juntar_materias'))
+        elif 'cargas_docentes' in request.POST:
+            return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
+        elif 'cargas_docentes_publicadas' in request.POST:
+            return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas', args=(anno, cuatrimestre)))
+        elif 'administrar_encuestas' in request.POST:
+            return HttpResponseRedirect(reverse('encuestas:administrar_habilitadas'))
+        elif 'dborrador' in request.POST:
+            return HttpResponseRedirect(reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0)))
     else:
+        anno_actual = timezone.now().year
+        annos = list(range(anno_actual - 3, anno_actual + 2))
+        cuatrimestres = [c for c in Cuatrimestres]
         return render(request, 'materias/administrar.html', context={'annos': annos,
-                                                                     'cuatrimestres': cuatrimestres})
+                                                                     'cuatrimestres': cuatrimestres,
+                                                                     'actual': anno_actual})
 
 
 def administrar_general(request, anno, cuatrimestre, key_to_field, url, **kwargs):
