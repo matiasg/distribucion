@@ -82,6 +82,8 @@ cargo_tipoturno = {'Teórica': [CargoDedicacion.AsoExc],
                    'Teórico-Práctica': [CargoDedicacion.AsoExc,
                                         CargoDedicacion.JTPSim, CargoDedicacion.Ay1Sim, CargoDedicacion.Ay2Sim]}
 
+docentes_separador = re.compile(' +(?:-+|— ) *')
+
 def salva_datos(html, anno, cuatrimestre):
     soup = BeautifulSoup(html, 'html.parser')
     comienzo = soup.find_all('div', attrs={'class': 'seccion'})[0]
@@ -115,7 +117,8 @@ def salva_datos(html, anno, cuatrimestre):
             for turno_html in parte.find_all('tr'):
                 rows = turno_html.find_all('td')
                 tipoynumero = rows[0].text.split()
-                turno_docentes = rows[2].text.split(' — ')
+                turno_docentes = docentes_separador.split(rows[2].text)
+                logger.debug('docenes: %s', turno_docentes)
 
                 # turnos
                 tipo_turno = tipo_turnos[tipoynumero[0]]
