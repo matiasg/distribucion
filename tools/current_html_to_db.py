@@ -89,16 +89,17 @@ def salva_datos(html, anno, cuatrimestre):
     comienzo = soup.find_all('div', attrs={'class': 'seccion'})[0]
 
     tipos_de_materia = {
-        'Materias Obligatorias': TipoMateria.B,
-        'Materias Optativas Regulares': TipoMateria.R,
-        'Materias Optativas No Regulares': TipoMateria.N,
+        'Materias Obligatorias'.lower(): TipoMateria.B,
+        'Materias Optativas Regulares'.lower(): TipoMateria.R,
+        'Materias Optativas No Regulares'.lower(): TipoMateria.N,
+        'Materias optativa no regulares'.lower(): TipoMateria.N,
     }
 
     tipo_de_materia = TipoMateria.B
     for parte in comienzo.findNextSiblings():
 
         if parte.attrs['class'][0] == 'seccion':
-            tipo_de_materia = tipos_de_materia[parte.text]
+            tipo_de_materia = tipos_de_materia[parte.text.lower()]
 
         else:
             nombre_materia = maymin(parte.find('thead').text)
