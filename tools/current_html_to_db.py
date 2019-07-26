@@ -82,7 +82,7 @@ cargo_tipoturno = {'Teórica': [CargoDedicacion.AsoExc],
                    'Teórico-Práctica': [CargoDedicacion.AsoExc,
                                         CargoDedicacion.JTPSim, CargoDedicacion.Ay1Sim, CargoDedicacion.Ay2Sim]}
 
-docentes_separador = re.compile(' +(?:-+|— ) *')
+docentes_separador = re.compile('(?: +-+ *| *—  *| *-+ +)')
 
 def salva_datos(html, anno, cuatrimestre):
     soup = BeautifulSoup(html, 'html.parser')
@@ -225,6 +225,7 @@ def salva_datos(html, anno, cuatrimestre):
                         palabras_nombre = 1 if len(palabras_na) < 3 else 2
                         nombre = ' '.join(palabras_na[:palabras_nombre])
                         apellido = ' '.join(palabras_na[palabras_nombre:])
+                        print(nombre, apellido, sep='\n')  # sac
                         doc = Docente.objects.create(na_nombre=nombre, na_apellido=apellido, cargos=[cargo])
                         logger.info('agregue a: %s', doc)
 
