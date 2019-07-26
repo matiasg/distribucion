@@ -82,21 +82,27 @@ cargo_tipoturno = {'Teórica': [CargoDedicacion.AsoExc],
                    'Teórico-Práctica': [CargoDedicacion.AsoExc,
                                         CargoDedicacion.JTPSim, CargoDedicacion.Ay1Sim, CargoDedicacion.Ay2Sim]}
 
+docentes_separador = re.compile('(?: +-+ *| *—  *| *-+ +)')
+
 def salva_datos(html, anno, cuatrimestre):
     soup = BeautifulSoup(html, 'html.parser')
     comienzo = soup.find_all('div', attrs={'class': 'seccion'})[0]
 
     tipos_de_materia = {
-        'Materias Obligatorias': TipoMateria.B,
-        'Materias Optativas Regulares': TipoMateria.R,
-        'Materias Optativas No Regulares': TipoMateria.N,
+        'Materias Obligatorias'.lower(): TipoMateria.B,
+        'Materias Dicatadas'.lower(): TipoMateria.B,  # 2012 V
+        'materias para la maestría en estadística': TipoMateria.B,  # 2011 2
+        'Materias Optativas Regulares'.lower(): TipoMateria.R,
+        'Materias Optativas No Regulares'.lower(): TipoMateria.N,
+        'Materias optativa no regulares'.lower(): TipoMateria.N,
+        'Materias optativas'.lower(): TipoMateria.N,
     }
 
     tipo_de_materia = TipoMateria.B
     for parte in comienzo.findNextSiblings():
 
         if parte.attrs['class'][0] == 'seccion':
-            tipo_de_materia = tipos_de_materia[parte.text]
+            tipo_de_materia = tipos_de_materia[parte.text.lower().strip()]
 
         else:
             nombre_materia = maymin(parte.find('thead').text)
@@ -115,7 +121,8 @@ def salva_datos(html, anno, cuatrimestre):
             for turno_html in parte.find_all('tr'):
                 rows = turno_html.find_all('td')
                 tipoynumero = rows[0].text.split()
-                turno_docentes = rows[2].text.split(' — ')
+                turno_docentes = docentes_separador.split(rows[2].text)
+                logger.debug('docentes: %s', turno_docentes)
 
                 # turnos
                 tipo_turno = tipo_turnos[tipoynumero[0]]
@@ -145,9 +152,21 @@ def salva_datos(html, anno, cuatrimestre):
                     numero_turno = int(tipoynumero[1]) if len(tipoynumero) > 1 else 0
                     subnumero = tipoynumero[2] if len(tipoynumero) > 2 else ''
                 except ValueError:
-                    numero_turno = int(tipoynumero[1][0])
-                    subnumero = tipoynumero[1][1:]
-
+                    try:
+                        numero_turno = int(tipoynumero[1][0])
+                        subnumero = tipoynumero[1][1:]
+                    # algunos cuatrimestres tienen el el numero_turno y el horario juntos
+                    # en algunas materias
+                    except ValueError:
+                        try:
+                            numero_turno = int(tipoynumero[1])
+                            fin_numero = 2
+                        except ValueError:
+                            numero_turno = 0
+                            fin_numero = 1
+                        finally:
+                            rows = list(rows)
+                            rows[1:1] = [rows[0]]
 
                 datos_turno = {
                     'materia': materia,
@@ -198,7 +217,6 @@ def salva_datos(html, anno, cuatrimestre):
                                                                           function='levenshtein',
                                                                           template=template))
                         docentes_parecidos = docentes_lvns.filter(similar__lt=3)
-                        print(len(docentes_parecidos))
                         if docentes_parecidos.count() > 0:
                             doc = docentes_parecidos.order_by('similar').first()
                             logger.warning('Encontré un docente que parece ser %s. Es %s. Los considero la misma persona.',
