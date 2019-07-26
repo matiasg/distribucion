@@ -119,7 +119,7 @@ def salva_datos(html, anno, cuatrimestre):
                 rows = turno_html.find_all('td')
                 tipoynumero = rows[0].text.split()
                 turno_docentes = docentes_separador.split(rows[2].text)
-                logger.debug('docenes: %s', turno_docentes)
+                logger.debug('docentes: %s', turno_docentes)
 
                 # turnos
                 tipo_turno = tipo_turnos[tipoynumero[0]]
