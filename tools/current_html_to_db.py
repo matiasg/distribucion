@@ -217,7 +217,6 @@ def salva_datos(html, anno, cuatrimestre):
                                                                           function='levenshtein',
                                                                           template=template))
                         docentes_parecidos = docentes_lvns.filter(similar__lt=3)
-                        print(len(docentes_parecidos))
                         if docentes_parecidos.count() > 0:
                             doc = docentes_parecidos.order_by('similar').first()
                             logger.warning('Encontré un docente que parece ser %s. Es %s. Los considero la misma persona.',
@@ -228,7 +227,6 @@ def salva_datos(html, anno, cuatrimestre):
                         palabras_nombre = 1 if len(palabras_na) < 3 else 2
                         nombre = ' '.join(palabras_na[:palabras_nombre])
                         apellido = ' '.join(palabras_na[palabras_nombre:])
-                        print(nombre, apellido, sep='\n')  # sac
                         doc = Docente.objects.create(na_nombre=nombre, na_apellido=apellido, cargos=[cargo])
                         logger.info('agregue a: %s', doc)
 
