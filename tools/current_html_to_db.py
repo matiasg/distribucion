@@ -149,9 +149,21 @@ def salva_datos(html, anno, cuatrimestre):
                     numero_turno = int(tipoynumero[1]) if len(tipoynumero) > 1 else 0
                     subnumero = tipoynumero[2] if len(tipoynumero) > 2 else ''
                 except ValueError:
-                    numero_turno = int(tipoynumero[1][0])
-                    subnumero = tipoynumero[1][1:]
-
+                    try:
+                        numero_turno = int(tipoynumero[1][0])
+                        subnumero = tipoynumero[1][1:]
+                    # algunos cuatrimestres tienen el el numero_turno y el horario juntos
+                    # en algunas materias
+                    except ValueError:
+                        try:
+                            numero_turno = int(tipoynumero[1])
+                            fin_numero = 2
+                        except ValueError:
+                            numero_turno = 0
+                            fin_numero = 1
+                        finally:
+                            rows = list(rows)
+                            rows[1:1] = [rows[0]]
 
                 datos_turno = {
                     'materia': materia,
