@@ -90,16 +90,19 @@ def salva_datos(html, anno, cuatrimestre):
 
     tipos_de_materia = {
         'Materias Obligatorias'.lower(): TipoMateria.B,
+        'Materias Dicatadas'.lower(): TipoMateria.B,  # 2012 V
+        'materias para la maestría en estadística': TipoMateria.B,  # 2011 2
         'Materias Optativas Regulares'.lower(): TipoMateria.R,
         'Materias Optativas No Regulares'.lower(): TipoMateria.N,
         'Materias optativa no regulares'.lower(): TipoMateria.N,
+        'Materias optativas'.lower(): TipoMateria.N,
     }
 
     tipo_de_materia = TipoMateria.B
     for parte in comienzo.findNextSiblings():
 
         if parte.attrs['class'][0] == 'seccion':
-            tipo_de_materia = tipos_de_materia[parte.text.lower()]
+            tipo_de_materia = tipos_de_materia[parte.text.lower().strip()]
 
         else:
             nombre_materia = maymin(parte.find('thead').text)
