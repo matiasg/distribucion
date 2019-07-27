@@ -113,7 +113,7 @@ def salva_datos(html, anno, cuatrimestre):
             tipo_de_materia = tipos_de_materia[parte.text.lower().strip()]
 
         else:
-            nombre_materia = maymin(parte.find('thead').text)
+            nombre_materia = maymin(parte.find('thead').text.strip())
             logger.info('Analizando: %s', nombre_materia)
 
             try:
