@@ -92,13 +92,15 @@ def administrar(request):
         if 'turnos_alumnos' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
         elif 'turnos_docentes' in request.POST:
-            return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
+            return HttpResponseRedirect(reverse('materias:administrar_necesidades_docentes', args=(anno, cuatrimestre)))
         elif 'exportar_informacion' in request.POST:
             return HttpResponseRedirect(reverse('materias:exportar_informacion', args=(anno, cuatrimestre)))
         elif 'generar_cuatrimestre' in request.POST:
             return HttpResponseRedirect(reverse('materias:generar_cuatrimestre', args=(anno, cuatrimestre)))
         elif 'generar_cargas_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:generar_cargas_docentes', args=(anno, cuatrimestre)))
+        elif 'administrar_docentes' in request.POST:
+            return HttpResponseRedirect(reverse('materias:administrar_docentes'))
         elif 'juntar_materias' in request.POST:
             return HttpResponseRedirect(reverse('materias:juntar_materias'))
         elif 'cargas_docentes' in request.POST:
@@ -169,7 +171,7 @@ def administrar_alumnos(request, anno, cuatrimestre):
 
 @login_required
 @permission_required('dborrador.add_asignacion')
-def administrar_docentes(request, anno, cuatrimestre):
+def administrar_necesidades_docentes(request, anno, cuatrimestre):
     key_to_field = {Turno: {'alumnos': ('alumnos', int),
                             'necesidadprof': ('necesidad_prof', int),
                             'necesidadjtp': ('necesidad_jtp', int),
@@ -188,7 +190,7 @@ def administrar_docentes(request, anno, cuatrimestre):
 
     necesidades_y_recursos = {tipo: (necesidades[tipo], recursos[tipo]) for tipo in TipoDocentes}
 
-    return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_docentes.html',
+    return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_necesidades_docentes.html',
                                necesidades_y_recursos=necesidades_y_recursos)
 
 @login_required
@@ -609,3 +611,15 @@ def generar_cargas_docentes(request, anno, cuatrimestre):
             'tipos': list(TipoDocentes),
         }
         return render(request, 'materias/generar_cargas.html', context)
+
+
+@login_required
+@permission_required('dborrador.add_turno')
+def administrar_docentes(request):
+    if request.method == 'POST':
+        pass
+    else:
+        context = {
+            'docentes': Docente.objects.all(),
+        }
+        return render(request, 'materias/administrar_docentes', context)

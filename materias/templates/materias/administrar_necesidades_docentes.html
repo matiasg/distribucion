@@ -9,7 +9,7 @@
 <h1>Administrar necesidades docentes de {{ anno }}, cuatrimestre {{ cuatrimestre.value }}</h1>
 
 
-<form action="{% url 'materias:administrar_docentes' anno cuatrimestre.name %}" method="post">
+<form action="{% url 'materias:administrar_necesidades_docentes' anno cuatrimestre.name %}" method="post">
 {% csrf_token %}
 
     <input type="submit" name="cambiar" value="salvar">
