@@ -51,6 +51,7 @@ def convierte_a_horarios(text):
     dia_y_hora = re.compile(fr'^({dia}):\s*({hora}) (?:a|-) ({hora})')
     dos_dias_y_hora = re.compile(fr'^({dia}) - ({dia}):\s*({hora}) (?:a|-) ({hora})')
     tres_dias_y_hora = re.compile(fr'^({dia}) - ({dia}) - ({dia}):\s*({hora}) (?:a|-) ({hora})')
+    cuatro_dias_y_hora = re.compile(fr'^({dia}) - ({dia}) - ({dia}) - ({dia}):\s*({hora}) (?:a|-) ({hora})')
 
     def hm(hhmm):
         ret = parse_time(hhmm) or datetime.time(int(hhmm), 0)
@@ -68,6 +69,13 @@ def convierte_a_horarios(text):
         return [(m.group(1), hm(m.group(7)), hm(m.group(10))),
                 (m.group(3), hm(m.group(7)), hm(m.group(10))),
                 (m.group(5), hm(m.group(7)), hm(m.group(10)))
+                ]
+    m = cuatro_dias_y_hora.search(text)
+    if m:
+        return [(m.group(1), hm(m.group(9)), hm(m.group(12))),
+                (m.group(3), hm(m.group(9)), hm(m.group(12))),
+                (m.group(5), hm(m.group(9)), hm(m.group(12))),
+                (m.group(7), hm(m.group(9)), hm(m.group(12)))
                 ]
     logger.warning('No veo los horarios en "%s"', text)
     return []
