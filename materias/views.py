@@ -16,6 +16,8 @@ from .models import (Materia, AliasDeMateria, Turno, Horario, Cuatrimestres, Tip
 from .misc import Mapeos, NoTurno
 from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
 
+TURNOS_MAX = 4
+
 
 def index(request):
     # Llamada sin anno y cuatrimestre. Tomamos el período actual
@@ -380,7 +382,7 @@ def cambiar_turno(request, turno_id):
     # TODO: en este momento, cualquier botón de "agregar horario" da lo mismo. Todos agregan el primer horario
     # que tenga dia, comienzo y final completado. Si hay más de uno, agregan solo el primero.
     # Habría que permitir un botón general de "agregar horarios"
-    for horario_agregado in range(3):
+    for horario_agregado in range(TURNOS_MAX):
         try:
             dia = request.POST[f'dia{horario_agregado}']
             comienzo = parse_time(request.POST[f'comienzo{horario_agregado}'])
@@ -394,6 +396,7 @@ def cambiar_turno(request, turno_id):
     else:
         context = {
             'turno': turno,
+            'turnosmax': TURNOS_MAX,
             'materia': turno.materia,
             'tipoturno': TipoTurno[turno.tipo],
             'dias': [d for d in Dias],
