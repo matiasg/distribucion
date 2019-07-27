@@ -36,7 +36,7 @@
         </tr>
         {% endfor %}
 
-        {% for i in turno.horario_set.all|restantes_hasta:3 %}
+        {% for i in turno.horario_set.all|restantes_hasta:turnosmax %}
         <tr>
             <td>
                 <select name="dia{{ i }}">
