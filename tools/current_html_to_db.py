@@ -8,6 +8,7 @@ import re
 import urllib.request as request
 from django.utils.dateparse import parse_time
 from argparse import ArgumentParser
+import string
 
 from django.db.models import Value, Func, F
 from django.db.models.functions import Concat
@@ -194,6 +195,7 @@ def salva_datos(html, anno, cuatrimestre):
                                    + [CargoDedicacion.Ay1Sim] * necesidad_ay1 + [CargoDedicacion.Ay2Sim] * necesidad_ay2
                 cargos_inferidos += [cargos_inferidos[-1]] * (len(turno_docentes) - len(cargos_inferidos))
                 for i, docente in enumerate(turno_docentes):
+                    docente = string.capwords(docente.strip())
                     # evitamos el docente '' que aparece en turnos sin asignaciones
                     if not docente:
                         continue
