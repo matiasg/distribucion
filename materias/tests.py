@@ -6,9 +6,10 @@ import datetime
 from locale import strxfrm
 from django.utils import timezone
 
-from materias.models import (Cargos, Carga, Dedicaciones, CargoDedicacion, Docente,
+from materias.models import (Cargos, Carga, Dedicaciones, CargoDedicacion, Docente, TipoDocentes,
                              Materia, AliasDeMateria, Turno, TipoMateria, TipoTurno, Dias,
                              Cuatrimestres, Horario, Pabellon)
+from materias.misc import Mapeos
 from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
 from usuarios.models import Usuario
 from django.contrib.auth.models import Permission
@@ -553,3 +554,53 @@ class TestPaginas(TestCase):
         self.assertEqual(AliasDeMateria.objects.first().materia, duplicada)
         turno = Turno.objects.get(pk=turno.id)
         self.assertEqual(turno.materia, duplicada)
+
+    def test_copiar_turnos(self):
+        # agrego una materia optativa
+        dict_nec = {'necesidad_prof': 0, 'necesidad_jtp': 0, 'necesidad_ay1': 0, 'necesidad_ay2': 0}
+        materia4 = Materia.objects.create(nombre='lacan 4', obligatoriedad=TipoMateria.N.name)
+        turno41 = Turno.objects.create(materia=materia4, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                       numero=1, tipo=TipoTurno.T.name, **dict_nec)
+
+        self.client.login(username='autorizado', password='1234')
+        response = self.client.get(reverse('materias:generar_cuatrimestre', args=(self.anno, self.cuatrimestre.name)))
+        self.assertContains(response, f'value="{self.cuatrimestre.name}" selected>{self.cuatrimestre.value}')
+        response = self.client.post(reverse('materias:generar_cuatrimestre', args=(self.anno, self.cuatrimestre.name)),
+                                    {'anno': self.anno+1, 'cuatrimestre': self.cuatrimestre.name,
+                                     f'copiar_{TipoMateria.B.name}': True,
+                                     f'copiar_{TipoMateria.R.name}': True})
+        for tipo in (TipoMateria.B, TipoMateria.R):
+            self.assertEqual(
+                Turno.objects.filter(anno=self.anno, cuatrimestre=self.cuatrimestre.name, materia__obligatoriedad=tipo.name).count(),
+                Turno.objects.filter(anno=self.anno+1, cuatrimestre=self.cuatrimestre.name, materia__obligatoriedad=tipo.name).count())
+
+        self.assertEqual(Turno.objects.filter(anno=self.anno,
+                                              cuatrimestre=self.cuatrimestre.name,
+                                              materia__obligatoriedad=TipoMateria.N.name).count(),
+                         1)
+        self.assertEqual(Turno.objects.filter(anno=self.anno+1,
+                                              cuatrimestre=self.cuatrimestre.name,
+                                              materia__obligatoriedad=TipoMateria.N.name).count(),
+                         0)
+
+    def test_copiar_cargas(self):
+        self.client.login(username='autorizado', password='1234')
+        response = self.client.get(reverse('materias:generar_cargas_docentes', args=(self.anno, self.cuatrimestre.name)))
+        self.assertContains(response, f'value="{self.cuatrimestre.name}" selected>{self.cuatrimestre.value}')
+        for tipo in TipoDocentes:
+            self.assertContains(response, f'name="copiar_{tipo.name}" checked>')
+
+        n = Docente.objects.create(na_nombre='nemo', na_apellido='X',
+                                   telefono='00 0000', email='nemo@nautilus.org',
+                                   cargos=[CargoDedicacion.TitExc.name])
+        for carded in CargoDedicacion:
+            Carga.objects.create(docente=n, cargo=carded.name, anno=self.anno, cuatrimestre=self.cuatrimestre.name)
+
+        self.client.post(reverse('materias:generar_cargas_docentes', args=(self.anno, self.cuatrimestre.name)),
+                         {'anno': self.anno+1, 'cuatrimestre': self.cuatrimestre.name,
+                          f'copiar_{TipoDocentes.P.name}': True,
+                          f'copiar_{TipoDocentes.J.name}': True})
+        for carded in CargoDedicacion:
+            esperado = 1 if Mapeos.tipos_de_cargo(carded.name) in (TipoDocentes.P, TipoDocentes.J) else 0
+            self.assertEqual(Carga.objects.filter(anno=self.anno+1, cuatrimestre=self.cuatrimestre.name, cargo=carded.name).count(),
+                             esperado)

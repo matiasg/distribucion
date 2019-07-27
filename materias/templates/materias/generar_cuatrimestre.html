@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+{% load static %}
+{% load materias_tags %}
+
+
+<head>
+    <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+    <h2>Generar materias para un nuevo cuatrimestre a partir del cuat. {{ cuatrimestre.value }} de {{ anno }}</h2>
+</head>
+
+<body>
+
+    <div id="actuar">
+        <a href="{% url 'materias:administrar' %}">Cancelar</a>
+    </div>
+
+    <hr>
+
+    <form action="{% url 'materias:generar_cuatrimestre' anno cuatrimestre.name %}" method="post">
+    {% csrf_token %}
+
+    <h2>
+        Cuatrimestre a generar:
+    </h2>
+    <p>
+        Año:
+        <select name="anno">
+            {% for a in annos %}
+            <option value="{{ a }}">{{ a }}</option>
+            {% endfor %}
+        </select>
+    </p>
+
+    <p>
+        Cuatrimestre:
+        <select name="cuatrimestre">
+            {% for c in cuatrimestres %}
+            <option value="{{ c.name }}" {% if c == cuatrimestre %}selected{% endif %}>{{ c.value }}</option>
+            {% endfor %}
+        </select>
+    </p>
+
+
+    <p>
+        {% for t in tipos %}
+        <br>
+        <input type="checkbox" name="copiar_{{ t.name }}" {% if t.name == "B" %}checked{% endif %}>
+        Copiar materias de tipo "{{ t.value }}"
+        {% endfor %}
+    </p>
+
+    <p>
+        <input id="actuar" type="submit" value="copiar">
+    </p>
+
+    </form>
+</body>

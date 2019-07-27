@@ -81,35 +81,39 @@ def filtra_materias(**kwargs):
 @login_required
 @permission_required('materias.view_docente')
 def administrar(request):
-    try:
+    if request.method == 'POST':
         anno = int(request.POST['anno'])
         cuatrimestre = request.POST['cuatrimestre']
         annos = [anno]
         cuatrimestres = [Cuatrimestres[cuatrimestre]]
-    except:
-        anno_actual = timezone.now().year
-        annos = [anno_actual, anno_actual + 1]
-        cuatrimestres = [c for c in Cuatrimestres]
 
-    if 'turnos_alumnos' in request.POST:
-        return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
-    elif 'turnos_docentes' in request.POST:
-        return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
-    elif 'exportar_informacion' in request.POST:
-        return HttpResponseRedirect(reverse('materias:exportar_informacion', args=(anno, cuatrimestre)))
-    elif 'juntar_materias' in request.POST:
-        return HttpResponseRedirect(reverse('materias:juntar_materias'))
-    elif 'cargas_docentes' in request.POST:
-        return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
-    elif 'cargas_docentes_publicadas' in request.POST:
-        return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas', args=(anno, cuatrimestre)))
-    elif 'administrar_encuestas' in request.POST:
-        return HttpResponseRedirect(reverse('encuestas:administrar_habilitadas'))
-    elif 'dborrador' in request.POST:
-        return HttpResponseRedirect(reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0)))
+        if 'turnos_alumnos' in request.POST:
+            return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
+        elif 'turnos_docentes' in request.POST:
+            return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
+        elif 'exportar_informacion' in request.POST:
+            return HttpResponseRedirect(reverse('materias:exportar_informacion', args=(anno, cuatrimestre)))
+        elif 'generar_cuatrimestre' in request.POST:
+            return HttpResponseRedirect(reverse('materias:generar_cuatrimestre', args=(anno, cuatrimestre)))
+        elif 'generar_cargas_docentes' in request.POST:
+            return HttpResponseRedirect(reverse('materias:generar_cargas_docentes', args=(anno, cuatrimestre)))
+        elif 'juntar_materias' in request.POST:
+            return HttpResponseRedirect(reverse('materias:juntar_materias'))
+        elif 'cargas_docentes' in request.POST:
+            return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
+        elif 'cargas_docentes_publicadas' in request.POST:
+            return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas', args=(anno, cuatrimestre)))
+        elif 'administrar_encuestas' in request.POST:
+            return HttpResponseRedirect(reverse('encuestas:administrar_habilitadas'))
+        elif 'dborrador' in request.POST:
+            return HttpResponseRedirect(reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0)))
     else:
+        anno_actual = timezone.now().year
+        annos = list(range(anno_actual - 3, anno_actual + 2))
+        cuatrimestres = [c for c in Cuatrimestres]
         return render(request, 'materias/administrar.html', context={'annos': annos,
-                                                                     'cuatrimestres': cuatrimestres})
+                                                                     'cuatrimestres': cuatrimestres,
+                                                                     'actual': anno_actual})
 
 
 def administrar_general(request, anno, cuatrimestre, key_to_field, url, **kwargs):
@@ -539,3 +543,66 @@ def exportar_informacion(request, anno, cuatrimestre):
             'cuatrimestre': cuatrimestre,
         }
         return render(request, 'materias/exportar_informacion.html', context)
+
+
+@login_required
+@permission_required('materias.add_turno')
+def generar_cuatrimestre(request, anno, cuatrimestre):
+    if request.method == 'POST':
+        n_anno = int(request.POST['anno'])
+        n_cuatrimestre = Cuatrimestres[request.POST['cuatrimestre']]
+        logger.info('Voy a copiar a: %s, cuat: %s', n_anno, n_cuatrimestre)
+        with transaction.atomic():
+            for turno in Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre):
+                tipo_materia = turno.materia.obligatoriedad
+                if f'copiar_{tipo_materia}' in request.POST:
+                    nturno, creado = Turno.objects.get_or_create(materia=turno.materia, anno=n_anno, cuatrimestre=n_cuatrimestre.name,
+                                                                 numero=turno.numero, subnumero=turno.subnumero, tipo=turno.tipo,
+                                                                 defaults={'necesidad_prof': turno.necesidad_prof,
+                                                                           'necesidad_jtp': turno.necesidad_jtp,
+                                                                           'necesidad_ay1': turno.necesidad_ay1,
+                                                                           'necesidad_ay2': turno.necesidad_ay2,
+                                                                           'dificil_de_cubrir': turno.dificil_de_cubrir})
+                    if creado:
+                        logger.info('Generé un nuevo turno: %s', nturno)
+                        for horario in turno.horario_set.all():
+                            nhorario = Horario.objects.create(turno=nturno, dia=horario.dia, comienzo=horario.comienzo, final=horario.final)
+        return HttpResponseRedirect(reverse('materias:administrar'))
+
+    else:
+        context = {
+            'anno': anno,
+            'annos': list(range(anno + 1, anno + 3)),
+            'cuatrimestre': Cuatrimestres[cuatrimestre],
+            'cuatrimestres': list(Cuatrimestres),
+            'tipos': list(TipoMateria),
+        }
+        return render(request, 'materias/generar_cuatrimestre.html', context)
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def generar_cargas_docentes(request, anno, cuatrimestre):
+    if request.method == 'POST':
+        n_anno = int(request.POST['anno'])
+        n_cuatrimestre = Cuatrimestres[request.POST['cuatrimestre']]
+        logger.info('Voy a copiar a: %s, cuat: %s', n_anno, n_cuatrimestre)
+        with transaction.atomic():
+            cargas_ac = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
+            for tipo in TipoDocentes:
+                if not f'copiar_{tipo.name}' in request.POST:
+                    continue
+                for carga in Mapeos.cargas_de_tipo(cargas_ac, tipo):
+                    Carga.objects.create(docente=carga.docente, cargo=carga.cargo,
+                                         anno=n_anno, cuatrimestre=n_cuatrimestre.name)
+                    logger.debug('generé una carga para %s de %s', carga.docente, carga.cargo)
+        return HttpResponseRedirect(reverse('materias:administrar'))
+    else:
+        context = {
+            'anno': anno,
+            'annos': list(range(anno + 1, anno + 3)),
+            'cuatrimestre': Cuatrimestres[cuatrimestre],
+            'cuatrimestres': list(Cuatrimestres),
+            'tipos': list(TipoDocentes),
+        }
+        return render(request, 'materias/generar_cargas.html', context)

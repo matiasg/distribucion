@@ -15,7 +15,7 @@
     Año: 
     <select name="anno">
         {% for a in annos %}
-        <option value="{{ a }}">{{ a }}</option>
+        <option value="{{ a }}" {% if a == actual %}selected{% endif %}>{{ a }}</option>
         {% endfor %}
     </select>
     Cuatrimestre: 
@@ -34,6 +34,12 @@
         </li>
         <li>
             <input type="submit" name="exportar_informacion" value="exportar datos a excel">
+        </li>
+        <li>
+            <input type="submit" name="generar_cuatrimestre" value="generar un nuevo cuatrimestre a partir de éste">
+        </li>
+        <li>
+            <input type="submit" name="generar_cargas_docentes" value="generar cargas docentes a partir de las actuales">
         </li>
         <li>
             <input type="submit" name="juntar_materias" value="juntar materias">
