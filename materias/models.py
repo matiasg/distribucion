@@ -233,8 +233,8 @@ class Horario(models.Model):
 class Docente(models.Model):
     na_nombre = models.CharField(max_length=30)
     na_apellido = models.CharField(max_length=30)
-    telefono = models.CharField(max_length=15, validators=[int_list_validator(sep=' ')])
-    email = models.EmailField()
+    telefono = models.CharField(max_length=15, validators=[int_list_validator(sep=' ')], blank=True)
+    email = models.EmailField(blank=True)
     cargos = ArrayField(models.CharField(max_length=6, choices=choice_enum(CargoDedicacion)), size=2)
     history = HistoricalRecords()
 
