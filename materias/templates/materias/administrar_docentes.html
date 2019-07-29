@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<head>
+    <h2>
+        Página para administrar docentes
+    </h2>
+</head>
+<body>
+
+    <form action="{% url 'materias:administrar_docentes' %}" method="post">
+    {% csrf_token %}
+    <input type="submit" name="juntar" value="juntar">
+    <ol>
+        {% for docente in docentes %}
+        <li>
+            <input type="checkbox" name="juntar_{{ docente.id }}">
+            <a href="{% url 'materias:administrar_un_docente' docente.id %}">
+                {{ docente }}
+            </a>
+        </li>
+        {% endfor %}
+    </ol>
+    </form>
+</body>

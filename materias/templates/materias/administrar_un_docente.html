@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<head>
+    <h2>
+        Página para administrar a {{ docente.nombre }}
+    </h2>
+</head>
+<body>
+    <form action="{% url 'materias:administrar_un_docente' docente.id %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="salvar">
+    </form>
+</body>
+

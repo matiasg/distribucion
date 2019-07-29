@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<head>
+<h2>
+    Juntar docentes que por error figuran como distintos
+</h2>
+</head>
+
+<body>
+    Estaríamos juntando a
+    <ol>
+        {% for docente in docentes %}
+        <li>
+            {{ docente }}
+        </li>
+        {% endfor %}
+    </ol>
+
+    <table id=cargas_docentes>
+        <tr>
+            <th>docente</th>
+            {% for ac in todos_los_turnos %}
+            <th class=separado>{{ ac.0 }}, {{ ac.1 }}</th>
+            {% endfor %}
+        </tr>
+        {% for docente, acs in turnos.items %}
+        <tr>
+            <td>{{ docente }}</td>
+            {% for ac in todos_los_turnos %}
+            <td id=numero>{% if ac in acs %}✔{% endif %}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if esta_bien %}
+    <form action="{% url 'materias:administrar_docentes' %}" method=post>
+    {% csrf_token %}
+
+    <p>
+        Los cuatrimestres en los que dieron clase no coinciden. Se pueden juntar.
+        ¿Con qué nombre?
+        <select id="nombre" name="nombre">
+            {% for docente in turnos %}
+            <option value="nombre_{{ docente.id }}">{{ docente.nombre }}</option>
+            {% endfor %}
+        </select>
+        {% for docente in turnos %}
+        <input type="hidden" name="juntar_{{ docente.id }}">
+        {% endfor %}
+    </p>
+    <p>
+        ¿Confirmás que los querés juntar?
+        <input id=actuar type="submit" name="confirmar" value="Sí, quiero">
+    </p>
+    </form>
+
+    {% else %}
+    No se pueden juntar porque coinciden los cuatrimestres donde dieron clase.
+    ¿Seguro es el mismo docente?
+    {% endif %}
+
+    <div id="actuar">
+        <a href="{% url 'materias:administrar_docentes' %}">Cancelar</a>
+    </div>
+
+</body>

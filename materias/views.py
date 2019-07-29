@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 from .models import (Materia, AliasDeMateria, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
                      TipoDocentes, Docente, CargoDedicacion, Carga, Pabellon, Dias)
 from .misc import Mapeos, NoTurno
+from .forms import DocenteForm
 from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
 
 TURNOS_MAX = 4
@@ -617,9 +618,72 @@ def generar_cargas_docentes(request, anno, cuatrimestre):
 @permission_required('dborrador.add_turno')
 def administrar_docentes(request):
     if request.method == 'POST':
-        pass
+        if 'juntar' in request.POST:
+            docentes = {docente for docente in Docente.objects.all()
+                        if f'juntar_{docente.id}' in request.POST}
+            logger.info('Voy a juntar a %s', docentes)
+            turnos = {docente: [(carga.turno.anno, carga.turno.cuatrimestre) for carga in docente.carga_set.all()]
+                      for docente in docentes}
+            todos_los_turnos = sorted({ac
+                                       for acs in turnos.values()
+                                       for ac in acs})
+            intersecciones = Counter(turno
+                                     for turno in todos_los_turnos
+                                     for docente, doc_turnos in turnos.items() if turno in doc_turnos)
+            context = {
+                'docentes': docentes,
+                'cuatrimestres': Cuatrimestres,
+                'turnos': turnos,
+                'todos_los_turnos': todos_los_turnos,
+                'esta_bien': max(intersecciones.values()) == 1 if intersecciones else True,
+            }
+            return render(request, 'materias/juntar_docentes.html', context)
+        elif 'confirmar' in request.POST:
+            docente_id = int(request.POST['nombre'].split('_')[1])
+            docente_final = Docente.objects.get(pk=docente_id)
+            para_juntar = {int(j_id.split('_')[1])
+                           for j_id in request.POST
+                           if j_id.startswith('juntar_')}
+            docentes = {Docente.objects.get(pk=d_id) for d_id in para_juntar if d_id != docente_id}
+            with transaction.atomic():
+                for docente in docentes:
+                    for carga in docente.carga_set.all():
+                        logger.debug('cambiando carga de docente: %s', carga)
+                        carga.docente = docente_final
+                    for preferencia in docente.preferenciasdocente_set.all():
+                        logger.debug('cambiando preferencia de docente: %s', preferencia)
+                        preferencia.docente = docente_final
+                    for otrosdatos in docente.otrosdatos_set.all():
+                        logger.debug('cambiando otros datos de docente: %s', otrosdatos)
+                        otrosdatos.docente = docente_final
+                    for cargaspedidas in docente.cargaspedidas_set.all():
+                        logger.debug('cambiando cargas pedidas de docente: %s', cargaspedidas)
+                        cargaspedidas.docente = docente_final
+                    docente_final.email = docente_final.email or docente.email
+                    docente_final.telefono = docente_final.telefono or docente.telefono
+                    docente.delete()
+                docente_final.save()
+    context = {
+        'docentes': Docente.objects.all(),
+    }
+    return render(request, 'materias/administrar_docentes.html', context)
+
+
+@login_required
+@permission_required('dborrador.add_turno')
+def administrar_un_docente(request, docente_id):
+    docente = Docente.objects.get(pk=docente_id)
+    context = {
+        'docente': docente,
+    }
+    if request.method == 'POST':
+        form = DocenteForm(request.POST, instance=docente)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse('materias:administrar_docentes'))
+        else:
+            logger.error(form.errors)
     else:
-        context = {
-            'docentes': Docente.objects.all(),
-        }
-        return render(request, 'materias/administrar_docentes', context)
+        form = DocenteForm(instance=docente)
+    context['form'] = form
+    return render(request, 'materias/administrar_un_docente.html', context)

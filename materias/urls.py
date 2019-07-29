@@ -29,6 +29,8 @@ urlpatterns = [
          views.generar_cargas_docentes, name='generar_cargas_docentes'),
     path('administrar_docentes',
          views.administrar_docentes, name='administrar_docentes'),
+    path('administrar_un_docente/<int:docente_id>',
+         views.administrar_un_docente, name='administrar_un_docente'),
     path('borrar_turno/<int:turno_id>', views.borrar_turno, name='borrar_turno'),
     path('cambiar_turno/<int:turno_id>', views.cambiar_turno, name='cambiar_turno'),
     path('borrar_horario/<int:horario_id>', views.borrar_horario, name='borrar_horario'),
