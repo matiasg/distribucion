@@ -650,15 +650,19 @@ def administrar_docentes(request):
                     for carga in docente.carga_set.all():
                         logger.debug('cambiando carga de docente: %s', carga)
                         carga.docente = docente_final
+                        carga.save()
                     for preferencia in docente.preferenciasdocente_set.all():
                         logger.debug('cambiando preferencia de docente: %s', preferencia)
                         preferencia.docente = docente_final
+                        preferencia.save()
                     for otrosdatos in docente.otrosdatos_set.all():
                         logger.debug('cambiando otros datos de docente: %s', otrosdatos)
                         otrosdatos.docente = docente_final
+                        otrosdatos.save()
                     for cargaspedidas in docente.cargaspedidas_set.all():
                         logger.debug('cambiando cargas pedidas de docente: %s', cargaspedidas)
                         cargaspedidas.docente = docente_final
+                        cargaspedidas.save()
                     docente_final.email = docente_final.email or docente.email
                     docente_final.telefono = docente_final.telefono or docente.telefono
                     docente.delete()
