@@ -11,9 +11,11 @@
 </head>
 <body>
 
+    <div id="actuar">
+        <a href="{% url 'materias:administrar' %}">Volver a administrar materias</a>
+    </div>
     <form action="{% url 'materias:administrar_docentes' %}" method="post">
     {% csrf_token %}
-    <input type="submit" name="juntar" value="juntar">
     <ol>
         {% for docente in docentes %}
         <li>
@@ -24,5 +26,6 @@
         </li>
         {% endfor %}
     </ol>
+    <input id="actuar" type="submit" name="juntar" value="juntar">
     </form>
 </body>
