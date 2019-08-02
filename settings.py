@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_extensions',
+    'django.contrib.postgres',
     'simple_history',  # para poder hacer rollback. https://django-simple-history.readthedocs.io/en/2.7.2/index.html
 ]
 
