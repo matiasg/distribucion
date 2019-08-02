@@ -6,14 +6,17 @@
 
 <head>
     <h2>
-        Página para administrar a {{ docente.nombre }}
+        {{ docente.nombre }}
     </h2>
 </head>
 <body>
+    <div id="actuar">
+        <a href="{% url 'materias:administrar_docentes' %}">Volver a todos los docentes</a>
+    </div>
     <form action="{% url 'materias:administrar_un_docente' docente.id %}" method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <input type="submit" value="salvar">
+    <input id="actuar" type="submit" value="salvar">
     </form>
 </body>
 
