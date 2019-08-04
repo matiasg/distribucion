@@ -1,10 +1,11 @@
 from django.db import models
 from simple_history.models import HistoricalRecords
-from django.core.validators import MaxValueValidator, RegexValidator
+from django.core.validators import MaxValueValidator
 from django.utils import timezone
 from enum import Enum
 
-from materias.models import Turno, Docente, Cuatrimestres, Cargos, TipoDocentes, choice_enum
+from materias.models import Turno, Docente, Cuatrimestres, Cargos, TipoDocentes, choice_enum, telefono_validator
+
 
 class PreferenciasDocente(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
@@ -16,10 +17,6 @@ class PreferenciasDocente(models.Model):
 
     def __str__(self):
         return f'{self.docente} -- {self.peso} -> {self.turno}'
-
-telefono_validator = RegexValidator(regex=r'^\+?[0-9 -]{9,15}$',
-                                    message=("El teléfono debe contener +, -, números, espacios "
-                                             "y tener entre 9 y 15 caracteres"))
 
 class OtrosDatos(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)

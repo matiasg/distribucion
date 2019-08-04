@@ -2,11 +2,10 @@ from collections import namedtuple
 from functools import total_ordering
 
 from django.db import models
-from django.core.validators import int_list_validator, MaxValueValidator
+from django.core.validators import int_list_validator, MaxValueValidator, RegexValidator
 from django.contrib.postgres.fields import ArrayField
 from simple_history.models import HistoricalRecords
 from enum import Enum
-
 
 AnnoCuatrimestre = namedtuple('AC', 'anno cuatrimestre')
 
@@ -230,10 +229,14 @@ class Horario(models.Model):
             return ''
 
 
+telefono_validator = RegexValidator(regex=r'^\+?[0-9 -]{9,15}$',
+                                    message=("El teléfono debe contener +, -, números, espacios "
+                                             "y tener entre 9 y 15 caracteres"))
+
 class Docente(models.Model):
     na_nombre = models.CharField(max_length=30)
     na_apellido = models.CharField(max_length=30)
-    telefono = models.CharField(max_length=15, validators=[int_list_validator(sep=' ')], blank=True)
+    telefono = models.CharField(max_length=17, validators=[telefono_validator], blank=True)
     email = models.EmailField(blank=True)
     cargos = ArrayField(models.CharField(max_length=6, choices=choice_enum(CargoDedicacion)), size=2)
     history = HistoricalRecords()
