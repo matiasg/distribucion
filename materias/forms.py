@@ -20,6 +20,11 @@ class DocenteForm(ModelForm):
             'na_nombre': 'Nombre',
             'na_apellido': 'Apellido',
         }
+        error_messages = {
+            'email': {
+                'invalid': 'el email es inválido',
+            }
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
