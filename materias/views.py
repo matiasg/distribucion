@@ -614,6 +614,13 @@ def generar_cargas_docentes(request, anno, cuatrimestre):
         return render(request, 'materias/generar_cargas.html', context)
 
 
+def _docentes_por_cargo():
+    return {
+        tipo_cargo: Mapeos.docentes_con_cargo_de_tipo(tipo_cargo)
+        for tipo_cargo in TipoDocentes
+    }
+
+
 @login_required
 @permission_required('dborrador.add_turno')
 def administrar_docentes(request):
@@ -668,7 +675,7 @@ def administrar_docentes(request):
                     docente.delete()
                 docente_final.save()
     context = {
-        'docentes': Docente.objects.all(),
+        'docentes': _docentes_por_cargo(),
     }
     return render(request, 'materias/administrar_docentes.html', context)
 

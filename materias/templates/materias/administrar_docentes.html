@@ -4,6 +4,11 @@
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
 
+<link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
+<script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
+<script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
+<script src="{% static 'materias/scripts.js' %}"></script>
+
 <head>
     <h2>
         Administrar docentes
@@ -14,18 +19,37 @@
     <div id="actuar">
         <a href="{% url 'materias:administrar' %}">Volver a administrar materias</a>
     </div>
+
     <form action="{% url 'materias:administrar_docentes' %}" method="post">
     {% csrf_token %}
-    <ol>
-        {% for docente in docentes %}
-        <li>
-            <input type="checkbox" name="juntar_{{ docente.id }}">
-            <a href="{% url 'materias:administrar_un_docente' docente.id %}">
-                {{ docente }}
-            </a>
-        </li>
+
+    <div id="tabs">
+        <ul>
+            {% for tipo in docentes %}
+            <li><a href="#tipo_{{ tipo.name }}">{{ tipo.value }}</a></li>
+            {% endfor %}
+        </ul>
+
+
+        {% for tipo, docentes_tipo in docentes.items %}
+
+        <div id="tipo_{{ tipo.name }}">
+            <ol>
+                {% for docente in docentes_tipo %}
+                <li>
+                    <input type="checkbox" name="juntar_{{ docente.id }}">
+                    <a href="{% url 'materias:administrar_un_docente' docente.id %}">
+                        {{ docente }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+        
         {% endfor %}
-    </ol>
+    </div>
+
+
     <input id="actuar" type="submit" name="juntar" value="juntar">
     </form>
 </body>
