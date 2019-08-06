@@ -257,7 +257,7 @@ class TestPaginas(TestCase):
     def test_administrar_dirige_bien(self):
         self.client.login(username='autorizado', password='1234')
         botones_urls = {
-            'turnos_docentes': 'materias/administrar_docentes',
+            'turnos_docentes': 'materias/administrar_necesidades_docentes',
             'turnos_alumnos': 'materias/administrar_alumnos',
             'cargas_docentes': 'materias/administrar_cargas_docentes',
             'exportar_informacion': 'materias/exportar_informacion',
@@ -280,7 +280,7 @@ class TestPaginas(TestCase):
         self.turno11.dificil_de_cubrir = True
         self.turno11.save()
 
-        url = f'/materias/administrar_docentes/{self.anno}/{self.cuatrimestre.name}'
+        url = f'/materias/administrar_necesidades_docentes/{self.anno}/{self.cuatrimestre.name}'
         response = self.client.get(url, follow=True)
         self.assertContains(response, f'name="dificil_{self.turno11.id}" checked')
 
