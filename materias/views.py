@@ -615,8 +615,10 @@ def generar_cargas_docentes(request, anno, cuatrimestre):
 
 
 def _docentes_por_cargo():
-    return {tipo_cargo: Mapeos.docentes_con_cargo_de_tipo(tipo_cargo)
-            for tipo_cargo in TipoDocentes}
+    docentes = {(tipo_cargo.name, tipo_cargo.value): Mapeos.docentes_con_cargo_de_tipo(tipo_cargo)
+                for tipo_cargo in TipoDocentes}
+    docentes[('sincargo', 'sin cargo')] = Docente.objects.filter(cargos__len=0)
+    return docentes
 
 def _docentes_en_request(request):
     return {docente for docente in Docente.objects.all()

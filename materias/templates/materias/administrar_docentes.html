@@ -26,14 +26,14 @@
     <div id="tabs">
         <ul>
             {% for tipo in docentes %}
-            <li><a href="#tipo_{{ tipo.name }}">{{ tipo.value }}</a></li>
+            <li><a href="#tipo_{{ tipo.0 }}">{{ tipo.1 }}</a></li>
             {% endfor %}
         </ul>
 
 
         {% for tipo, docentes_tipo in docentes.items %}
 
-        <div id="tipo_{{ tipo.name }}">
+        <div id="tipo_{{ tipo.0 }}">
             <ol>
                 {% for docente in docentes_tipo %}
                 <li>
