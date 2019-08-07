@@ -29,7 +29,11 @@
         </tr>
         {% for docente, acs in turnos.items %}
         <tr>
-            <td>{{ docente }}</td>
+            <td>
+                <a href="{% url 'materias:administrar_un_docente' docente.id %}">
+                    {{ docente }}
+                </a>
+            </td>
             {% for ac in todos_los_turnos %}
             <td id=numero>{% if ac in acs %}✔{% endif %}</td>
             {% endfor %}
