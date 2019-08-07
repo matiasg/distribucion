@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from .models import (Materia, AliasDeMateria, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
-                     TipoDocentes, Docente, CargoDedicacion, Carga, Pabellon, Dias)
+                     TipoDocentes, Docente, CargoDedicacion, Carga, Pabellon, Dias, choice_enum,)
 from .misc import Mapeos, NoTurno
 from .forms import DocenteForm
 from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
@@ -615,10 +615,12 @@ def generar_cargas_docentes(request, anno, cuatrimestre):
 
 
 def _docentes_por_cargo():
-    return {
-        tipo_cargo: Mapeos.docentes_con_cargo_de_tipo(tipo_cargo)
-        for tipo_cargo in TipoDocentes
-    }
+    return {tipo_cargo: Mapeos.docentes_con_cargo_de_tipo(tipo_cargo)
+            for tipo_cargo in TipoDocentes}
+
+def _docentes_en_request(request):
+    return {docente for docente in Docente.objects.all()
+            if f'juntar_{docente.id}' in request.POST}
 
 
 @login_required
@@ -626,8 +628,7 @@ def _docentes_por_cargo():
 def administrar_docentes(request):
     if request.method == 'POST':
         if 'juntar' in request.POST:
-            docentes = {docente for docente in Docente.objects.all()
-                        if f'juntar_{docente.id}' in request.POST}
+            docentes = _docentes_en_request(request)
             logger.info('Voy a juntar a %s', docentes)
             turnos = {docente: [(carga.turno.anno, carga.turno.cuatrimestre) for carga in docente.carga_set.all()]
                       for docente in docentes}
@@ -674,6 +675,24 @@ def administrar_docentes(request):
                     docente_final.telefono = docente_final.telefono or docente.telefono
                     docente.delete()
                 docente_final.save()
+
+        elif 'cambiar_cargo' in request.POST:
+            context = {
+                'docentes': _docentes_en_request(request),
+                'cargos': [('', '')] + list(reversed(list(choice_enum(CargoDedicacion)))),
+            }
+            return render(request, 'materias/cambiar_cargos.html', context)
+
+        elif 'confirma_cambiar' in request.POST:
+            docentes = _docentes_en_request(request)
+            cargo = request.POST['cargo'].split('_')[1]
+            cargos = [CargoDedicacion[cargo]] if cargo else []
+            logger.info('le voy a cambiar el cargo a %s: desde ahora, %s', docentes, cargo)
+            with transaction.atomic():
+                for docente in docentes:
+                    docente.cargos = cargos
+                    docente.save()
+
     context = {
         'docentes': _docentes_por_cargo(),
     }
