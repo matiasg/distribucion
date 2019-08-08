@@ -688,7 +688,7 @@ def administrar_docentes(request):
         elif 'confirma_cambiar' in request.POST:
             docentes = _docentes_en_request(request)
             cargo = request.POST['cargo'].split('_')[1]
-            cargos = [CargoDedicacion[cargo]] if cargo else []
+            cargos = [CargoDedicacion[cargo].name] if cargo else []
             logger.info('le voy a cambiar el cargo a %s: desde ahora, %s', docentes, cargo)
             with transaction.atomic():
                 for docente in docentes:
