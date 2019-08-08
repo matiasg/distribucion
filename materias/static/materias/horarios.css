@@ -176,3 +176,8 @@ table#cargas td input
   width: 3em;
   font-size: large;
 }
+
+table#horarios tr td
+{
+  border: thin solid;
+}
