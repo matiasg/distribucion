@@ -637,3 +637,24 @@ class TestPaginas(TestCase):
         self.assertContains(response, '<select name="cargo">')
         self.assertContains(response, f'<input type="hidden" name="juntar_{n.id}">')
         self.assertContains(response, f'<input type="hidden" name="juntar_{m.id}">')
+
+    def test_administrar_un_docente(self):
+        self.client.login(username='autorizado', password='1234')
+        n = Docente.objects.create(na_nombre='nemo', na_apellido='X', telefono='00 0000', email='nemo@nautilus.org',
+                                   cargos=[CargoDedicacion.TitExc.name])
+        response = self.client.get(reverse('materias:administrar_un_docente', args=(n.id,)))
+        self.assertTrue(re.search('<input type="text" name="na_nombre" value="nemo" .*>', response.content.decode()))
+        self.assertTrue(re.search('<input type="text" name="na_apellido" value="X" .*>', response.content.decode()))
+        self.assertTrue(re.search(f'<input type="text" name="telefono" value="{n.telefono}" .*>', response.content.decode()))
+        self.assertTrue(re.search(f'<input type="email" name="email" value="{n.email}" .*>', response.content.decode()))
+        self.assertTrue(re.search('<select name="cargo0" id="id_cargo0">', response.content.decode()))
+        self.assertTrue(re.search('<select name="cargo1" id="id_cargo1">', response.content.decode()))
+        self.assertTrue(re.search('<select name="cargo2" id="id_cargo2">', response.content.decode()))
+        # le cambio el apellido
+        self.client.post(reverse('materias:administrar_un_docente', args=(n.id,)),
+                         {'na_nombre': n.nombre, 'na_apellido': 'nuevo apellido',
+                          'telefono': '0123456789', 'email': n.email,
+                          'cargo0': CargoDedicacion.TitExc.name, 'cargo1': '', 'cargo2': '',
+                          })
+        n.refresh_from_db()
+        self.assertEqual(n.na_apellido, 'nuevo apellido')
