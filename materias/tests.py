@@ -275,7 +275,7 @@ class TestPaginas(TestCase):
             self.assertTrue(ultima[0].startswith(f'/{url}'))
             self.assertEqual(ultima[1], 302, f'No está redirigiendo bien a {url}')
 
-    def test_administrar_docentes(self):
+    def test_administrar_necesidades_docentes(self):
         self.client.login(username='autorizado', password='1234')
 
         self.turno11.dificil_de_cubrir = True
@@ -605,3 +605,35 @@ class TestPaginas(TestCase):
             esperado = 1 if Mapeos.tipos_de_cargo(carded.name) in (TipoDocentes.P, TipoDocentes.J) else 0
             self.assertEqual(Carga.objects.filter(anno=self.anno+1, cuatrimestre=self.cuatrimestre.name, cargo=carded.name).count(),
                              esperado)
+
+    def test_administrar_docentes(self):
+        self.client.login(username='autorizado', password='1234')
+        response = self.client.get(reverse('materias:administrar_docentes'))
+        self.assertContains(response, 'type="submit" name="juntar"')
+        self.assertContains(response, 'type="submit" name="cambiar_cargo"')
+
+        # sin docentes no hay nadie
+        checkboxes = re.findall('<input type="checkbox" name="juntar_(\d+)">', response.content.decode())
+        self.assertEqual(len(checkboxes), 0)
+
+        # ahora con docentes y tres cargos
+        n = Docente.objects.create(na_nombre='nemo', na_apellido='X', telefono='00 0000', email='nemo@nautilus.org',
+                                   cargos=[CargoDedicacion.TitExc.name])
+        m = Docente.objects.create(na_nombre='mario', na_apellido='Y', telefono='00 0000', email='mario@nautilus.org',
+                                   cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
+        response = self.client.get(reverse('materias:administrar_docentes'))
+        checkboxes = re.findall('<input type="checkbox" name="juntar_(\d+)">', response.content.decode())
+        self.assertEqual(len(checkboxes), 3)
+        self.assertEqual(set(checkboxes), {f'{n.id}', f'{m.id}'})
+        # juntar docentes
+        post = {f'juntar_{n.id}': True, f'juntar_{m.id}': True, 'juntar': True}
+        response = self.client.post(reverse('materias:administrar_docentes'), post)
+        self.assertContains(response, '<select id="nombre" name="nombre">')
+        self.assertContains(response, f'<option value="nombre_{n.id}">')
+        self.assertContains(response, f'<option value="nombre_{m.id}">')
+        # cambiar el cargo
+        post = {f'juntar_{n.id}': True, f'juntar_{m.id}': True, 'cambiar_cargo': True}
+        response = self.client.post(reverse('materias:administrar_docentes'), post)
+        self.assertContains(response, '<select name="cargo">')
+        self.assertContains(response, f'<input type="hidden" name="juntar_{n.id}">')
+        self.assertContains(response, f'<input type="hidden" name="juntar_{m.id}">')
