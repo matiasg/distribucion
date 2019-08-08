@@ -41,12 +41,10 @@
         {% endfor %}
     </table>
 
-    {% if esta_bien %}
     <form action="{% url 'materias:administrar_docentes' %}" method=post>
     {% csrf_token %}
 
     <p>
-        Los cuatrimestres en los que dieron clase no coinciden. Se pueden juntar.
         ¿Con qué nombre?
         <select id="nombre" name="nombre">
             {% for docente in turnos %}
@@ -58,15 +56,17 @@
         {% endfor %}
     </p>
     <p>
+        {% if no_hay_repetidos %}
+        Los cuatrimestres en los que dieron clase no coinciden. Se pueden juntar.
         ¿Confirmás que los querés juntar?
         <input id=actuar type="submit" name="confirmar" value="Sí, quiero">
+        {% else %}
+        Coinciden los cuatrimestres donde dieron clase.
+        ¿Seguro es el mismo docente?
+        <input id=actuar type="submit" name="confirmar" value="Sí, seguro seguro">
+        {% endif %}
     </p>
     </form>
-
-    {% else %}
-    No se pueden juntar porque coinciden los cuatrimestres donde dieron clase.
-    ¿Seguro es el mismo docente?
-    {% endif %}
 
     <div id="actuar">
         <a href="{% url 'materias:administrar_docentes' %}">Cancelar</a>

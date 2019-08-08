@@ -645,7 +645,7 @@ def administrar_docentes(request):
                 'cuatrimestres': Cuatrimestres,
                 'turnos': turnos,
                 'todos_los_turnos': todos_los_turnos,
-                'esta_bien': max(intersecciones.values()) == 1 if intersecciones else True,
+                'no_hay_repetidos': max(intersecciones.values()) == 1 if intersecciones else True,
             }
             return render(request, 'materias/juntar_docentes.html', context)
         elif 'confirmar' in request.POST:
