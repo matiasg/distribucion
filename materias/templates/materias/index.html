@@ -10,7 +10,7 @@
     {% for materia, turnos in lista %}
 
     {% if turnos %}
-    <table border=1 cellpadding=5 cellspacing=0>
+    <table id="horarios">
         <caption>{{ materia.nombre.upper }}</caption>
         <tbody>
         {% for turno in turnos %}
