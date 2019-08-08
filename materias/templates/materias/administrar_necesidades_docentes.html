@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+{% load static %}
+{% load materias_tags %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<h1>Administrar necesidades docentes de {{ anno }}, cuatrimestre {{ cuatrimestre.value }}</h1>
+
+
+<form action="{% url 'materias:administrar_necesidades_docentes' anno cuatrimestre.name %}" method="post">
+{% csrf_token %}
+
+    <input type="submit" name="cambiar" value="salvar">
+
+    <table id=cargas_docentes>
+        <thead>
+            <tr>
+                <th class=necesidades></th>
+                {% for tipo in necesidades_y_recursos %}
+                <th class=necesidades>{{ tipo.value }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Necesidades</td>
+                {% for tipo, nyr in necesidades_y_recursos.items %}
+                <td id=numero><span id=cantidad><mark id={{ nyr.1|bien_o_mal:nyr.0 }}>{{ nyr.0 }}</mark></span></td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td>Cargas disponibles</td>
+                {% for tipo, nyr in necesidades_y_recursos.items %}
+                <td id=numero><span id=cantidad><mark id={{ nyr.1|bien_o_mal:nyr.0 }}>{{ nyr.1 }}</mark></span></td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+
+
+    {% for tipo, materias_turnos in materias %}
+    <div class="seccion">{{ tipo }}</div>
+
+        {% for materia, turnos in materias_turnos %}
+            {% if turnos %}
+            <span class="tabla_numeros_chicos">
+            <table>
+                <caption>{{ materia.nombre.upper }}</caption>
+                <tbody>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th>Prof</th>
+                        <th>JTP</th>
+                        <th>Ay1</th>
+                        <th>Ay2</th>
+                        <th>alumnos</th>
+                        <th>difícil</th>
+                    </tr>
+                    {% for turno in turnos %}
+                    <tr>
+                        <td class="fondo{{ turno.tipo }}">{{ turno.tipo }} {{ turno.numero }}</td>
+                        <td class="diayhora">{{ turno.horarios_info.diayhora }}</td>
+                        <td><input type="number" name="necesidadprof_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_prof }}></td>
+                        <td><input type="number" name="necesidadjtp_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_jtp }}></td>
+                        <td><input type="number" name="necesidaday1_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_ay1 }}></td>
+                        <td><input type="number" name="necesidaday2_{{ turno.id }}" min=0 max=10 value={{ turno.necesidad_ay2 }}></td>
+                        <td><input type="number" name="alumnos_{{ turno.id }}" min=0 max=1000 value={{ turno.alumnos }}></td>
+                        <td><input type="checkbox" name="dificil_{{ turno.id }}" {% if turno.dificil_de_cubrir %}checked{% endif %}></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </span>
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+</form>

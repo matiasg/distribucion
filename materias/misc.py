@@ -86,6 +86,14 @@ class Mapeos:
         return ret
 
     @staticmethod
+    def docentes_con_cargo_de_tipo(tipo):
+        '''TipoDocentes -> [docente]
+        Es similar a docentes_de_tipo pero mira el cargo del docente y no el cargo de la carga :-/
+        '''
+        cardeds = Mapeos.cargos_de_tipos(tipo)
+        return Docente.objects.filter(cargos__overlap=cardeds).all()
+
+    @staticmethod
     def turnos_de_tipo_y_ac(tipo, ac):
         '''TipoDocentes -> AnnoCuatrimestre -> [Turno]'''
         return Mapeos.encuesta_tipo_turno(tipo).filter(anno=ac.anno, cuatrimestre=ac.cuatrimestre)

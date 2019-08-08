@@ -12,8 +12,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 from .models import (Materia, AliasDeMateria, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
-                     TipoDocentes, Docente, CargoDedicacion, Carga, Pabellon, Dias)
+                     TipoDocentes, Docente, CargoDedicacion, Carga, Pabellon, Dias, choice_enum,)
 from .misc import Mapeos, NoTurno
+from .forms import DocenteForm
 from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
 
 TURNOS_MAX = 4
@@ -92,13 +93,15 @@ def administrar(request):
         if 'turnos_alumnos' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
         elif 'turnos_docentes' in request.POST:
-            return HttpResponseRedirect(reverse('materias:administrar_docentes', args=(anno, cuatrimestre)))
+            return HttpResponseRedirect(reverse('materias:administrar_necesidades_docentes', args=(anno, cuatrimestre)))
         elif 'exportar_informacion' in request.POST:
             return HttpResponseRedirect(reverse('materias:exportar_informacion', args=(anno, cuatrimestre)))
         elif 'generar_cuatrimestre' in request.POST:
             return HttpResponseRedirect(reverse('materias:generar_cuatrimestre', args=(anno, cuatrimestre)))
         elif 'generar_cargas_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:generar_cargas_docentes', args=(anno, cuatrimestre)))
+        elif 'administrar_docentes' in request.POST:
+            return HttpResponseRedirect(reverse('materias:administrar_docentes'))
         elif 'juntar_materias' in request.POST:
             return HttpResponseRedirect(reverse('materias:juntar_materias'))
         elif 'cargas_docentes' in request.POST:
@@ -169,7 +172,7 @@ def administrar_alumnos(request, anno, cuatrimestre):
 
 @login_required
 @permission_required('dborrador.add_asignacion')
-def administrar_docentes(request, anno, cuatrimestre):
+def administrar_necesidades_docentes(request, anno, cuatrimestre):
     key_to_field = {Turno: {'alumnos': ('alumnos', int),
                             'necesidadprof': ('necesidad_prof', int),
                             'necesidadjtp': ('necesidad_jtp', int),
@@ -188,7 +191,7 @@ def administrar_docentes(request, anno, cuatrimestre):
 
     necesidades_y_recursos = {tipo: (necesidades[tipo], recursos[tipo]) for tipo in TipoDocentes}
 
-    return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_docentes.html',
+    return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_necesidades_docentes.html',
                                necesidades_y_recursos=necesidades_y_recursos)
 
 @login_required
@@ -609,3 +612,110 @@ def generar_cargas_docentes(request, anno, cuatrimestre):
             'tipos': list(TipoDocentes),
         }
         return render(request, 'materias/generar_cargas.html', context)
+
+
+def _docentes_por_cargo():
+    docentes = {(tipo_cargo.name, tipo_cargo.value): Mapeos.docentes_con_cargo_de_tipo(tipo_cargo)
+                for tipo_cargo in TipoDocentes}
+    docentes[('sincargo', 'sin cargo')] = Docente.objects.filter(cargos__len=0)
+    return docentes
+
+def _docentes_en_request(request):
+    return {docente for docente in Docente.objects.all()
+            if f'juntar_{docente.id}' in request.POST}
+
+
+@login_required
+@permission_required('materias.add_turno')
+def administrar_docentes(request):
+    if request.method == 'POST':
+        if 'juntar' in request.POST:
+            docentes = _docentes_en_request(request)
+            logger.info('Voy a juntar a %s', docentes)
+            turnos = {docente: [(carga.turno.anno, carga.turno.cuatrimestre) for carga in docente.carga_set.all()]
+                      for docente in docentes}
+            todos_los_turnos = sorted({ac
+                                       for acs in turnos.values()
+                                       for ac in acs})
+            intersecciones = Counter(turno
+                                     for turno in todos_los_turnos
+                                     for docente, doc_turnos in turnos.items() if turno in doc_turnos)
+            context = {
+                'docentes': docentes,
+                'cuatrimestres': Cuatrimestres,
+                'turnos': turnos,
+                'todos_los_turnos': todos_los_turnos,
+                'no_hay_repetidos': max(intersecciones.values()) == 1 if intersecciones else True,
+            }
+            return render(request, 'materias/juntar_docentes.html', context)
+        elif 'confirmar' in request.POST:
+            docente_id = int(request.POST['nombre'].split('_')[1])
+            docente_final = Docente.objects.get(pk=docente_id)
+            para_juntar = {int(j_id.split('_')[1])
+                           for j_id in request.POST
+                           if j_id.startswith('juntar_')}
+            docentes = {Docente.objects.get(pk=d_id) for d_id in para_juntar if d_id != docente_id}
+            with transaction.atomic():
+                for docente in docentes:
+                    for carga in docente.carga_set.all():
+                        logger.debug('cambiando carga de docente: %s', carga)
+                        carga.docente = docente_final
+                        carga.save()
+                    for preferencia in docente.preferenciasdocente_set.all():
+                        logger.debug('cambiando preferencia de docente: %s', preferencia)
+                        preferencia.docente = docente_final
+                        preferencia.save()
+                    for otrosdatos in docente.otrosdatos_set.all():
+                        logger.debug('cambiando otros datos de docente: %s', otrosdatos)
+                        otrosdatos.docente = docente_final
+                        otrosdatos.save()
+                    for cargaspedidas in docente.cargaspedidas_set.all():
+                        logger.debug('cambiando cargas pedidas de docente: %s', cargaspedidas)
+                        cargaspedidas.docente = docente_final
+                        cargaspedidas.save()
+                    docente_final.email = docente_final.email or docente.email
+                    docente_final.telefono = docente_final.telefono or docente.telefono
+                    docente.delete()
+                docente_final.save()
+
+        elif 'cambiar_cargo' in request.POST:
+            context = {
+                'docentes': _docentes_en_request(request),
+                'cargos': [('', '')] + list(reversed(list(choice_enum(CargoDedicacion)))),
+            }
+            return render(request, 'materias/cambiar_cargos.html', context)
+
+        elif 'confirma_cambiar' in request.POST:
+            docentes = _docentes_en_request(request)
+            cargo = request.POST['cargo'].split('_')[1]
+            cargos = [CargoDedicacion[cargo].name] if cargo else []
+            logger.info('le voy a cambiar el cargo a %s: desde ahora, %s', docentes, cargo)
+            with transaction.atomic():
+                for docente in docentes:
+                    docente.cargos = cargos
+                    docente.save()
+
+    context = {
+        'docentes': _docentes_por_cargo(),
+    }
+    return render(request, 'materias/administrar_docentes.html', context)
+
+
+@login_required
+@permission_required('materias.add_turno')
+def administrar_un_docente(request, docente_id):
+    docente = Docente.objects.get(pk=docente_id)
+    context = {
+        'docente': docente,
+    }
+    if request.method == 'POST':
+        form = DocenteForm(request.POST, instance=docente)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse('materias:administrar_docentes'))
+        else:
+            logger.error(form.errors)
+    else:
+        form = DocenteForm(instance=docente)
+    context['form'] = form
+    return render(request, 'materias/administrar_un_docente.html', context)

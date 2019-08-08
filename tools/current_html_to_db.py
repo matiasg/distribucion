@@ -8,6 +8,7 @@ import re
 import urllib.request as request
 from django.utils.dateparse import parse_time
 from argparse import ArgumentParser
+import string
 
 from django.db.models import Value, Func, F
 from django.db.models.functions import Concat
@@ -91,6 +92,7 @@ cargo_tipoturno = {'Teórica': [CargoDedicacion.AsoExc],
                                         CargoDedicacion.JTPSim, CargoDedicacion.Ay1Sim, CargoDedicacion.Ay2Sim]}
 
 docentes_separador = re.compile('(?: +-+ *| *—  *| *-+ +)')
+docente_con_dias_al_final = re.compile('(.*[^\s])(\s*\((?i:lu|ma|mi|ju|vi|-)+\))')
 
 def salva_datos(html, anno, cuatrimestre):
     soup = BeautifulSoup(html, 'html.parser')
@@ -194,6 +196,10 @@ def salva_datos(html, anno, cuatrimestre):
                                    + [CargoDedicacion.Ay1Sim] * necesidad_ay1 + [CargoDedicacion.Ay2Sim] * necesidad_ay2
                 cargos_inferidos += [cargos_inferidos[-1]] * (len(turno_docentes) - len(cargos_inferidos))
                 for i, docente in enumerate(turno_docentes):
+                    m = docente_con_dias_al_final.search(docente)
+                    if m:
+                        docente = m.group(1)
+                    docente = string.capwords(docente.strip())
                     # evitamos el docente '' que aparece en turnos sin asignaciones
                     if not docente:
                         continue

@@ -186,6 +186,11 @@ class TestPaginas(TestCase):
         autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='dborrador', codename='add_asignacion'))
         autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='materias', codename='view_docente'))
 
+    def _agrega_docentes(self):
+        self.n = Docente.objects.create(na_nombre='nemo', na_apellido='X', telefono='00 0000', email='nemo@nautilus.org',
+                                        cargos=[CargoDedicacion.TitExc.name])
+        self.m = Docente.objects.create(na_nombre='mario', na_apellido='Y', telefono='00 0000', email='mario@nautilus.org',
+                                        cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
     def test_pagina_principal_con_y_sin_turnos(self):
         response = self.client.get(f'/materias/{self.anno}{self.cuatrimestre.value}')
         self.assertContains(response, '<div class="seccion">Obligatorias</div>' )
@@ -257,9 +262,10 @@ class TestPaginas(TestCase):
     def test_administrar_dirige_bien(self):
         self.client.login(username='autorizado', password='1234')
         botones_urls = {
-            'turnos_docentes': 'materias/administrar_docentes',
+            'turnos_docentes': 'materias/administrar_necesidades_docentes',
             'turnos_alumnos': 'materias/administrar_alumnos',
             'cargas_docentes': 'materias/administrar_cargas_docentes',
+            'administrar_docentes': 'materias/administrar_docentes',
             'exportar_informacion': 'materias/exportar_informacion',
             'cargas_docentes_publicadas': 'materias/administrar_cargas_publicadas',
             'administrar_encuestas': 'encuestas/administrar_habilitadas',
@@ -274,13 +280,13 @@ class TestPaginas(TestCase):
             self.assertTrue(ultima[0].startswith(f'/{url}'))
             self.assertEqual(ultima[1], 302, f'No está redirigiendo bien a {url}')
 
-    def test_administrar_docentes(self):
+    def test_administrar_necesidades_docentes(self):
         self.client.login(username='autorizado', password='1234')
 
         self.turno11.dificil_de_cubrir = True
         self.turno11.save()
 
-        url = f'/materias/administrar_docentes/{self.anno}/{self.cuatrimestre.name}'
+        url = f'/materias/administrar_necesidades_docentes/{self.anno}/{self.cuatrimestre.name}'
         response = self.client.get(url, follow=True)
         self.assertContains(response, f'name="dificil_{self.turno11.id}" checked')
 
@@ -356,25 +362,20 @@ class TestPaginas(TestCase):
 
     def test_administrar_cargas_docentes(self):
         self.client.login(username='autorizado', password='1234')
-        n = Docente.objects.create(na_nombre='nemo', na_apellido='X',
-                                   telefono='00 0000', email='nemo@nautilus.org',
-                                   cargos=[CargoDedicacion.TitExc.name])
-        m = Docente.objects.create(na_nombre='mario', na_apellido='Y',
-                                   telefono='00 0000', email='mario@nautilus.org',
-                                   cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
+        self._agrega_docentes()
         now = timezone.now()
-        Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name,
+        Carga.objects.create(docente=self.n, cargo=CargoDedicacion.TitExc.name,
                              anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-        Carga.objects.create(docente=m, cargo=CargoDedicacion.TitExc.name,
+        Carga.objects.create(docente=self.m, cargo=CargoDedicacion.TitExc.name,
                              anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-        Carga.objects.create(docente=m, cargo=CargoDedicacion.Ay1Smx.name,
+        Carga.objects.create(docente=self.m, cargo=CargoDedicacion.Ay1Smx.name,
                              anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-        PreferenciasDocente.objects.create(docente=n, turno=self.turno11,
+        PreferenciasDocente.objects.create(docente=self.n, turno=self.turno11,
                                            cargo=Cargos.Tit.name, peso=2, fecha_encuesta=now)
-        OtrosDatos.objects.create(docente=n, fecha_encuesta=now,
+        OtrosDatos.objects.create(docente=self.n, fecha_encuesta=now,
                                   anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                   comentario='_esto deberia aparecer_')
-        CargasPedidas.objects.create(docente=n, fecha_encuesta=now,
+        CargasPedidas.objects.create(docente=self.n, fecha_encuesta=now,
                                      anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                      cargas=2)
 
@@ -385,39 +386,35 @@ class TestPaginas(TestCase):
 
     def test_administrar_cargas_de_un_docente(self):
         self.client.login(username='autorizado', password='1234')
-
-        n = Docente.objects.create(na_nombre='nemo',
-                                   telefono='00 0000', email='nemo@nautilus.org',
-                                   cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
-        m = Docente.objects.create(na_nombre='mario',
-                                   telefono='00 0000', email='mario@nautilus.org',
-                                   cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
-        c1 = Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name,
+        self._agrega_docentes()
+        self.n.cargos = [CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name]
+        self.n.save()
+        c1 = Carga.objects.create(docente=self.n, cargo=CargoDedicacion.TitExc.name,
                                   anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-        c2 = Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name,
+        c2 = Carga.objects.create(docente=self.n, cargo=CargoDedicacion.TitExc.name,
                                   anno=self.anno, cuatrimestre=self.cuatrimestre.name)
         now = timezone.now()
-        OtrosDatos.objects.create(docente=n, fecha_encuesta=now,
+        OtrosDatos.objects.create(docente=self.n, fecha_encuesta=now,
                                   anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-        CargasPedidas.objects.create(docente=n, fecha_encuesta=now,
+        CargasPedidas.objects.create(docente=self.n, fecha_encuesta=now,
                                      anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                      cargas=2)
-        cm = Carga.objects.create(docente=m, cargo=CargoDedicacion.TitExc.name,
+        cm = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.TitExc.name,
                                   anno=self.anno, cuatrimestre=self.cuatrimestre.name)
 
-        url = f'/materias/administrar_cargas_un_docente/{self.anno}/{self.cuatrimestre.name}/{n.id}'
+        url = f'/materias/administrar_cargas_un_docente/{self.anno}/{self.cuatrimestre.name}/{self.n.id}'
         response = self.client.get(url, follow=True)
         self.assertContains(response, 'cargo_TitExc')
         self.assertContains(response, 'cargo_Ay1Smx')
 
-        response = self.client.post(f'/materias/administrar_cargas_un_docente/{self.anno}/{self.cuatrimestre.name}/{n.id}',
+        response = self.client.post(f'/materias/administrar_cargas_un_docente/{self.anno}/{self.cuatrimestre.name}/{self.n.id}',
                                     {'salvar': True, 'anno': self.anno, 'cuatrimestre': self.cuatrimestre.name,
                                      'cargo_TitExc': 1, 'cargo_Ay1Smx': 1},
                                     follow=True)
-        self.assertEquals(Carga.objects.filter(docente=n, cargo='TitExc').count(), 1)
-        self.assertEquals(Carga.objects.filter(docente=n, cargo='Ay1Smx').count(), 1)
+        self.assertEquals(Carga.objects.filter(docente=self.n, cargo='TitExc').count(), 1)
+        self.assertEquals(Carga.objects.filter(docente=self.n, cargo='Ay1Smx').count(), 1)
 
-        url = f'/materias/administrar_cargas_un_docente/{self.anno}/{self.cuatrimestre.name}/{m.id}'
+        url = f'/materias/administrar_cargas_un_docente/{self.anno}/{self.cuatrimestre.name}/{self.m.id}'
         response = self.client.get(url, follow=True)
         self.assertContains(response, 'no completó la encuesta')
         self.assertContains(response, 'cargo_TitExc')
@@ -501,12 +498,9 @@ class TestPaginas(TestCase):
                                  args=(self.materia1.id, self.anno, self.cuatrimestre.name)))
 
     def test_cambiar_cargas_publicadas(self):
-        n = Docente.objects.create(na_nombre='nemo', na_apellido='X', telefono='00 0000', email='nemo@nautilus.org',
-                                   cargos=[CargoDedicacion.TitExc.name])
-        m = Docente.objects.create(na_nombre='mario', na_apellido='Y', telefono='00 0000', email='mario@nautilus.org',
-                                   cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
-        cn = Carga.objects.create(docente=n, cargo=CargoDedicacion.TitExc.name, anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-        cm = Carga.objects.create(docente=m, cargo=CargoDedicacion.JTPSim.name, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+        self._agrega_docentes()
+        cn = Carga.objects.create(docente=self.n, cargo=CargoDedicacion.TitExc.name, anno=self.anno, cuatrimestre=self.cuatrimestre.name)
+        cm = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.JTPSim.name, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                              turno=self.turno11)
         self.client.login(username='autorizado', password='1234')
         url = reverse('materias:administrar_cargas_publicadas', args=(self.anno, self.cuatrimestre.name))
@@ -590,8 +584,7 @@ class TestPaginas(TestCase):
         for tipo in TipoDocentes:
             self.assertContains(response, f'name="copiar_{tipo.name}" checked>')
 
-        n = Docente.objects.create(na_nombre='nemo', na_apellido='X',
-                                   telefono='00 0000', email='nemo@nautilus.org',
+        n = Docente.objects.create(na_nombre='nemo', na_apellido='X', telefono='00 0000', email='nemo@nautilus.org',
                                    cargos=[CargoDedicacion.TitExc.name])
         for carded in CargoDedicacion:
             Carga.objects.create(docente=n, cargo=carded.name, anno=self.anno, cuatrimestre=self.cuatrimestre.name)
@@ -604,3 +597,87 @@ class TestPaginas(TestCase):
             esperado = 1 if Mapeos.tipos_de_cargo(carded.name) in (TipoDocentes.P, TipoDocentes.J) else 0
             self.assertEqual(Carga.objects.filter(anno=self.anno+1, cuatrimestre=self.cuatrimestre.name, cargo=carded.name).count(),
                              esperado)
+
+    def test_administrar_docentes(self):
+        self.client.login(username='autorizado', password='1234')
+        response = self.client.get(reverse('materias:administrar_docentes'))
+        self.assertContains(response, 'type="submit" name="juntar"')
+        self.assertContains(response, 'type="submit" name="cambiar_cargo"')
+        # sin docentes no hay nadie
+        checkboxes = re.findall('<input type="checkbox" name="juntar_(\d+)">', response.content.decode())
+        self.assertEqual(len(checkboxes), 0)
+        # ahora con docentes y tres cargos
+        self._agrega_docentes()
+        response = self.client.get(reverse('materias:administrar_docentes'))
+        checkboxes = re.findall('<input type="checkbox" name="juntar_(\d+)">', response.content.decode())
+        self.assertEqual(len(checkboxes), 3)
+        self.assertEqual(set(checkboxes), {f'{self.n.id}', f'{self.m.id}'})
+
+    def test_juntar_docentes(self):
+        self.client.login(username='autorizado', password='1234')
+        self._agrega_docentes()
+        post = {f'juntar_{self.n.id}': True, f'juntar_{self.m.id}': True, 'juntar': True}
+        response = self.client.post(reverse('materias:administrar_docentes'), post)
+        self.assertContains(response, '<select id="nombre" name="nombre">')
+        self.assertContains(response, f'<option value="nombre_{self.n.id}">')
+        self.assertContains(response, f'<option value="nombre_{self.m.id}">')
+        # confirmo juntar
+        now = timezone.now()
+        carga = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.TitExc.name,
+                                     anno=self.anno, cuatrimestre=self.cuatrimestre.name)
+        pref = PreferenciasDocente.objects.create(docente=self.m, turno=self.turno11,
+                                                  cargo=Cargos.Tit.name, peso=2, fecha_encuesta=now)
+        otrosdatos = OtrosDatos.objects.create(docente=self.m, fecha_encuesta=now,
+                                               anno=self.anno, cuatrimestre=self.cuatrimestre.name, comentario='')
+        pedidas = CargasPedidas.objects.create(docente=self.m, fecha_encuesta=now,
+                                               anno=self.anno, cuatrimestre=self.cuatrimestre.name, cargas=2)
+        post = {f'juntar_{self.n.id}': True, f'juntar_{self.m.id}': True, 'nombre': f'nombre_{self.n.id}', 'confirmar': True}
+        response = self.client.post(reverse('materias:administrar_docentes'), post)
+        with self.assertRaises(Docente.DoesNotExist):
+            self.m.refresh_from_db()
+        id_anterior = self.n.id
+        self.n.refresh_from_db()
+        self.assertEqual(self.n.id, id_anterior)
+        self.assertEqual(self.n.nombre, 'nemo X')
+
+        for objeto in [carga, pref, otrosdatos, pedidas]:
+            objeto.refresh_from_db()
+            self.assertEqual(objeto.docente, self.n)
+
+    def test_cambiar_cargo(self):
+        self.client.login(username='autorizado', password='1234')
+        self._agrega_docentes()
+        post = {f'juntar_{self.n.id}': True, f'juntar_{self.m.id}': True, 'cambiar_cargo': True}
+        response = self.client.post(reverse('materias:administrar_docentes'), post)
+        self.assertContains(response, '<select name="cargo">')
+        self.assertContains(response, f'<input type="hidden" name="juntar_{self.n.id}">')
+        self.assertContains(response, f'<input type="hidden" name="juntar_{self.m.id}">')
+        # confirmo cambiar
+        post = {f'juntar_{self.n.id}': True, f'juntar_{self.m.id}': True,
+                'cargo': f'cargo_{CargoDedicacion.Ay2Sim.name}', 'confirma_cambiar': True}
+        response = self.client.post(reverse('materias:administrar_docentes'), post)
+        self.m.refresh_from_db()
+        self.n.refresh_from_db()
+        self.assertEquals(self.m.cargos, [CargoDedicacion.Ay2Sim.name])
+        self.assertEquals(self.n.cargos, [CargoDedicacion.Ay2Sim.name])
+
+    def test_administrar_un_docente(self):
+        self.client.login(username='autorizado', password='1234')
+        n = Docente.objects.create(na_nombre='nemo', na_apellido='X', telefono='00 0000', email='nemo@nautilus.org',
+                                   cargos=[CargoDedicacion.TitExc.name])
+        response = self.client.get(reverse('materias:administrar_un_docente', args=(n.id,)))
+        self.assertTrue(re.search('<input type="text" name="na_nombre" value="nemo" .*>', response.content.decode()))
+        self.assertTrue(re.search('<input type="text" name="na_apellido" value="X" .*>', response.content.decode()))
+        self.assertTrue(re.search(f'<input type="text" name="telefono" value="{n.telefono}" .*>', response.content.decode()))
+        self.assertTrue(re.search(f'<input type="email" name="email" value="{n.email}" .*>', response.content.decode()))
+        self.assertTrue(re.search('<select name="cargo0" id="id_cargo0">', response.content.decode()))
+        self.assertTrue(re.search('<select name="cargo1" id="id_cargo1">', response.content.decode()))
+        self.assertTrue(re.search('<select name="cargo2" id="id_cargo2">', response.content.decode()))
+        # le cambio el apellido
+        self.client.post(reverse('materias:administrar_un_docente', args=(n.id,)),
+                         {'na_nombre': n.nombre, 'na_apellido': 'nuevo apellido',
+                          'telefono': '0123456789', 'email': n.email,
+                          'cargo0': CargoDedicacion.TitExc.name, 'cargo1': '', 'cargo2': '',
+                          })
+        n.refresh_from_db()
+        self.assertEqual(n.na_apellido, 'nuevo apellido')

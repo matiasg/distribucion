@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<head>
+    <h2>Cambiarle el cargo a un conjunto de docentes</h2>
+</head>
+
+<body>
+    <div id="actuar">
+        <a href="{% url 'materias:administrar' %}">Volver a administrar materias</a>
+    </div>
+
+    <form action="{% url 'materias:administrar_docentes' %}" method="post">
+    {% csrf_token %}
+
+    <h3>
+        Le vamos a cambiar el cargo a
+    </h3>
+
+    <ol>
+        {% for docente in docentes %}
+        <li>{{ docente }}</li>
+        <input type="hidden" name="juntar_{{ docente.id }}">
+        {% endfor %}
+    </ol>
+
+    <select name="cargo">
+        {% for cargo in cargos %}
+        <option value="cargo_{{ cargo.0 }}">{{ cargo.1 }}</option>
+        {% endfor %}
+    </select>
+
+
+    <input id="actuar" type="submit" name="confirma_cambiar" value="cambiar">
+    </form>
+
+</body>
