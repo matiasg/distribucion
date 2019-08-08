@@ -626,7 +626,7 @@ def _docentes_en_request(request):
 
 
 @login_required
-@permission_required('dborrador.add_turno')
+@permission_required('materias.add_turno')
 def administrar_docentes(request):
     if request.method == 'POST':
         if 'juntar' in request.POST:
@@ -702,7 +702,7 @@ def administrar_docentes(request):
 
 
 @login_required
-@permission_required('dborrador.add_turno')
+@permission_required('materias.add_turno')
 def administrar_un_docente(request, docente_id):
     docente = Docente.objects.get(pk=docente_id)
     context = {

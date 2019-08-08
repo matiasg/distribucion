@@ -260,6 +260,7 @@ class TestPaginas(TestCase):
             'turnos_docentes': 'materias/administrar_necesidades_docentes',
             'turnos_alumnos': 'materias/administrar_alumnos',
             'cargas_docentes': 'materias/administrar_cargas_docentes',
+            'administrar_docentes': 'materias/administrar_docentes',
             'exportar_informacion': 'materias/exportar_informacion',
             'cargas_docentes_publicadas': 'materias/administrar_cargas_publicadas',
             'administrar_encuestas': 'encuestas/administrar_habilitadas',
