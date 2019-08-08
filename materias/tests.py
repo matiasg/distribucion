@@ -622,6 +622,15 @@ class TestPaginas(TestCase):
         self.assertContains(response, f'<option value="nombre_{self.n.id}">')
         self.assertContains(response, f'<option value="nombre_{self.m.id}">')
         # confirmo juntar
+        now = timezone.now()
+        carga = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.TitExc.name,
+                                     anno=self.anno, cuatrimestre=self.cuatrimestre.name)
+        pref = PreferenciasDocente.objects.create(docente=self.m, turno=self.turno11,
+                                                  cargo=Cargos.Tit.name, peso=2, fecha_encuesta=now)
+        otrosdatos = OtrosDatos.objects.create(docente=self.m, fecha_encuesta=now,
+                                               anno=self.anno, cuatrimestre=self.cuatrimestre.name, comentario='')
+        pedidas = CargasPedidas.objects.create(docente=self.m, fecha_encuesta=now,
+                                               anno=self.anno, cuatrimestre=self.cuatrimestre.name, cargas=2)
         post = {f'juntar_{self.n.id}': True, f'juntar_{self.m.id}': True, 'nombre': f'nombre_{self.n.id}', 'confirmar': True}
         response = self.client.post(reverse('materias:administrar_docentes'), post)
         with self.assertRaises(Docente.DoesNotExist):
@@ -630,6 +639,10 @@ class TestPaginas(TestCase):
         self.n.refresh_from_db()
         self.assertEqual(self.n.id, id_anterior)
         self.assertEqual(self.n.nombre, 'nemo X')
+
+        for objeto in [carga, pref, otrosdatos, pedidas]:
+            objeto.refresh_from_db()
+            self.assertEqual(objeto.docente, self.n)
 
     def test_cambiar_cargo(self):
         self.client.login(username='autorizado', password='1234')
