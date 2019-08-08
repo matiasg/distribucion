@@ -114,3 +114,9 @@ class TestMapeos(TestCase):
         self.assertEqual(Mapeos.filtrar_cargas_de_tipo_ge(TipoDocentes.J, cargas), [self.carga1, self.carga3])
         self.assertEqual(Mapeos.filtrar_cargas_de_tipo_ge(TipoDocentes.A1, cargas), [self.carga1, self.carga2, self.carga3])
         self.assertEqual(Mapeos.filtrar_cargas_de_tipo_ge(TipoDocentes.A2, cargas), [self.carga1, self.carga2, self.carga3])
+
+    def test_docentes_con_cargos_de_tipo(self):
+        self.assertEqual(set(Mapeos.docentes_con_cargo_de_tipo(TipoDocentes.P)), {self.n, self.m})
+        self.assertEqual(set(Mapeos.docentes_con_cargo_de_tipo(TipoDocentes.J)), set())
+        self.assertEqual(set(Mapeos.docentes_con_cargo_de_tipo(TipoDocentes.A1)), {self.n})
+        self.assertEqual(set(Mapeos.docentes_con_cargo_de_tipo(TipoDocentes.A2)), set())
