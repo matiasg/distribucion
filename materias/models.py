@@ -245,7 +245,7 @@ class Docente(models.Model):
     history = HistoricalRecords()
 
     class Meta:
-        ordering = ['na_apellido', 'na_nombre']
+        ordering = ['cargos', 'na_apellido', 'na_nombre']
 
     def __str__(self):
         return f'{self.nombre}'
@@ -275,6 +275,7 @@ class Carga(models.Model):
     class Meta:
         verbose_name = 'carga docente'
         verbose_name_plural = 'cargas docentes'
+        ordering = ['cargo', 'docente__na_appellido', 'docente__na_nombre']
 
     def __str__(self):
         return f'{self.docente} -> {self.turno}'
