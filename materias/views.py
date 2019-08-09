@@ -632,7 +632,8 @@ def administrar_docentes(request):
         if 'juntar' in request.POST:
             docentes = _docentes_en_request(request)
             logger.info('Voy a juntar a %s', docentes)
-            turnos = {docente: [(carga.turno.anno, carga.turno.cuatrimestre) for carga in docente.carga_set.all()]
+            turnos = {docente: [(carga.turno.anno, carga.turno.cuatrimestre)
+                                for carga in docente.carga_set.all() if carga.turno is not None]
                       for docente in docentes}
             todos_los_turnos = sorted({ac
                                        for acs in turnos.values()
