@@ -130,6 +130,17 @@ class TestModels(TestCase):
 
         self.assertEquals(turno.horarios_info().aula, f'5 (P.{Pabellon.Uno.value[1]}) y 6 (P.{Pabellon.Cero_infinito.value[1]})')
 
+    def test_horario_sin_aula_o_pabellon(self):
+        siete, nueve = datetime.time(7), datetime.time(9)
+        horario1 = Horario.objects.create(turno=self.turno, dia=Dias.Lu.name, comienzo=siete, final=nueve, aula='', pabellon=Pabellon.Uno.value[0])
+        horario2 = Horario.objects.create(turno=self.turno, dia=Dias.Lu.name, comienzo=siete, final=nueve, aula='1', pabellon='')
+        horario3 = Horario.objects.create(turno=self.turno, dia=Dias.Lu.name, comienzo=siete, final=nueve, aula='2', pabellon=Pabellon.Uno.value[0])
+        horario4 = Horario.objects.create(turno=self.turno, dia=Dias.Lu.name, comienzo=siete, final=nueve, aula='3', pabellon=Pabellon.Cero_infinito.value[0])
+        self.assertEquals(horario1.aula_y_pabellon(), '')
+        self.assertEquals(horario2.aula_y_pabellon(), '')
+        self.assertEquals(horario3.aula_y_pabellon(), f'2 (P.{Pabellon.Uno.value[1]})')
+        self.assertEquals(horario4.aula_y_pabellon(), f'3 (P.{Pabellon.Cero_infinito.value[1]})')
+
     def test_orden_docente(self):
         c = Docente.objects.create(na_nombre='Ca', na_apellido='C',
                                    telefono='00 0000', email='ca@nada.org', cargos=[CargoDedicacion.TitExc.name])
