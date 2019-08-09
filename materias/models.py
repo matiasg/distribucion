@@ -109,6 +109,9 @@ class Materia(models.Model):
     obligatoriedad = models.CharField(max_length=1, choices=choice_enum(TipoMateria))
     history = HistoricalRecords()
 
+    class Meta:
+        ordering = ['obligatoriedad', 'nombre']
+
     def __str__(self):
         return self.nombre
 
