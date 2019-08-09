@@ -681,3 +681,35 @@ class TestPaginas(TestCase):
                           })
         n.refresh_from_db()
         self.assertEqual(n.na_apellido, 'nuevo apellido')
+
+
+class TestCasosBorde(TestCase):
+
+    def setUp(self):
+        self.anno = 2345
+        self.cuatrimestre = Cuatrimestres.V
+        self.materia = Materia.objects.create(nombre='lacan 1', obligatoriedad=TipoMateria.B.name)
+        dict_nec = {'necesidad_prof': 0, 'necesidad_jtp': 0, 'necesidad_ay1': 0, 'necesidad_ay2': 0}
+        self.turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                          numero=1, tipo=TipoTurno.T.name, **dict_nec)
+        Usuario.objects.create_user(username='desautorizado', password='123')
+        autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
+        autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='materias', codename='add_turno'))
+        autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='dborrador', codename='add_asignacion'))
+        autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='materias', codename='view_docente'))
+
+    def test_juntar_docentes_con_carga_sin_turno(self):
+        self.client.login(username='autorizado', password='1234')
+        n1 = Docente.objects.create(na_nombre='nemo', na_apellido='X', telefono='00 0000', email='nemo@nautilus.org', cargos=[CargoDedicacion.TitExc.name])
+        n2 = Docente.objects.create(na_nombre='nemo', na_apellido='Y', telefono='00 0000', email='nemo@nautilus.org', cargos=[CargoDedicacion.JTPExc.name])
+        c1 = Carga.objects.create(docente=n1, cargo=CargoDedicacion.TitExc.name, anno=self.anno, cuatrimestre=self.cuatrimestre.name)
+        c2 = Carga.objects.create(docente=n2, cargo=CargoDedicacion.TitExc.name, anno=self.anno, cuatrimestre=self.cuatrimestre.name)
+        post = {f'juntar_{n1.id}': True, f'juntar_{n2.id}': True, 'juntar': True}
+        response = self.client.post(reverse('materias:administrar_docentes'), post)
+        self.assertEqual(response.status_code, 200)
+        post = {f'juntar_{n1.id}': True, f'juntar_{n2.id}': True, 'nombre': f'nombre_{n1.id}', 'confirmar': True}
+        response = self.client.post(reverse('materias:administrar_docentes'), post)
+        self.assertEqual(response.status_code, 200)
+        c2.refresh_from_db()
+        self.assertEqual(c2.docente, n1)
+        self.assertEqual(c2.turno, None)
