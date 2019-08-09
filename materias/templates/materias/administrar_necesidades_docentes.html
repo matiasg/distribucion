@@ -7,7 +7,7 @@
 <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
 
 <head>
-    <h1>Administrar necesidades docentes de {{ anno }}, cuatrimestre {{ cuatrimestre.value }}</h1>
+    <h2>Administrar necesidades docentes de {{ anno }}, cuatrimestre {{ cuatrimestre.value }}</h2>
 </head>
 
 
@@ -15,12 +15,10 @@
     <form action="{% url 'materias:administrar_necesidades_docentes' anno cuatrimestre.name %}" method="post">
     {% csrf_token %}
     
-        <div id="actuar">
-            <a href="{% url 'materias:administrar' %}">Cancelar</a>
-        </div>
+        <div id="actuar"> <a href="{% url 'materias:administrar' %}">Cancelar</a> </div>
     
-        <input id="actuar" type="submit" name="cambiar" value="salvar">
-    
+        <hr>
+
         <table id=cargas_docentes>
             <thead>
                 <tr>
@@ -34,13 +32,13 @@
                 <tr>
                     <td>Necesidades</td>
                     {% for tipo, nyr in necesidades_y_recursos.items %}
-                    <td id=numero><span id=cantidad><mark id={{ nyr.1|bien_o_mal:nyr.0 }}>{{ nyr.0 }}</mark></span></td>
+                    <td class=numero><span id=cantidad><mark id={{ nyr.1|bien_o_mal:nyr.0 }}>{{ nyr.0 }}</mark></span></td>
                     {% endfor %}
                 </tr>
                 <tr>
                     <td>Cargas disponibles</td>
                     {% for tipo, nyr in necesidades_y_recursos.items %}
-                    <td id=numero><span id=cantidad><mark id={{ nyr.1|bien_o_mal:nyr.0 }}>{{ nyr.1 }}</mark></span></td>
+                    <td class=numero><span id=cantidad><mark id={{ nyr.1|bien_o_mal:nyr.0 }}>{{ nyr.1 }}</mark></span></td>
                     {% endfor %}
                 </tr>
             </tbody>
@@ -84,5 +82,8 @@
                 {% endif %}
             {% endfor %}
         {% endfor %}
+    
+        <hr>
+        <input id="actuar" type="submit" name="cambiar" value="salvar">
     </form>
 </body>

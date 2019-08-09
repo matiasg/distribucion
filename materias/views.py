@@ -296,11 +296,13 @@ def administrar_cargas_publicadas(request, anno, cuatrimestre):
     cargas_distribuidas = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre,
                                                turno__isnull=False).order_by('docente__na_apellido', 'docente__na_nombre')
     cargas_no_distribuidas = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre,
-                                               turno__isnull=True).order_by('docente__na_apellido', 'docente__na_nombre')
+                                                  turno__isnull=True).order_by('docente__na_apellido', 'docente__na_nombre')
 
     context = {
         'distribuidas': cargas_distribuidas,
         'no_distribuidas': cargas_no_distribuidas,
+        'anno': anno,
+        'cuatrimestre': Cuatrimestres[cuatrimestre],
     }
     return render(request, 'materias/cambiar_cargas_docentes_publicadas.html', context)
 

@@ -81,5 +81,13 @@ h1 {
 h2 {
   text-align: center;
   font-weight: lighter;
-  color: #444
+  color: #444;
+  background: #ddf;
+}
+
+h3 {
+  text-align: center;
+  font-weight: lighter;
+  color: #666;
+  background: #ccf;
 }

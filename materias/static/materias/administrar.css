@@ -21,13 +21,14 @@ table#cargas_docentes td#docente
   font-weight: bold;
 }
 
-table#cargas_docentes td#comentario
+table#cargas_docentes td.comentario
 {
   width: 80em;
   font-size: small;
 }
 
-table#cargas_docentes td#numero
+table#cargas_docentes td#numero,
+table#cargas_docentes td.numero
 {
   text-align: center;
 }

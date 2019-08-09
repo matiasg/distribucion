@@ -5,9 +5,9 @@
 <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
 
 <head>
-    <h1>
+    <h2>
         Administrar alumnos, aulas y pabellones de {{ anno }}, cuatrimestre {{ cuatrimestre.value }}
-    </h1>
+    </h2>
 </head>
 
 <body>
@@ -17,8 +17,6 @@
         <div id="actuar">
             <a href="{% url 'materias:administrar' %}">Volver a administrar materias</a>
         </div>
-
-        <input id="actuar" type="submit" name="cambiar" value="salvar">
     
         {% for tipo, materias_turnos in materias %}
         <div class="seccion">{{ tipo }}</div>
@@ -62,5 +60,8 @@
                 {% endif %}
             {% endfor %}
         {% endfor %}
+
+        <hr>
+        <input id="actuar" type="submit" name="cambiar" value="salvar">
     </form>
 </body>

@@ -21,9 +21,7 @@
     <form action="{% url 'materias:generar_cargas_docentes' anno cuatrimestre.name %}" method="post">
     {% csrf_token %}
 
-    <h2>
-        Cuatrimestre a generar:
-    </h2>
+    <h3> Cuatrimestre a generar: </h3>
     <p>
         Año:
         <select name="anno">

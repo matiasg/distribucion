@@ -20,7 +20,9 @@
 
         {% for obligatoriedad, o_materias in materias.items %}
         <hr>
-        <h4>Tipo: {{ obligatoriedad.value }}</h4>
+        <div class="seccion">
+            {{ obligatoriedad.value|capfirst }}
+        </div>
         <ul>
             {% for materia in o_materias %}
             <li>
