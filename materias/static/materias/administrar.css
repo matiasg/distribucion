@@ -46,3 +46,9 @@ table#administrar_materia td
   border: 1px solid black;
   padding: 5px;
 }
+
+.destacado
+{
+  font-size: large;
+  font-weight: bolder;
+}
