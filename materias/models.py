@@ -280,9 +280,6 @@ class Carga(models.Model):
     def __str__(self):
         return f'{self.docente} -> {self.turno}'
 
-    # def cargo_es_de_tipo(self, tipodocente):
-    #     return Cargos[self.cargo[:3]] in Mapeos.tipo_a_cargos(tipodocente)
-
     @classmethod
     def para_ac(cls, ac):
         ''' AnnoCuatrimestre -> [Carga] '''
