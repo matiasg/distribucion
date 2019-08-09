@@ -109,6 +109,9 @@ class Materia(models.Model):
     obligatoriedad = models.CharField(max_length=1, choices=choice_enum(TipoMateria))
     history = HistoricalRecords()
 
+    class Meta:
+        ordering = ['obligatoriedad', 'nombre']
+
     def __str__(self):
         return self.nombre
 
@@ -222,7 +225,7 @@ class Horario(models.Model):
         return f'{time_str(self.comienzo)} a {time_str(self.final)}'
 
     def aula_y_pabellon(self):
-        if self.pabellon:
+        if self.pabellon and self.aula:
             pab = [p for p in Pabellon if p.value[0] == self.pabellon][0]
             return f'{self.aula} (P.{pab.value[1]})'
         else:
@@ -242,7 +245,7 @@ class Docente(models.Model):
     history = HistoricalRecords()
 
     class Meta:
-        ordering = ['na_apellido', 'na_nombre']
+        ordering = ['cargos', 'na_apellido', 'na_nombre']
 
     def __str__(self):
         return f'{self.nombre}'
@@ -272,12 +275,10 @@ class Carga(models.Model):
     class Meta:
         verbose_name = 'carga docente'
         verbose_name_plural = 'cargas docentes'
+        ordering = ['cargo', 'docente__na_appellido', 'docente__na_nombre']
 
     def __str__(self):
         return f'{self.docente} -> {self.turno}'
-
-    # def cargo_es_de_tipo(self, tipodocente):
-    #     return Cargos[self.cargo[:3]] in Mapeos.tipo_a_cargos(tipodocente)
 
     @classmethod
     def para_ac(cls, ac):

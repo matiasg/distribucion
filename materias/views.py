@@ -48,7 +48,7 @@ def anno_y_cuatrimestre(anno_cuat):
         raise ValueError(f'El año debe ser un número. Recibí {anno}')
     cuatris_dict = {c.value: c.name for c in Cuatrimestres}
     if not cuat.capitalize() in cuatris_dict:
-        raise ValueError(f'El cuatrimestre debe ser 1, 2 o v. Recibí {cuat}')
+        raise ValueError(f'El cuatrimestre debe ser 1, 2 o V. Recibí {cuat}')
     cuat = cuatris_dict[cuat.capitalize()]
     return anno, cuat
 
