@@ -163,7 +163,7 @@ table#cargas
   margin: 10px;
 }
 
-table#cargas td
+table#cargas td,
 {
   border: 1px solid black;
   font-size: large;
@@ -177,7 +177,7 @@ table#cargas td input
   font-size: large;
 }
 
-table#horarios tr td
+table.horarios tr td
 {
   border: thin solid;
 }
