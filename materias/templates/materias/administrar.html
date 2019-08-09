@@ -4,6 +4,11 @@
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
 
+<link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
+<script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
+<script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
+<script src="{% static 'materias/scripts.js' %}"></script>
+
 <head>
     Página para administrar algunos recursos
 </head>
@@ -24,42 +29,46 @@
         <option value="{{ c.name }}">{{ c.value }}</option>
         {% endfor %}
     </select>
-            
-    <ul id=administrar_listado>
-        <li>
-            <input type="submit" name="turnos_alumnos" value="administrar alumnos, aulas y pabellones">
-        </li>
-        <li>
-            <input type="submit" name="turnos_docentes" value="administrar necesidades docentes">
-        </li>
-        <li>
-            <input type="submit" name="exportar_informacion" value="exportar datos a excel">
-        </li>
-        <li>
-            <input type="submit" name="generar_cuatrimestre" value="generar un nuevo cuatrimestre a partir de éste">
-        </li>
-        <li>
-            <input type="submit" name="generar_cargas_docentes" value="generar cargas docentes a partir de las actuales">
-        </li>
-        <li>
-            <input type="submit" name="administrar_docentes" value="administrar docentes">
-        </li>
-        <li>
-            <input type="submit" name="juntar_materias" value="juntar materias">
-        </li>
-        {% if perms.dborrador.add_asignacion %}
-        <li>
-            <input type="submit" name="cargas_docentes" value="cantidad de cargas docentes">
-        </li>
-        <li>
-            <input type="submit" name="cargas_docentes_publicadas" value="cambiar cargas ya publicadas">
-        </li>
-        <li>
-            <input type="submit" name="administrar_encuestas" value="administrar encuestas">
-        </li>
-        <li>
-            <input type="submit" name="dborrador" value="distribuir docentes">
-        </li>
-        {% endif %}
+
+
+
+    <div id="tabs">
+    <ul>
+        <li><a href="#materias">materias</a></li>
+        <li><a href="#docentes">docentes</a></li>
+        <li><a href="#encuestas">encuestas y distribución</a></li>
     </ul>
+            
+    <div id="materias">
+        <ul class=administrar_listado>
+            <li> <input type="submit" name="turnos_alumnos" value="administrar alumnos, aulas y pabellones"> </li>
+            <li> <input type="submit" name="generar_cuatrimestre" value="generar un nuevo cuatrimestre a partir de éste"> </li>
+            <li> <input type="submit" name="generar_cargas_docentes" value="generar cargas docentes a partir de las actuales"> </li>
+            <li> <input type="submit" name="juntar_materias" value="juntar materias"> </li>
+        </ul>
+    </div>
+
+    <div id="docentes">
+        <ul class=administrar_listado>
+            <li> <input type="submit" name="administrar_docentes" value="administrar docentes"> </li>
+            {% if perms.dborrador.add_asignacion %}
+            <li> <input type="submit" name="turnos_docentes" value="administrar necesidades docentes"> </li>
+            <li> <input type="submit" name="cargas_docentes_publicadas" value="cambiar cargas ya publicadas"> </li>
+            {% endif %}
+            <li> <input type="submit" name="exportar_informacion" value="exportar datos a excel"> </li>
+        </ul>
+    </div>
+
+    <div id="encuestas">
+        <ul class=administrar_listado>
+            <li> <input type="submit" name="cargas_docentes" value="cantidad de cargas docentes"> </li>
+            {% if perms.dborrador.add_asignacion %}
+            <li> <input type="submit" name="administrar_encuestas" value="administrar encuestas"> </li>
+            <li> <input type="submit" name="dborrador" value="distribuir docentes"> </li>
+            {% endif %}
+        </ul>
+    </div>
+
+
+    </div>
 </body>
