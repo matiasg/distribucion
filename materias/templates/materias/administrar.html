@@ -10,25 +10,29 @@
 <script src="{% static 'materias/scripts.js' %}"></script>
 
 <head>
-    Página para administrar algunos recursos
+    <h1>
+        Administrar recursos
+    </h1>
 </head>
 <body>
 
 <form action="{% url 'materias:administrar' %}" method="post">
 {% csrf_token %}
 
-    Año: 
-    <select name="anno">
-        {% for a in annos %}
-        <option value="{{ a }}" {% if a == actual %}selected{% endif %}>{{ a }}</option>
-        {% endfor %}
-    </select>
-    Cuatrimestre: 
-    <select name="cuatrimestre">
-        {% for c in cuatrimestres %}
-        <option value="{{ c.name }}">{{ c.value }}</option>
-        {% endfor %}
-    </select>
+    <p class="destacado">
+        Año: 
+        <select name="anno">
+            {% for a in annos %}
+            <option value="{{ a }}" {% if a == actual %}selected{% endif %}>{{ a }}</option>
+            {% endfor %}
+        </select>
+        Cuatrimestre: 
+        <select name="cuatrimestre">
+            {% for c in cuatrimestres %}
+            <option value="{{ c.name }}">{{ c.value }}</option>
+            {% endfor %}
+        </select>
+    </p>
 
 
 
