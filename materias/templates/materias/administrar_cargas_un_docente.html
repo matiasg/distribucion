@@ -23,7 +23,7 @@
 
     <input type=submit name="salvar" value="salvar">
 
-    <table id=cargas>
+    <table id="cargas_docentes">
         <thead>
             <td>Cargo</td>
             <td>Asignadas hasta ahora</td>
@@ -34,7 +34,7 @@
             {% for cargo, cantidad in cargas_por_tipo.items %}
             <tr>
                 <td>{{ cargo }}</td>
-                <td>{{ cantidad }}</td>
+                <td class="numero">{{ cantidad }}</td>
                 <td><input type=number name="cargo_{{ cargo }}" min=0 max=3 value={{ cantidad }}></td>
             </tr>
             {% endfor %}

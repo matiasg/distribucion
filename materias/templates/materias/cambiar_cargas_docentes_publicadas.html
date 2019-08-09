@@ -6,47 +6,51 @@
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
 
-<h1>Cambiar cargas ya publicadas</h1>
+<head>
+    <h2>Cambiar cargas ya publicadas para {{ anno }}, cuatrimestre {{ cuatrimestre.value }}</h2>
+</head>
 
-<div id="actuar">
-    <a href="{% url 'materias:administrar' %}">Volver a administrar materias</a>
-</div>
-
-<h2>Cargas con turno asignado</h2>
-<table id="cargas_docentes">
-    <thead>
-        <tr>
-            <td>Docente</td> <td>Cargo</td>
-            <td>Turno</td>
-            <td>Materia</td>
-        </tr>
-    </thead>
-    <tbody>
-        {% for carga in distribuidas %}
-        <tr>
-            <td><a href="{% url 'materias:cambiar_una_carga_publicada' carga.id %}">{{ carga.docente }}</a></td>
-            <td>{{ carga.cargo|cargo_nombre_largo }}
-            <td>{{ carga.turno.horarios_info.tipoynumero }}</td>
-            <td>{{ carga.turno.materia }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-<h2>Cargas sin asignación</h2>
-
-<table id="cargas_docentes">
-    <thead>
-        <tr>
-            <td>Docente</td> <td>Cargo</td>
-        </tr>
-    </thead>
-    <tbody>
-        {% for carga in no_distribuidas %}
-        <tr>
-            <td><a href="{% url 'materias:cambiar_una_carga_publicada' carga.id %}">{{ carga.docente }}</a></td>
-            <td>{{ carga.cargo|cargo_nombre_largo }}
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<body>
+    <div id="actuar">
+        <a href="{% url 'materias:administrar' %}">Volver a administrar materias</a>
+    </div>
+    
+    <h3>Cargas con turno asignado</h3>
+    <table id="cargas_docentes">
+        <thead>
+            <tr>
+                <td>Docente</td> <td>Cargo</td>
+                <td>Turno</td>
+                <td>Materia</td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for carga in distribuidas %}
+            <tr>
+                <td><a href="{% url 'materias:cambiar_una_carga_publicada' carga.id %}">{{ carga.docente }}</a></td>
+                <td>{{ carga.cargo|cargo_nombre_largo }}
+                <td>{{ carga.turno.horarios_info.tipoynumero }}</td>
+                <td>{{ carga.turno.materia }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <h3>Cargas sin asignación</h3>
+    
+    <table id="cargas_docentes">
+        <thead>
+            <tr>
+                <td>Docente</td> <td>Cargo</td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for carga in no_distribuidas %}
+            <tr>
+                <td><a href="{% url 'materias:cambiar_una_carga_publicada' carga.id %}">{{ carga.docente }}</a></td>
+                <td>{{ carga.cargo|cargo_nombre_largo }}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>

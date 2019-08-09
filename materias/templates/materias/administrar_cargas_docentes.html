@@ -80,9 +80,9 @@
                     <a href="{% url 'materias:administrar_cargas_un_docente' anno cuatrimestre docente.id %}">{{ docente }}</a>
                 </td>
                 <td>{{ docente.cargos|join:", " }}</td>
-                <td id=numero>{{ cargas_pedidas.0 }}</td>
-                <td id=numero>{{ cargas_pedidas.1 }}</td>
-                <td id=comentario>{{ cargas_pedidas.2.comentario|linebreaksbr }}</td>
+                <td class=numero>{{ cargas_pedidas.0 }}</td>
+                <td class=numero>{{ cargas_pedidas.1 }}</td>
+                <td class=comentario>{{ cargas_pedidas.2.comentario|linebreaksbr }}</td>
             </tr>
             {% endfor %}
         </table>
