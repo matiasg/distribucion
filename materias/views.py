@@ -230,12 +230,18 @@ def modificar_materia(request, materia_id):
         'materia': materia,
     }
     if request.method == 'POST':
-        form = MateriaForm(request.POST, instance=materia)
-        if form.is_valid():
-            form.save()
+        if 'salvar' in request.POST:
+            form = MateriaForm(request.POST, instance=materia)
+            if form.is_valid():
+                form.save()
+                logger.info('salvé una materia modificada: %s', materia)
+                return HttpResponseRedirect(reverse('materias:modificar_materias'))
+            else:
+                logger.error(form.errors)
+        elif 'borrar' in request.POST:
+            borrado = materia.delete()
+            logger.warning('borre la materia %s (objetos borrados: %s)', materia, borrado)
             return HttpResponseRedirect(reverse('materias:modificar_materias'))
-        else:
-            logger.error(form.errors)
     else:
         form = MateriaForm(instance=materia)
     context['form'] = form

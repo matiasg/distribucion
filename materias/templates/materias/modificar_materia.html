@@ -16,6 +16,13 @@
     <form action="{% url 'materias:modificar_materia' materia.id %}" method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <input id="actuar" type="submit" value="salvar">
+        <input id="actuar" type="submit" name="salvar" value="salvar">
+
+        {% if not materia.turno_set.count %}
+        <p>
+            Esta materia no se dictó nunca. Se puede borrar.
+            <input id="actuar" type="submit" name="borrar" value="Borrar">
+        </p>
+        {% endif %}
     </form>
 </body>
