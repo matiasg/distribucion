@@ -3,9 +3,10 @@ table#cargas_docentes
   border: 1;
 }
 
-table#cargas_docentes thead
+table#cargas_docentes thead,
+table#administrar_materia th
 {
-  background-color: #228;
+  background: darkslateblue;
   color: #fff;
   text-align: center;
 }
