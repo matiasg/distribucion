@@ -724,3 +724,13 @@ class TestCasosBorde(TestCase):
         c2.refresh_from_db()
         self.assertEqual(c2.docente, n1)
         self.assertEqual(c2.turno, None)
+
+    def test_administrar_materia_sin_turnos(self):
+        self.client.login(username='autorizado', password='1234')
+        url = reverse('materias:administrar_materia', args=(self.materia.id, self.anno + 8, self.cuatrimestre.name))
+        # miro materia sin turnos
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        # ahora intento agregar un turno
+        response = self.client.post(url, {'agregar_turno_T': True}, follow=True)
+        self.assertEqual(response.status_code, 200)

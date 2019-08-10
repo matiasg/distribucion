@@ -384,7 +384,8 @@ def cambiar_una_carga_publicada(request, carga_id):
 def agregar_turno(request, materia_id, tipo, anno, cuatrimestre):
     materia = Materia.objects.get(pk=materia_id)
     turnos = Turno.objects.filter(materia=materia, anno=anno, cuatrimestre=cuatrimestre)
-    numero_nuevo_turno = max(t.numero for t in turnos.filter(tipo=tipo)) + 1
+    turnos_tipo = turnos.filter(tipo=tipo)
+    numero_nuevo_turno = max(t.numero for t in turnos_tipo) + 1 if turnos_tipo.count() else 0
     turno = Turno.objects.create(materia=materia, anno=anno, cuatrimestre=cuatrimestre, tipo=tipo, numero=numero_nuevo_turno,
                                  necesidad_prof=0, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
     return HttpResponseRedirect(reverse('materias:cambiar_turno', args=(turno.id,)))
