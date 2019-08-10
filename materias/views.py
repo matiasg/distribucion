@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 from .models import (Materia, AliasDeMateria, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
                      TipoDocentes, Docente, CargoDedicacion, Carga, Pabellon, Dias, choice_enum,)
 from .misc import Mapeos, NoTurno
-from .forms import DocenteForm
+from .forms import DocenteForm, MateriaForm
 from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
 
 TURNOS_MAX = 4
@@ -92,6 +92,10 @@ def administrar(request):
 
         if 'turnos_alumnos' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
+        elif 'agregar_materias' in request.POST:
+            return HttpResponseRedirect(reverse('materias:agregar_materias'))
+        elif 'modificar_materias' in request.POST:
+            return HttpResponseRedirect(reverse('materias:modificar_materias'))
         elif 'turnos_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_necesidades_docentes', args=(anno, cuatrimestre)))
         elif 'exportar_informacion' in request.POST:
@@ -193,6 +197,39 @@ def administrar_necesidades_docentes(request, anno, cuatrimestre):
 
     return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_necesidades_docentes.html',
                                necesidades_y_recursos=necesidades_y_recursos)
+
+
+@login_required
+@permission_required('materias.add_turno')
+def agregar_materias(request):
+    pass
+
+
+@login_required
+@permission_required('materias.add_turno')
+def modificar_materias(request):
+    pass
+
+
+@login_required
+@permission_required('materias.add_turno')
+def modificar_materia(request, materia_id):
+    materia = Materia.objects.get(pk=materia_id)
+    context = {
+        'materia': materia,
+    }
+    if request.method == 'POST':
+        form = MateriaForm(request.POST, instance=materia)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse('materias:modificar_materias'))
+        else:
+            logger.error(form.errors)
+    else:
+        form = MateriaForm(instance=materia)
+    context['form'] = form
+    return render(request, 'materias/modificar_materia.html', context)
+
 
 @login_required
 @permission_required('dborrador.add_asignacion')

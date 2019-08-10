@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<head>
+    <h2>
+        {{ materia.nombre }}
+    </h2>
+</head>
+
+<body>
+    <div id="actuar">
+        <a href="{% url 'materias:modificar_materias' %}">Cancelar</a>
+    </div>
+    <form action="{% url 'materias:modificar_materia' materia.id %}" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input id="actuar" type="submit" value="salvar">
+    </form>
+</body>
