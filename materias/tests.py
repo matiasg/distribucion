@@ -693,6 +693,7 @@ class TestPaginas(TestCase):
                          {'na_nombre': n.nombre, 'na_apellido': 'nuevo apellido',
                           'telefono': '0123456789', 'email': n.email,
                           'cargo0': CargoDedicacion.TitExc.name, 'cargo1': '', 'cargo2': '',
+                          'salvar': True,
                           })
         n.refresh_from_db()
         self.assertEqual(n.na_apellido, 'nuevo apellido')
