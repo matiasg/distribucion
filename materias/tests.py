@@ -266,8 +266,12 @@ class TestPaginas(TestCase):
 
         self.client.login(username='autorizado', password='1234')
         response = self.client.get('/materias/administrar', follow=True)
-        self.assertContains(response, 'administrar alumnos')
-        self.assertContains(response, 'administrar necesidades')
+        self.assertContains(response, 'administrar materias: alumnos y turnos')
+        self.assertContains(response, 'administrar necesidades docentes')
+        self.assertContains(response, 'agregar materias')
+        self.assertContains(response, 'modificar materias')
+        self.assertContains(response, 'administrar encuestas')
+        self.assertContains(response, 'distribuir docentes')
         self.assertEqual(len(response.redirect_chain), 0)
 
     def test_administrar_dirige_bien(self):
