@@ -53,3 +53,19 @@ table#administrar_materia td
   font-size: large;
   font-weight: bolder;
 }
+
+.separados li {
+  margin: 4px 0;
+}
+
+a.muchos:link, a.muchos:visited
+{
+  background: #eee;
+  color: blue;
+}
+
+a.muchos:link:hover, a.muchos:visited:hover
+{
+  background: #bbb;
+  color: blue;
+}

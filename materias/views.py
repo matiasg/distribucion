@@ -19,6 +19,11 @@ from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
 
 TURNOS_MAX = 4
 
+TIPO_DICT = {TipoMateria.B: 'Obligatorias',
+             TipoMateria.R: 'Optativas regulares',
+             TipoMateria.N: 'Optativas no regulares'}
+
+
 
 def index(request):
     # Llamada sin anno y cuatrimestre. Tomamos el período actual
@@ -66,13 +71,10 @@ def por_anno_y_cuatrimestre(request, anno_cuat):
 
 def filtra_materias(**kwargs):
     turnos_filtrados = Turno.objects.filter(**kwargs)
-    tipo_dict = {TipoMateria.B.name: 'Obligatorias',
-                 TipoMateria.R.name: 'Optativas regulares',
-                 TipoMateria.N.name: 'Optativas no regulares'}
 
     materias = []
-    for tipo, tipo_largo in tipo_dict.items():
-        tmaterias = Materia.objects.filter(obligatoriedad=tipo)
+    for tipo, tipo_largo in TIPO_DICT.items():
+        tmaterias = Materia.objects.filter(obligatoriedad=tipo.name)
         materias_turnos = [
                 (materia, sorted(turnos_filtrados.filter(materia=materia)))
                 for materia in tmaterias
@@ -208,7 +210,11 @@ def agregar_materias(request):
 @login_required
 @permission_required('materias.add_turno')
 def modificar_materias(request):
-    pass
+    context = {
+        'materias': {TIPO_DICT[ob]: Materia.objects.filter(obligatoriedad=ob.name).order_by('nombre')
+                     for ob in TipoMateria}
+    }
+    return render(request, 'materias/modificar_materias.html', context)
 
 
 @login_required
@@ -505,10 +511,9 @@ def juntar_materias(request):
             return render(request, 'materias/confirmar_juntar_materias.html', context=context)
 
     else:
-        materias = {obligatoriedad: Materia.objects.filter(obligatoriedad=obligatoriedad.name).order_by('nombre')
-                    for obligatoriedad in TipoMateria}
         context = {
-            'materias': materias,
+            'materias': {TIPO_DICT[ob]: Materia.objects.filter(obligatoriedad=ob.name).order_by('nombre')
+                         for ob in TipoMateria}
         }
         return render(request, 'materias/juntar_materias.html', context=context)
 
