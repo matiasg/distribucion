@@ -772,12 +772,17 @@ def administrar_un_docente(request, docente_id):
         'docente': docente,
     }
     if request.method == 'POST':
-        form = DocenteForm(request.POST, instance=docente)
-        if form.is_valid():
-            form.save()
+        if 'salvar' in request.POST:
+            form = DocenteForm(request.POST, instance=docente)
+            if form.is_valid():
+                form.save()
+                return HttpResponseRedirect(reverse('materias:administrar_docentes'))
+            else:
+                logger.error(form.errors)
+        elif 'borrar' in request.POST:
+            borrado = docente.delete()
+            logger.warning('Borré un docente: %s. Todo lo borrado es %s', docente, borrado)
             return HttpResponseRedirect(reverse('materias:administrar_docentes'))
-        else:
-            logger.error(form.errors)
     else:
         form = DocenteForm(instance=docente)
     context['form'] = form
