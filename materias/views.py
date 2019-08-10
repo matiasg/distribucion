@@ -204,7 +204,8 @@ def administrar_necesidades_docentes(request, anno, cuatrimestre):
 @login_required
 @permission_required('materias.add_turno')
 def agregar_materias(request):
-    pass
+    nueva_materia, creada = Materia.objects.get_or_create(nombre='__ nueva materia __')
+    return HttpResponseRedirect(reverse('materias:modificar_materia', args=(nueva_materia.id,)))
 
 
 @login_required
