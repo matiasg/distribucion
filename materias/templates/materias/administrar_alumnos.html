@@ -4,64 +4,90 @@
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
 
+<link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
+<script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
+<script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
+<script src="{% static 'materias/scripts.js' %}"></script>
+
 <head>
     <h2>
-        Administrar materias, alumnos, aulas y pabellones de {{ anno }}, cuatrimestre {{ cuatrimestre.value }}
+        Administrar materias: alumnos y turnos en {{ anno }}, cuatrimestre {{ cuatrimestre.value }}
     </h2>
 </head>
 
 <body>
-    <form action="{% url 'materias:administrar_alumnos' anno cuatrimestre.name %}" method="post">
-    {% csrf_token %}
-    
-        <div id="actuar">
-            <a href="{% url 'materias:administrar' %}">Volver a administrar materias</a>
-        </div>
-    
-        {% for tipo, materias_turnos in materias %}
-        <div class="seccion">{{ tipo }}</div>
-    
-            {% for materia, turnos in materias_turnos %}
+
+    <div id="actuar">
+        <a href="{% url 'materias:administrar' %}">Volver a: administrar</a>
+    </div>
+        
+    <div id="tabs">
+        <ul>
+            <li><a href="#con_turnos">Materias con turnos</a></li>
+            <li><a href="#sin_turnos">Materias sin turnos en este cuatrimestre</a></li>
+        </ul>
+
+        <div id="con_turnos">
+            <form action="{% url 'materias:administrar_alumnos' anno cuatrimestre.name %}" method="post">
+                {% csrf_token %}
+
+                {% for tipo, materias_turnos in materias %}
+                <div class="seccion">{{ tipo }}</div>
+
+                {% for materia, turnos in materias_turnos %}
                 {% if turnos %}
                 <span class="tabla_numeros_chicos">
-                <table>
-                    <caption>
-                        <a href="{% url 'materias:administrar_materia' materia.id anno cuatrimestre.name %}">
-                            {{ materia.nombre.upper }}
-                        </a>
-                    </caption>
-                    <tbody>
-                        <tr>
-                            <th></th>
-                            <th></th>
-                            <th>alumnos</th>
-                        </tr>
-                        {% for turno in turnos %}
-                        <tr>
-                            <td class="fondo{{ turno.tipo }}">{{ turno.tipo }} {{ turno.numero }}</td>
-                            <td class="diayhora">{{ turno.horarios_info.diayhora }}</td>
-                            <td><input type="number" name="alumnos_{{ turno.id }}" min=0 max=1000 value={{ turno.alumnos }}></td>
-                            {% for horario in turno.horario_set.all %}
-                            <td class="tabla_col_borde_izquierdo">{{ horario.dia }}: {{ horario.de_a }}</td>
-                            <td>Aula: <input type="text" name="aula_{{ horario.id }}" value="{{ horario.aula }}" maxlength=5></td>
-                            <td>Pab: <select name="pabellon_{{ horario.id }}">
-                                    {% for pabellon in pabellones %}
+                    <table>
+                        <caption>
+                            <a href="{% url 'materias:administrar_materia' materia.id anno cuatrimestre.name %}">
+                                {{ materia.nombre.upper }}
+                            </a>
+                        </caption>
+                        <tbody>
+                            <tr>
+                                <th></th>
+                                <th></th>
+                                <th>alumnos</th>
+                            </tr>
+                            {% for turno in turnos %}
+                            <tr>
+                                <td class="fondo{{ turno.tipo }}">{{ turno.tipo }} {{ turno.numero }}</td>
+                                <td class="diayhora">{{ turno.horarios_info.diayhora }}</td>
+                                <td><input type="number" name="alumnos_{{ turno.id }}" min=0 max=1000 value={{ turno.alumnos }}></td>
+                                {% for horario in turno.horario_set.all %}
+                                <td class="tabla_col_borde_izquierdo">{{ horario.dia }}: {{ horario.de_a }}</td>
+                                <td>Aula: <input type="text" name="aula_{{ horario.id }}" value="{{ horario.aula }}" maxlength=5></td>
+                                <td>Pab: <select name="pabellon_{{ horario.id }}">
+                                        {% for pabellon in pabellones %}
                                         <option value="{{ pabellon.value.0 }}" {% if pabellon.value.0 == horario.pabellon %}selected{% endif %}>
                                         {{ pabellon.value.1 }}
                                         </option>
+                                        {% endfor %}
+                                    </select></td>
                                     {% endfor %}
-                            </select></td>
+                            </tr>
                             {% endfor %}
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
                 </span>
                 {% endif %}
-            {% endfor %}
-        {% endfor %}
+                {% endfor %}
+                {% endfor %}
 
-        <hr>
-        <input id="actuar" type="submit" name="cambiar" value="salvar">
-    </form>
+                <hr>
+                <input id="actuar" type="submit" name="cambiar" value="salvar">
+            </form>
+        </div>
+
+        <div id="sin_turnos">
+            <ul>
+                {% for materia in materias_sin_turnos %}
+                <li>
+                    <a href="{% url 'materias:administrar_materia' materia.id anno cuatrimestre.name %}">{{ materia.nombre.upper }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    
 </body>

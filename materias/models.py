@@ -80,10 +80,15 @@ class Cuatrimestres(Enum):
     S = '2'
 
 
+@total_ordering
 class TipoMateria(Enum):
     B = 'obligatoria'
     R = 'optativa regular'
     N = 'optativa no regular'
+
+    def __ge__(self, otro):
+        ordenados = [TipoMateria.B, TipoMateria.R, TipoMateria.N]
+        return ordenados.index(self) >= ordenados.index(otro)
 
 
 class Pabellon(Enum):

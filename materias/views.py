@@ -156,10 +156,14 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url, **kwargs
 
     else:
         materias = filtra_materias(anno=anno, cuatrimestre=cuatrimestre)
+        materias_con_turnos = {turno.materia for turno in Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)}
+        materias_sin_turnos = set(Materia.objects.all()) - materias_con_turnos
+        materias_sin_turnos = sorted(materias_sin_turnos, key=lambda m: (TipoMateria[m.obligatoriedad], strxfrm(m.nombre)))
 
         context = {'anno': anno,
                    'cuatrimestre': Cuatrimestres[cuatrimestre],
                    'materias': materias,
+                   'materias_sin_turnos': materias_sin_turnos,
                    'pabellones': list(Pabellon)}
         context.update(kwargs)
         return render(request, url, context)
