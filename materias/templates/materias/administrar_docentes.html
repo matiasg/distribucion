@@ -17,7 +17,7 @@
 <body>
 
     <div id="actuar">
-        <a href="{% url 'materias:administrar' %}">Volver a administrar materias</a>
+        <a href="{% url 'materias:administrar' %}">Volver a: administrar</a>
     </div>
 
     <form action="{% url 'materias:administrar_docentes' %}" method="post">
@@ -49,8 +49,8 @@
         {% endfor %}
     </div>
 
-
     <input id="actuar" type="submit" name="juntar" value="juntar">
     <input id="actuar" type="submit" name="cambiar_cargo" value="cambiar cargo">
+    <input id="actuar" type="submit" name="agregar" value="agregar un docente nuevo">
     </form>
 </body>

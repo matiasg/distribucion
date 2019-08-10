@@ -752,6 +752,12 @@ def administrar_docentes(request):
                     docente.cargos = cargos
                     docente.save()
 
+        elif 'agregar' in request.POST:
+            docente, creado = Docente.objects.get_or_create(na_nombre='__ nuevo docente __', na_apellido='', cargos=[])
+            if creado:
+                logger.info('estoy creando un nuevo docente')
+            return HttpResponseRedirect(reverse('materias:administrar_un_docente', args=(docente.id,)))
+
     context = {
         'docentes': _docentes_por_cargo(),
     }
