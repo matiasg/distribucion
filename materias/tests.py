@@ -731,6 +731,21 @@ class TestPaginas(TestCase):
             nueva_materia.refresh_from_db()
         self.assertEqual(response.redirect_chain[-1][0], reverse('materias:modificar_materias'))
 
+    def test_agregar_y_borrar_docente(self):
+        self.client.login(username='autorizado', password='1234')
+        # lo agregamos
+        response = self.client.post(reverse('materias:administrar_docentes'), {'agregar': True}, follow=True)
+        redirect_url, status = response.redirect_chain[-1]
+        self.assertEqual(status, 302)
+        nuevo_docente_id = int(redirect_url.split('/')[-1])
+        nuevo_docente = Docente.objects.get(pk=nuevo_docente_id)
+        self.assertEqual(nuevo_docente.cargos, [])
+        # y lo borramos
+        response = self.client.post(redirect_url, {'borrar': True}, follow=True)
+        with self.assertRaises(Docente.DoesNotExist):
+            nuevo_docente.refresh_from_db()
+        self.assertEqual(response.redirect_chain[-1][0], reverse('materias:administrar_docentes'))
+
 
 class TestCasosBorde(TestCase):
 
