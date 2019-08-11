@@ -10,28 +10,37 @@
 
 <body>
 
-    {% for tipo, cargas_tipo in cargas.items %}
+    <div class="actuar"> <a href="{% url 'materias:administrar' %}#encuestas">Cancelar</a> </div>
+
+    <hr>
+    <form action="{% url 'materias:cargas_docentes_anuales' anno %}" method="post">
+    {% csrf_token %}
+
+    {% for tipo, tipo_cargas in cargas.items %}
         <h3>{{ tipo.value }}</h3>
-        <table>
+        <table class="tabla_numeros_chicos">
             <thead>
                 <tr>
                     <th>Docente</th>
+                    <th>Cargo</th>
                     <th>Verano</th>
                     <th>Primero</th>
                     <th>Segundo</th>
-                    <th>Total</th>
                 </tr>
             </thead>
-            {% for docente, cargas_docente in cargas_tipo.items %}
+            {% for doc_carga, cantidades in tipo_cargas.items %}
             <tr>
-                <td>{{ docente }}</td>
-                <td>{{ cargas_docente.0 }}</td>
-                <td>{{ cargas_docente.1 }}</td>
-                <td>{{ cargas_docente.2 }}</td>
-                <td></td>
+                <td>{{ doc_carga.0 }}</td>
+                <td>{{ doc_carga.1 }}</td>
+                <td> <input type="number" name="cargas_{{ doc_carga.0.id }}_{{ doc_carga.1}}_V" min=0 max=4 value={{ cantidades.0 }}> </td>
+                <td> <input type="number" name="cargas_{{ doc_carga.0.id }}_{{ doc_carga.1}}_P" min=0 max=4 value={{ cantidades.1 }}> </td>
+                <td> <input type="number" name="cargas_{{ doc_carga.0.id }}_{{ doc_carga.1}}_S" min=0 max=4 value={{ cantidades.2 }}> </td>
             </tr>
-            
             {% endfor %}
         </table>
     {% endfor %}
+
+    <hr>
+    <input class="actuar" type="submit" name="salvar" value="salvar">
+    </form>
 </body>

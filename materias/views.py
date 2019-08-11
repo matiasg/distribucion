@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import permission_required, login_required
 
 from locale import strxfrm
 from collections import Counter, namedtuple, defaultdict
+import re
 import logging
 logger = logging.getLogger(__name__)
 
@@ -253,18 +254,53 @@ def modificar_materia(request, materia_id):
 @login_required
 @permission_required('dborrador.add_asignacion')
 def cargas_docentes_anuales(request, anno):
-    cargas = {tipo: defaultdict(Counter) for tipo in TipoDocentes}
-    for carga in Carga.objects.filter(anno=anno):
-        cargas[Mapeos.tipo_de_carga(carga)][carga.docente].update(carga.cuatrimestre)
-    cargas = {tipo: {docente: (cs['V'], cs['P'], cs['S'])
-                     for docente, cs in tdocs.items()}
-              for tipo, tdocs in cargas.items()}
+    if request.method == 'POST':
+        if 'salvar' in request.POST:
+            reg = re.compile('^cargas_(\d+)_([a-zA-Z12]{6})_([VPS])$')
+            with transaction.atomic():
+                for carga_docid_cuat in request.POST:
+                    m = reg.search(carga_docid_cuat)
+                    if m:
+                        docente_id = int(m.group(1))
+                        docente = Docente.objects.get(pk=docente_id)
+                        cargo = m.group(2)
+                        cuatrimestre = m.group(3)
 
-    context = {
-        'anno': anno,
-        'cargas': cargas,
-    }
-    return render(request, 'materias/cargas_docentes_anuales.html', context)
+                        cantidad = int(request.POST[carga_docid_cuat])
+                        actuales = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=docente, cargo=cargo)
+                        a_generar = cantidad - actuales.count()
+
+                        if a_generar < 0:
+                            logger.warning('voy a borrar %d cargas de %s (%s) para el cuatrimestre %s', -a_generar, docente, cargo, cuatrimestre)
+                            for c in range(-a_generar):
+                                actuales.last().delete()
+
+                        elif a_generar > 0:
+                            logger.warning('voy a generar %d cargas de %s (%s) para el cuatrimestre %s', a_generar, docente, cargo, cuatrimestre)
+                            for c in range(a_generar):
+                                Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre, docente=docente, cargo=cargo)
+
+        return HttpResponseRedirect(reverse('materias:administrar'))
+
+    else:
+        cargas_anno = Carga.objects.filter(anno=anno)
+        por_cuatrimestre = {cuatrimestre: Counter((carga.docente, carga.cargo) for carga in cargas_anno.filter(cuatrimestre=cuatrimestre.name))
+                            for cuatrimestre in Cuatrimestres}
+        por_tipo_cargo = {tipo: {(carga.docente, carga.cargo) for carga in cargas_anno if Mapeos.tipo_de_carga(carga) == tipo}
+                          for tipo in TipoDocentes}
+
+        cargas = {tipo: {doc_cargo: [por_cuatrimestre[cuat][doc_cargo]
+                                     for cuat in (Cuatrimestres.V, Cuatrimestres.P, Cuatrimestres.S)]
+                         for doc_cargo in por_tipo_cargo[tipo]}
+                  for tipo in TipoDocentes}
+
+        context = {
+            'anno': anno,
+            'cargas': cargas,
+            'tipos': list(TipoDocentes),
+            'cuatrimestres': [Cuatrimestres.V, Cuatrimestres.P, Cuatrimestres.S],
+        }
+        return render(request, 'materias/cargas_docentes_anuales.html', context)
 
 
 @login_required
