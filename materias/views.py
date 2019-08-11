@@ -112,6 +112,8 @@ def administrar(request):
             return HttpResponseRedirect(reverse('materias:juntar_materias'))
         elif 'cargas_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
+        elif 'cargas_docentes_anuales' in request.POST:
+            return HttpResponseRedirect(reverse('materias:cargas_docentes_anuales', args=(anno,)))
         elif 'cargas_docentes_publicadas' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas', args=(anno, cuatrimestre)))
         elif 'administrar_encuestas' in request.POST:
@@ -246,6 +248,12 @@ def modificar_materia(request, materia_id):
         form = MateriaForm(instance=materia)
     context['form'] = form
     return render(request, 'materias/modificar_materia.html', context)
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def cargas_docentes_anuales(request, anno):
+    pass
 
 
 @login_required
