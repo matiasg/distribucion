@@ -14,10 +14,15 @@ logger = logging.getLogger(__name__)
 from .models import (Materia, AliasDeMateria, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
                      TipoDocentes, Docente, CargoDedicacion, Carga, Pabellon, Dias, choice_enum,)
 from .misc import Mapeos, NoTurno
-from .forms import DocenteForm
+from .forms import DocenteForm, MateriaForm
 from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
 
 TURNOS_MAX = 4
+
+TIPO_DICT = {TipoMateria.B: 'Obligatorias',
+             TipoMateria.R: 'Optativas regulares',
+             TipoMateria.N: 'Optativas no regulares'}
+
 
 
 def index(request):
@@ -66,13 +71,10 @@ def por_anno_y_cuatrimestre(request, anno_cuat):
 
 def filtra_materias(**kwargs):
     turnos_filtrados = Turno.objects.filter(**kwargs)
-    tipo_dict = {TipoMateria.B.name: 'Obligatorias',
-                 TipoMateria.R.name: 'Optativas regulares',
-                 TipoMateria.N.name: 'Optativas no regulares'}
 
     materias = []
-    for tipo, tipo_largo in tipo_dict.items():
-        tmaterias = Materia.objects.filter(obligatoriedad=tipo)
+    for tipo, tipo_largo in TIPO_DICT.items():
+        tmaterias = Materia.objects.filter(obligatoriedad=tipo.name)
         materias_turnos = [
                 (materia, sorted(turnos_filtrados.filter(materia=materia)))
                 for materia in tmaterias
@@ -92,6 +94,10 @@ def administrar(request):
 
         if 'turnos_alumnos' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
+        elif 'agregar_materia' in request.POST:
+            return HttpResponseRedirect(reverse('materias:agregar_materia'))
+        elif 'modificar_materias' in request.POST:
+            return HttpResponseRedirect(reverse('materias:modificar_materias'))
         elif 'turnos_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_necesidades_docentes', args=(anno, cuatrimestre)))
         elif 'exportar_informacion' in request.POST:
@@ -150,10 +156,14 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url, **kwargs
 
     else:
         materias = filtra_materias(anno=anno, cuatrimestre=cuatrimestre)
+        materias_con_turnos = {turno.materia for turno in Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)}
+        materias_sin_turnos = set(Materia.objects.all()) - materias_con_turnos
+        materias_sin_turnos = sorted(materias_sin_turnos, key=lambda m: (TipoMateria[m.obligatoriedad], strxfrm(m.nombre)))
 
         context = {'anno': anno,
                    'cuatrimestre': Cuatrimestres[cuatrimestre],
                    'materias': materias,
+                   'materias_sin_turnos': materias_sin_turnos,
                    'pabellones': list(Pabellon)}
         context.update(kwargs)
         return render(request, url, context)
@@ -193,6 +203,50 @@ def administrar_necesidades_docentes(request, anno, cuatrimestre):
 
     return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_necesidades_docentes.html',
                                necesidades_y_recursos=necesidades_y_recursos)
+
+
+@login_required
+@permission_required('materias.add_turno')
+def agregar_materia(request):
+    nueva_materia, creada = Materia.objects.get_or_create(nombre='__ nueva materia __')
+    return HttpResponseRedirect(reverse('materias:modificar_materia', args=(nueva_materia.id,)))
+
+
+@login_required
+@permission_required('materias.add_turno')
+def modificar_materias(request):
+    context = {
+        'materias': {TIPO_DICT[ob]: Materia.objects.filter(obligatoriedad=ob.name).order_by('nombre')
+                     for ob in TipoMateria}
+    }
+    return render(request, 'materias/modificar_materias.html', context)
+
+
+@login_required
+@permission_required('materias.add_turno')
+def modificar_materia(request, materia_id):
+    materia = Materia.objects.get(pk=materia_id)
+    context = {
+        'materia': materia,
+    }
+    if request.method == 'POST':
+        if 'salvar' in request.POST:
+            form = MateriaForm(request.POST, instance=materia)
+            if form.is_valid():
+                form.save()
+                logger.info('salvé una materia modificada: %s', materia)
+                return HttpResponseRedirect(reverse('materias:modificar_materias'))
+            else:
+                logger.error(form.errors)
+        elif 'borrar' in request.POST:
+            borrado = materia.delete()
+            logger.warning('borre la materia %s (objetos borrados: %s)', materia, borrado)
+            return HttpResponseRedirect(reverse('materias:modificar_materias'))
+    else:
+        form = MateriaForm(instance=materia)
+    context['form'] = form
+    return render(request, 'materias/modificar_materia.html', context)
+
 
 @login_required
 @permission_required('dborrador.add_asignacion')
@@ -340,7 +394,8 @@ def cambiar_una_carga_publicada(request, carga_id):
 def agregar_turno(request, materia_id, tipo, anno, cuatrimestre):
     materia = Materia.objects.get(pk=materia_id)
     turnos = Turno.objects.filter(materia=materia, anno=anno, cuatrimestre=cuatrimestre)
-    numero_nuevo_turno = max(t.numero for t in turnos.filter(tipo=tipo)) + 1
+    turnos_tipo = turnos.filter(tipo=tipo)
+    numero_nuevo_turno = max(t.numero for t in turnos_tipo) + 1 if turnos_tipo.count() else 0
     turno = Turno.objects.create(materia=materia, anno=anno, cuatrimestre=cuatrimestre, tipo=tipo, numero=numero_nuevo_turno,
                                  necesidad_prof=0, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
     return HttpResponseRedirect(reverse('materias:cambiar_turno', args=(turno.id,)))
@@ -468,10 +523,9 @@ def juntar_materias(request):
             return render(request, 'materias/confirmar_juntar_materias.html', context=context)
 
     else:
-        materias = {obligatoriedad: Materia.objects.filter(obligatoriedad=obligatoriedad.name).order_by('nombre')
-                    for obligatoriedad in TipoMateria}
         context = {
-            'materias': materias,
+            'materias': {TIPO_DICT[ob]: Materia.objects.filter(obligatoriedad=ob.name).order_by('nombre')
+                         for ob in TipoMateria}
         }
         return render(request, 'materias/juntar_materias.html', context=context)
 
@@ -698,6 +752,12 @@ def administrar_docentes(request):
                     docente.cargos = cargos
                     docente.save()
 
+        elif 'agregar' in request.POST:
+            docente, creado = Docente.objects.get_or_create(na_nombre='__ nuevo docente __', na_apellido='', cargos=[])
+            if creado:
+                logger.info('estoy creando un nuevo docente')
+            return HttpResponseRedirect(reverse('materias:administrar_un_docente', args=(docente.id,)))
+
     context = {
         'docentes': _docentes_por_cargo(),
     }
@@ -712,12 +772,17 @@ def administrar_un_docente(request, docente_id):
         'docente': docente,
     }
     if request.method == 'POST':
-        form = DocenteForm(request.POST, instance=docente)
-        if form.is_valid():
-            form.save()
+        if 'salvar' in request.POST:
+            form = DocenteForm(request.POST, instance=docente)
+            if form.is_valid():
+                form.save()
+                return HttpResponseRedirect(reverse('materias:administrar_docentes'))
+            else:
+                logger.error(form.errors)
+        elif 'borrar' in request.POST:
+            borrado = docente.delete()
+            logger.warning('Borré un docente: %s. Todo lo borrado es %s', docente, borrado)
             return HttpResponseRedirect(reverse('materias:administrar_docentes'))
-        else:
-            logger.error(form.errors)
     else:
         form = DocenteForm(instance=docente)
     context['form'] = form

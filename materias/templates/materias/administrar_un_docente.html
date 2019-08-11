@@ -42,7 +42,16 @@
         </table>
     </div>
 
-    <input id="actuar" type="submit" value="salvar">
+    <input id="actuar" type="submit" name="salvar" value="salvar">
+
+    {% if not docente.carga_set.count %}
+    <p>
+        Este docente no tiene cargas asignadas.
+        Se puede borrar.
+        <input id="actuar" type="submit" name="borrar" value="Borrar">
+    </p>
+    {% endif %}
+
     </form>
 </body>
 

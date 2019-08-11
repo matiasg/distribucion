@@ -80,10 +80,15 @@ class Cuatrimestres(Enum):
     S = '2'
 
 
+@total_ordering
 class TipoMateria(Enum):
     B = 'obligatoria'
     R = 'optativa regular'
     N = 'optativa no regular'
+
+    def __ge__(self, otro):
+        ordenados = [TipoMateria.B, TipoMateria.R, TipoMateria.N]
+        return ordenados.index(self) >= ordenados.index(otro)
 
 
 class Pabellon(Enum):
@@ -106,7 +111,8 @@ TurnoInfo = namedtuple('TurnoInfo', ['tipoynumero', 'diayhora', 'aula'])
 
 class Materia(models.Model):
     nombre = models.CharField(max_length=120)
-    obligatoriedad = models.CharField(max_length=1, choices=choice_enum(TipoMateria))
+    obligatoriedad = models.CharField(max_length=1, choices=choice_enum(TipoMateria),
+                                      default=TipoMateria.N.name, blank=False)
     history = HistoricalRecords()
 
     class Meta:

@@ -1,9 +1,9 @@
-from django.forms import ModelForm, CharField, ChoiceField
+from django.forms import ModelForm, ChoiceField, Textarea, TextInput
 from django.contrib.postgres.forms import SimpleArrayField, SplitArrayField
 
 from functools import partial
 
-from .models import Docente, CargoDedicacion, choice_enum
+from .models import Docente, CargoDedicacion, Materia, choice_enum
 
 CHOICES_CARGOS = [(None, '')] + list(reversed(list(choice_enum(CargoDedicacion))))
 
@@ -37,3 +37,13 @@ class DocenteForm(ModelForm):
         docente.cargos = [self.data[k] for k in ('cargo0', 'cargo1', 'cargo2')
                           if self.data[k]]
         docente.save()
+
+
+class MateriaForm(ModelForm):
+
+    class Meta:
+        model = Materia
+        fields = '__all__'
+        widgets = {
+            'nombre': TextInput(attrs={'size': 120}),
+        }

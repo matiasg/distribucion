@@ -266,8 +266,12 @@ class TestPaginas(TestCase):
 
         self.client.login(username='autorizado', password='1234')
         response = self.client.get('/materias/administrar', follow=True)
-        self.assertContains(response, 'administrar alumnos')
-        self.assertContains(response, 'administrar necesidades')
+        self.assertContains(response, 'administrar materias: alumnos y turnos')
+        self.assertContains(response, 'administrar necesidades docentes')
+        self.assertContains(response, 'agregar una materia')
+        self.assertContains(response, 'modificar materias')
+        self.assertContains(response, 'administrar encuestas')
+        self.assertContains(response, 'distribuir docentes')
         self.assertEqual(len(response.redirect_chain), 0)
 
     def test_administrar_dirige_bien(self):
@@ -282,6 +286,10 @@ class TestPaginas(TestCase):
             'administrar_encuestas': 'encuestas/administrar_habilitadas',
             'dborrador': 'dborrador/distribucion',
             'juntar_materias': 'materias/juntar_materias',
+            'agregar_materia': 'materias/modificar_materia',
+            'modificar_materias': 'materias/modificar_materias',
+            'generar_cuatrimestre': 'materias/generar_cuatrimestre',
+            'generar_cargas_docentes': 'materias/generar_cargas_docentes',
         }
         for boton, url in botones_urls.items():
             response = self.client.post('/materias/administrar',
@@ -689,9 +697,54 @@ class TestPaginas(TestCase):
                          {'na_nombre': n.nombre, 'na_apellido': 'nuevo apellido',
                           'telefono': '0123456789', 'email': n.email,
                           'cargo0': CargoDedicacion.TitExc.name, 'cargo1': '', 'cargo2': '',
+                          'salvar': True,
                           })
         n.refresh_from_db()
         self.assertEqual(n.na_apellido, 'nuevo apellido')
+
+    def test_agregar_y_modificar_materias(self):
+        # miramos que modificar materias tiene links a todas las materias
+        self.client.login(username='autorizado', password='1234')
+        response = self.client.get(reverse('materias:modificar_materias'))
+        for materia in (self.materia1, self.materia2, self.materia3):
+            url = reverse('materias:modificar_materia', args=(materia.id,))
+            self.assertContains(response, f'href="{url}">{materia.nombre}')
+        # ahora modificamos una sola
+        url = reverse('materias:modificar_materia', args=(self.materia1.id,))
+        response = self.client.post(url, {'salvar': True, 'obligatoriedad': TipoMateria.R.name,
+                                          'nombre': 'lacan 1 - freud 0'})
+        self.materia1.refresh_from_db()
+        self.assertEqual(self.materia1.nombre, 'lacan 1 - freud 0')
+        self.assertEqual(self.materia1.obligatoriedad, TipoMateria.R.name)
+        # y ahora creamos una nueva materia
+        response = self.client.post(reverse('materias:agregar_materia'), follow=True)
+        redirect_url, status = response.redirect_chain[-1]
+        self.assertEqual(status, 302)
+        nueva_materia_id = int(redirect_url.split('/')[-1])
+        for materia in (self.materia1, self.materia2, self.materia3):
+            self.assertNotEqual(nueva_materia_id, materia.id)
+        nueva_materia = Materia.objects.get(pk=nueva_materia_id)
+        self.assertEqual(nueva_materia.obligatoriedad, TipoMateria.N.name)
+        # y la borramos
+        response = self.client.post(redirect_url, {'borrar': True, 'obligatoriedad': '?', 'nombre': 'no importa'}, follow=True)
+        with self.assertRaises(Materia.DoesNotExist):
+            nueva_materia.refresh_from_db()
+        self.assertEqual(response.redirect_chain[-1][0], reverse('materias:modificar_materias'))
+
+    def test_agregar_y_borrar_docente(self):
+        self.client.login(username='autorizado', password='1234')
+        # lo agregamos
+        response = self.client.post(reverse('materias:administrar_docentes'), {'agregar': True}, follow=True)
+        redirect_url, status = response.redirect_chain[-1]
+        self.assertEqual(status, 302)
+        nuevo_docente_id = int(redirect_url.split('/')[-1])
+        nuevo_docente = Docente.objects.get(pk=nuevo_docente_id)
+        self.assertEqual(nuevo_docente.cargos, [])
+        # y lo borramos
+        response = self.client.post(redirect_url, {'borrar': True}, follow=True)
+        with self.assertRaises(Docente.DoesNotExist):
+            nuevo_docente.refresh_from_db()
+        self.assertEqual(response.redirect_chain[-1][0], reverse('materias:administrar_docentes'))
 
 
 class TestCasosBorde(TestCase):
@@ -724,3 +777,13 @@ class TestCasosBorde(TestCase):
         c2.refresh_from_db()
         self.assertEqual(c2.docente, n1)
         self.assertEqual(c2.turno, None)
+
+    def test_administrar_materia_sin_turnos(self):
+        self.client.login(username='autorizado', password='1234')
+        url = reverse('materias:administrar_materia', args=(self.materia.id, self.anno + 8, self.cuatrimestre.name))
+        # miro materia sin turnos
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        # ahora intento agregar un turno
+        response = self.client.post(url, {'agregar_turno_T': True}, follow=True)
+        self.assertEqual(response.status_code, 200)

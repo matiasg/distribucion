@@ -3,9 +3,10 @@ table#cargas_docentes
   border: 1;
 }
 
-table#cargas_docentes thead
+table#cargas_docentes thead,
+table#administrar_materia th
 {
-  background-color: #228;
+  background: darkslateblue;
   color: #fff;
   text-align: center;
 }
@@ -52,4 +53,20 @@ table#administrar_materia td
 {
   font-size: large;
   font-weight: bolder;
+}
+
+.separados li {
+  margin: 4px 0;
+}
+
+a.muchos:link, a.muchos:visited
+{
+  background: #eee;
+  color: blue;
+}
+
+a.muchos:link:hover, a.muchos:visited:hover
+{
+  background: #bbb;
+  color: blue;
 }
