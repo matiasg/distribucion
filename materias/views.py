@@ -94,8 +94,8 @@ def administrar(request):
 
         if 'turnos_alumnos' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
-        elif 'agregar_materias' in request.POST:
-            return HttpResponseRedirect(reverse('materias:agregar_materias'))
+        elif 'agregar_materia' in request.POST:
+            return HttpResponseRedirect(reverse('materias:agregar_materia'))
         elif 'modificar_materias' in request.POST:
             return HttpResponseRedirect(reverse('materias:modificar_materias'))
         elif 'turnos_docentes' in request.POST:
@@ -207,7 +207,7 @@ def administrar_necesidades_docentes(request, anno, cuatrimestre):
 
 @login_required
 @permission_required('materias.add_turno')
-def agregar_materias(request):
+def agregar_materia(request):
     nueva_materia, creada = Materia.objects.get_or_create(nombre='__ nueva materia __')
     return HttpResponseRedirect(reverse('materias:modificar_materia', args=(nueva_materia.id,)))
 
