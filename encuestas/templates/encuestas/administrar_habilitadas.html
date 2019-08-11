@@ -4,10 +4,9 @@
 <link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
 
 <head>
-    <h1>
+    <h2>
         Habilitar/deshabilitar encuestas
-    </h1>
-
+    </h2>
     <link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
     <script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
     <script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
@@ -29,6 +28,7 @@
                 <th>En vigencia</th>
                 <th>Cambiar</th>
                 <th>Borrar</th>
+                <th>Link</th>
             </tr>
         </thead>
         {% for habi in habilitadas %}
@@ -41,6 +41,11 @@
             <td>{% if habi.es_valida_ahora %}✔{% else %}✘{% endif %}</td>
             <td><a id=actuar href="{% url 'encuestas:cambiar_habilitacion' habi.id %}">Cambiar</a></td>
             <td><button id=actuar class="borrar_habilitacion" data-habilitacion="{{ habi.id }}">Borrar</td>
+            <td>
+                <a href="{{ host }}{% url 'encuestas:encuesta' habi.anno habi.cuatrimestres habi.tipo_docente %}">
+                    {{ host }}{% url 'encuestas:encuesta' habi.anno habi.cuatrimestres habi.tipo_docente %}
+                </a>
+            </td>
         </tr>
         {% endfor %}
     </table>

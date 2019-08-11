@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 {% load static %}
 <link rel="stylesheet" type="text/css" href="{% static 'encuestas/encuestas.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
 
 <head>
     <h2>
@@ -20,8 +21,8 @@
     <form action="{% url 'encuestas:agregar_habilitacion' %}" method="post">
     {% csrf_token %}
     {{ form.as_table }}
-    <input type="submit" value="salvar">
-    <a href="{% url 'encuestas:administrar_habilitadas' %}">Cancelar</a>
+    <input class="actuar" type="submit" value="salvar">
+    <a class="actuar" href="{% url 'encuestas:administrar_habilitadas' %}">Cancelar</a>
     </form>
 </body>
 

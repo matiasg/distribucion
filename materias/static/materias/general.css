@@ -42,6 +42,7 @@ th.separado {
   width: 8em;
 }
 
+.actuar,
 #actuar,
 li input {
   -webkit-transition-duration: 0.2s; /* Safari */
@@ -53,20 +54,24 @@ li input {
   color: black;
   width: max-content;
   cursor: pointer;
+  background: inherit;
 }
 
+.actuar:hover,
 #actuar:hover,
 li input:hover {
-  background-color: #238;
+  background: #238;
   color: white;
 }
 
 #actuar a,
-a #actuar {
+a #actuar,
+a.actuar {
   text-decoration: none;
   color: black;
 }
 
+.actuar a:hover,
 #actuar a:hover {
   color: white;
 }

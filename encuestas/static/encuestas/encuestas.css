@@ -82,3 +82,7 @@ a#actuar {
 #actuar {
   background-color: transparent;
 }
+
+h1, h2 {
+  background: transparent !important;
+}

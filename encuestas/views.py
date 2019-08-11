@@ -32,6 +32,7 @@ def index(request):
 def administrar_habilitadas(request):
     context = {
         'habilitadas': EncuestasHabilitadas.objects.all(),
+        'host': f'{request.scheme}://{request.get_host()}',
     }
     return render(request, 'encuestas/administrar_habilitadas.html', context)
 
