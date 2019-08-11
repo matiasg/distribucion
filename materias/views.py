@@ -7,7 +7,7 @@ from django.utils.dateparse import parse_time
 from django.contrib.auth.decorators import permission_required, login_required
 
 from locale import strxfrm
-from collections import Counter, namedtuple
+from collections import Counter, namedtuple, defaultdict
 import logging
 logger = logging.getLogger(__name__)
 
@@ -253,7 +253,18 @@ def modificar_materia(request, materia_id):
 @login_required
 @permission_required('dborrador.add_asignacion')
 def cargas_docentes_anuales(request, anno):
-    pass
+    cargas = {tipo: defaultdict(Counter) for tipo in TipoDocentes}
+    for carga in Carga.objects.filter(anno=anno):
+        cargas[Mapeos.tipo_de_carga(carga)][carga.docente].update(carga.cuatrimestre)
+    cargas = {tipo: {docente: (cs['V'], cs['P'], cs['S'])
+                     for docente, cs in tdocs.items()}
+              for tipo, tdocs in cargas.items()}
+
+    context = {
+        'anno': anno,
+        'cargas': cargas,
+    }
+    return render(request, 'materias/cargas_docentes_anuales.html', context)
 
 
 @login_required

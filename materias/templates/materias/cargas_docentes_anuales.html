@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<head>
+    <h2>Cargas docentes para {{ anno }}</h2>
+</head>
+
+<body>
+
+    {% for tipo, cargas_tipo in cargas.items %}
+        <h3>{{ tipo.value }}</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Docente</th>
+                    <th>Verano</th>
+                    <th>Primero</th>
+                    <th>Segundo</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            {% for docente, cargas_docente in cargas_tipo.items %}
+            <tr>
+                <td>{{ docente }}</td>
+                <td>{{ cargas_docente.0 }}</td>
+                <td>{{ cargas_docente.1 }}</td>
+                <td>{{ cargas_docente.2 }}</td>
+                <td></td>
+            </tr>
+            
+            {% endfor %}
+        </table>
+    {% endfor %}
+</body>
