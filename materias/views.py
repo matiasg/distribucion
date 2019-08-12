@@ -293,12 +293,17 @@ def cargas_docentes_anuales(request, anno):
 
     else:
         cargas_anno = Carga.objects.filter(anno=anno)
-        por_cuatrimestre = {cuatrimestre: Counter((carga.docente, carga.cargo) for carga in cargas_anno.filter(cuatrimestre=cuatrimestre.name))
-                            for cuatrimestre in Cuatrimestres}
-        por_tipo_cargo = {tipo: {(carga.docente, carga.cargo) for carga in cargas_anno if Mapeos.tipo_de_carga(carga) == tipo}
+        docentes_y_cargos = {(docente, cargo)
+                             for docente in Docente.objects.filter(cargos__len__gt=0).all()
+                             for cargo in docente.cargos}
+        docentes_y_cargos |= {(carga.docente, carga.cargo) for carga in cargas_anno}
+        por_tipo_cargo = {tipo: {(docente, cargo) for (docente, cargo) in docentes_y_cargos if Mapeos.tipos_de_cargo(cargo) == tipo}
                           for tipo in TipoDocentes}
 
-        cargas = {tipo: {doc_cargo: [por_cuatrimestre[cuat][doc_cargo]
+        contados = {cuatrimestre: Counter((carga.docente, carga.cargo) for carga in cargas_anno.filter(cuatrimestre=cuatrimestre.name))
+                    for cuatrimestre in Cuatrimestres}
+
+        cargas = {tipo: {doc_cargo: [contados[cuat][doc_cargo]
                                      for cuat in (Cuatrimestres.V, Cuatrimestres.P, Cuatrimestres.S)]
                          for doc_cargo in sorted(por_tipo_cargo[tipo],
                                                  key=lambda dc: strxfrm(f'{dc[0].na_apellido}, {dc[0].na_nombre}'))}
