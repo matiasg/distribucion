@@ -34,6 +34,11 @@ table#cargas_docentes td.numero
   text-align: center;
 }
 
+table.sin_borde
+{
+  border: unset;
+}
+
 ul.administrar_listado li
 {
   padding-top: 1em;
