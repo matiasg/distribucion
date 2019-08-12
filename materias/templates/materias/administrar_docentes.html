@@ -34,16 +34,15 @@
         {% for tipo, docentes_tipo in docentes.items %}
 
         <div id="tipo_{{ tipo.0 }}">
-            <ol>
+            <table class="sin_borde">
                 {% for docente in docentes_tipo %}
-                <li>
-                    <input type="checkbox" name="juntar_{{ docente.id }}">
-                    <a href="{% url 'materias:administrar_un_docente' docente.id %}">
-                        {{ docente }}
-                    </a>
-                </li>
+                <tr>
+                    <td> <input type="checkbox" name="juntar_{{ docente.id }}"> </td>
+                    <td> <a href="{% url 'materias:administrar_un_docente' docente.id %}"> {{ docente }} </a> </td>
+                    <td> {{ docente.cargos_largos|join:", " }} </td>
+                </tr>
                 {% endfor %}
-            </ol>
+            </table>
         </div>
         
         {% endfor %}

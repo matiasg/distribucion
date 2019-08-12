@@ -7,7 +7,8 @@ from django.utils.dateparse import parse_time
 from django.contrib.auth.decorators import permission_required, login_required
 
 from locale import strxfrm
-from collections import Counter, namedtuple
+from collections import Counter, namedtuple, defaultdict
+import re
 import logging
 logger = logging.getLogger(__name__)
 
@@ -112,6 +113,8 @@ def administrar(request):
             return HttpResponseRedirect(reverse('materias:juntar_materias'))
         elif 'cargas_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
+        elif 'cargas_docentes_anuales' in request.POST:
+            return HttpResponseRedirect(reverse('materias:cargas_docentes_anuales', args=(anno,)))
         elif 'cargas_docentes_publicadas' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas', args=(anno, cuatrimestre)))
         elif 'administrar_encuestas' in request.POST:
@@ -246,6 +249,74 @@ def modificar_materia(request, materia_id):
         form = MateriaForm(instance=materia)
     context['form'] = form
     return render(request, 'materias/modificar_materia.html', context)
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def cargas_docentes_anuales(request, anno):
+    if request.method == 'POST':
+        if 'salvar' in request.POST:
+            reg = re.compile('^cargas_(\d+)_([a-zA-Z12]{6})_([VPS])$')
+            with transaction.atomic():
+                for carga_docid_cuat in request.POST:
+                    m = reg.search(carga_docid_cuat)
+                    if m:
+                        docente_id = int(m.group(1))
+                        docente = Docente.objects.get(pk=docente_id)
+                        cargo = m.group(2)
+                        cuatrimestre = m.group(3)
+
+                        cantidad = int(request.POST[carga_docid_cuat])
+                        actuales = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=docente, cargo=cargo)
+                        a_generar = cantidad - actuales.count()
+
+                        if a_generar < 0:
+                            logger.warning('voy a borrar %d cargas de %s (%s) para el cuatrimestre %s', -a_generar, docente, cargo, cuatrimestre)
+                            for c in range(-a_generar):
+                                actuales.last().delete()
+
+                        elif a_generar > 0:
+                            logger.warning('voy a generar %d cargas de %s (%s) para el cuatrimestre %s', a_generar, docente, cargo, cuatrimestre)
+                            for c in range(a_generar):
+                                Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre, docente=docente, cargo=cargo)
+
+            return HttpResponseRedirect(f"{reverse('materias:administrar')}#encuestas")
+
+        elif 'generar' in request.POST:
+            for docente in Docente.objects.filter(cargos__len__gt=0):
+                logger.info('le genero cargas a %s para %d', docente, anno)
+                for cargo in docente.cargos:
+                    Carga.objects.create(docente=docente, anno=anno, cuatrimestre=Cuatrimestres.P.name, cargo=cargo)
+                    Carga.objects.create(docente=docente, anno=anno, cuatrimestre=Cuatrimestres.S.name, cargo=cargo)
+
+            return HttpResponseRedirect(reverse('materias:cargas_docentes_anuales', args=(anno,)))
+
+    else:
+        cargas_anno = Carga.objects.filter(anno=anno)
+        docentes_y_cargos = {(docente, cargo)
+                             for docente in Docente.objects.filter(cargos__len__gt=0).all()
+                             for cargo in docente.cargos}
+        docentes_y_cargos |= {(carga.docente, carga.cargo) for carga in cargas_anno}
+        por_tipo_cargo = {tipo: {(docente, cargo) for (docente, cargo) in docentes_y_cargos if Mapeos.tipos_de_cargo(cargo) == tipo}
+                          for tipo in TipoDocentes}
+
+        contados = {cuatrimestre: Counter((carga.docente, carga.cargo) for carga in cargas_anno.filter(cuatrimestre=cuatrimestre.name))
+                    for cuatrimestre in Cuatrimestres}
+
+        cargas = {tipo: {doc_cargo: [contados[cuat][doc_cargo]
+                                     for cuat in (Cuatrimestres.V, Cuatrimestres.P, Cuatrimestres.S)]
+                         for doc_cargo in sorted(por_tipo_cargo[tipo],
+                                                 key=lambda dc: strxfrm(dc[0].apellido_nombre))}
+                  for tipo in TipoDocentes}
+
+        context = {
+            'anno': anno,
+            'cargas': cargas,
+            'generar_cargas': cargas_anno.count() == 0,
+            'tipos': list(TipoDocentes),
+            'cuatrimestres': [Cuatrimestres.V, Cuatrimestres.P, Cuatrimestres.S],
+        }
+        return render(request, 'materias/cargas_docentes_anuales.html', context)
 
 
 @login_required
@@ -671,7 +742,8 @@ def generar_cargas_docentes(request, anno, cuatrimestre):
 
 
 def _docentes_por_cargo():
-    docentes = {(tipo_cargo.name, tipo_cargo.value): Mapeos.docentes_con_cargo_de_tipo(tipo_cargo)
+    docentes = {(tipo_cargo.name, tipo_cargo.value): sorted(Mapeos.docentes_con_cargo_de_tipo(tipo_cargo),
+                                                            key=lambda d: strxfrm(d.apellido_nombre))
                 for tipo_cargo in TipoDocentes}
     docentes[('sincargo', 'sin cargo')] = Docente.objects.filter(cargos__len=0)
     return docentes
