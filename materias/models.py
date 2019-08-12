@@ -269,6 +269,10 @@ class Docente(models.Model):
         cd = CargoDedicacion.con_cargo(cargo)
         return cls.objects.filter(cargos__overlap=cd)
 
+    @property
+    def cargos_largos(self):
+        return [CargoDedicacion[cd].value for cd in self.cargos]
+
 
 class Carga(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
