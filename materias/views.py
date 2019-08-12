@@ -300,7 +300,8 @@ def cargas_docentes_anuales(request, anno):
 
         cargas = {tipo: {doc_cargo: [por_cuatrimestre[cuat][doc_cargo]
                                      for cuat in (Cuatrimestres.V, Cuatrimestres.P, Cuatrimestres.S)]
-                         for doc_cargo in por_tipo_cargo[tipo]}
+                         for doc_cargo in sorted(por_tipo_cargo[tipo],
+                                                 key=lambda dc: strxfrm(f'{dc[0].na_apellido}, {dc[0].na_nombre}'))}
                   for tipo in TipoDocentes}
 
         context = {
