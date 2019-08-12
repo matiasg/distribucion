@@ -280,7 +280,16 @@ def cargas_docentes_anuales(request, anno):
                             for c in range(a_generar):
                                 Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre, docente=docente, cargo=cargo)
 
-        return HttpResponseRedirect(reverse('materias:administrar'))
+            return HttpResponseRedirect(reverse('materias:administrar'))
+
+        elif 'generar' in request.POST:
+            for docente in Docente.objects.filter(cargos__len__gt=0):
+                logger.info('le genero cargas a %s para %d', docente, anno)
+                for cargo in docente.cargos:
+                    Carga.objects.create(docente=docente, anno=anno, cuatrimestre=Cuatrimestres.P.name, cargo=cargo)
+                    Carga.objects.create(docente=docente, anno=anno, cuatrimestre=Cuatrimestres.S.name, cargo=cargo)
+
+            return HttpResponseRedirect(reverse('materias:cargas_docentes_anuales', args=(anno,)))
 
     else:
         cargas_anno = Carga.objects.filter(anno=anno)
@@ -297,6 +306,7 @@ def cargas_docentes_anuales(request, anno):
         context = {
             'anno': anno,
             'cargas': cargas,
+            'generar_cargas': cargas_anno.count() == 0,
             'tipos': list(TipoDocentes),
             'cuatrimestres': [Cuatrimestres.V, Cuatrimestres.P, Cuatrimestres.S],
         }

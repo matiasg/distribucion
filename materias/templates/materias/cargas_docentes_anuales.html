@@ -42,5 +42,11 @@
 
     <hr>
     <input class="actuar" type="submit" name="salvar" value="salvar">
+
+    {% if generar_cargas %}
+    <h2>Ningún docente tiene cargas para {{ anno }}</h2>
+    Podemos generar automáticamente cargas desde este botón:
+    <input class="actuar" type="submit" name="generar" value="Generar cargas para {{ anno }}">
+    {% endif %}
     </form>
 </body>
