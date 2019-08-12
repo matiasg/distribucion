@@ -306,7 +306,7 @@ def cargas_docentes_anuales(request, anno):
         cargas = {tipo: {doc_cargo: [contados[cuat][doc_cargo]
                                      for cuat in (Cuatrimestres.V, Cuatrimestres.P, Cuatrimestres.S)]
                          for doc_cargo in sorted(por_tipo_cargo[tipo],
-                                                 key=lambda dc: strxfrm(f'{dc[0].na_apellido}, {dc[0].na_nombre}'))}
+                                                 key=lambda dc: strxfrm(dc[0].apellido_nombre))}
                   for tipo in TipoDocentes}
 
         context = {
@@ -742,7 +742,8 @@ def generar_cargas_docentes(request, anno, cuatrimestre):
 
 
 def _docentes_por_cargo():
-    docentes = {(tipo_cargo.name, tipo_cargo.value): Mapeos.docentes_con_cargo_de_tipo(tipo_cargo)
+    docentes = {(tipo_cargo.name, tipo_cargo.value): sorted(Mapeos.docentes_con_cargo_de_tipo(tipo_cargo),
+                                                            key=lambda d: strxfrm(d.apellido_nombre))
                 for tipo_cargo in TipoDocentes}
     docentes[('sincargo', 'sin cargo')] = Docente.objects.filter(cargos__len=0)
     return docentes
