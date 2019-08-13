@@ -5,6 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_time
 from django.contrib.auth.decorators import permission_required, login_required
+from django.db.models import Max, Min
 
 from locale import strxfrm
 from collections import Counter, namedtuple, defaultdict
@@ -25,9 +26,7 @@ TIPO_DICT = {TipoMateria.B: 'Obligatorias',
              TipoMateria.N: 'Optativas no regulares'}
 
 
-
-def index(request):
-    # Llamada sin anno y cuatrimestre. Tomamos el período actual
+def anno_y_cuatrimestre_actuales():
     # Fechas inventadas de período actual:
     # Cuatrimestre de Verano: 1/1 al 15/3
     # Primer Cuatrimestre: 16/3 al 31/7
@@ -36,11 +35,17 @@ def index(request):
     anno = now.year
     mes_dia = (now.month, now.day)
     if mes_dia < (3, 16):
-        c = Cuatrimestres.V
+        cuatrimestre = Cuatrimestres.V
     elif mes_dia < (8, 1):
-        c = Cuatrimestres.P
+        cuatrimestre = Cuatrimestres.P
     else:
-        c = Cuatrimestres.S
+        cuatrimestre = Cuatrimestres.S
+    return anno, cuatrimestre
+
+
+def index(request):
+    # Llamada sin anno y cuatrimestre. Tomamos el período actual
+    anno, c = anno_y_cuatrimestre_actuales()
     return por_anno_y_cuatrimestre(request, f'{anno}{c.value}')
 
 
@@ -90,8 +95,6 @@ def administrar(request):
     if request.method == 'POST':
         anno = int(request.POST['anno'])
         cuatrimestre = request.POST['cuatrimestre']
-        annos = [anno]
-        cuatrimestres = [Cuatrimestres[cuatrimestre]]
 
         if 'turnos_alumnos' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
@@ -121,13 +124,19 @@ def administrar(request):
             return HttpResponseRedirect(reverse('encuestas:administrar_habilitadas'))
         elif 'dborrador' in request.POST:
             return HttpResponseRedirect(reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0)))
+
     else:
-        anno_actual = timezone.now().year
-        annos = list(range(anno_actual - 3, anno_actual + 2))
-        cuatrimestres = [c for c in Cuatrimestres]
-        return render(request, 'materias/administrar.html', context={'annos': annos,
-                                                                     'cuatrimestres': cuatrimestres,
-                                                                     'actual': anno_actual})
+        anno, cuatrimestre = anno_y_cuatrimestre_actuales()
+        cuatrimestre = cuatrimestre.name
+
+    primer_anno = Turno.objects.aggregate(Min('anno'))['anno__min']
+    ultimo_anno = Turno.objects.aggregate(Max('anno'))['anno__max']
+    annos = list(range(primer_anno, ultimo_anno + 2))
+    cuatrimestres = list(Cuatrimestres)
+
+    return render(request, 'materias/administrar.html', context={'annos': annos,
+                                                                 'cuatrimestres': cuatrimestres,
+                                                                 'anno': anno, 'cuatrimestre': cuatrimestre})
 
 
 def administrar_general(request, anno, cuatrimestre, key_to_field, url, **kwargs):
@@ -153,7 +162,6 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url, **kwargs
                         setattr(objeto, field, v)
                         logger.debug('cambiando %s a obj. %s por %s', page_field, objeto, v)
                     objeto.save()
-
 
         return HttpResponseRedirect(reverse('materias:administrar'))
 
