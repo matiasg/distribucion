@@ -11,9 +11,14 @@
 </head>
 
 <body>
-    <div id="actuar">
-        <a href="{% url 'materias:administrar' %}">Volver a administrar materias</a>
-    </div>
+    <form action="{% url 'materias:administrar' %}#docentes" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="anno" value="{{ anno }}">
+        <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre.name }}">
+        <input class="actuar" type="submit" name="administrar" value="Volver a: administrar">
+    </form>
+    
+    <hr>
     
     <h3>Cargas con turno asignado</h3>
     <table id="cargas_docentes">

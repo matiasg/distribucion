@@ -111,7 +111,7 @@ def administrar(request):
         elif 'generar_cargas_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:generar_cargas_docentes', args=(anno, cuatrimestre)))
         elif 'administrar_docentes' in request.POST:
-            return HttpResponseRedirect(reverse('materias:administrar_docentes'))
+            return HttpResponseRedirect(reverse('materias:administrar_docentes'), {'anno': anno, 'cuatrimestre': cuatrimestre})
         elif 'juntar_materias' in request.POST:
             return HttpResponseRedirect(reverse('materias:juntar_materias'))
         elif 'cargas_docentes' in request.POST:
@@ -358,7 +358,7 @@ def administrar_cargas_docentes(request, anno, cuatrimestre):
                              if cargas.count() > 0 and d not in docentes_con_encuesta}
 
     context = {'anno': anno,
-               'cuatrimestre': cuatrimestre,
+               'cuatrimestre': Cuatrimestres[cuatrimestre],
                'docentes_con_cargas': docentes_con_cargas,
                'docentes_sin_cargas': docentes_sin_cargas,
                'diferencias_encuesta': diferencias_encuesta,
