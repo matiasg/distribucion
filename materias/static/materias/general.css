@@ -44,6 +44,7 @@ th.separado {
 
 .actuar,
 #actuar,
+input.actuar,
 li input {
   -webkit-transition-duration: 0.2s; /* Safari */
   transition-duration: 0.2s;
@@ -59,6 +60,7 @@ li input {
 
 .actuar:hover,
 #actuar:hover,
+input.actuar:hover,
 li input:hover {
   background: #238;
   color: white;
