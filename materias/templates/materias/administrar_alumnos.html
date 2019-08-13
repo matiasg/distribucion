@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 {% load static %}
+{% load materias_tags %}
+
 <link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
@@ -54,7 +56,7 @@
                                 <td class="fondo{{ turno.tipo }}">{{ turno.tipo }} {{ turno.numero }}</td>
                                 <td class="diayhora">{{ turno.horarios_info.diayhora }}</td>
                                 <td><input type="number" name="alumnos_{{ turno.id }}" min=0 max=1000 value={{ turno.alumnos }}></td>
-                                {% for horario in turno.horario_set.all %}
+                                {% for horario in turno.horario_set.all|ordenados %}
                                 <td class="tabla_col_borde_izquierdo">{{ horario.dia }}: {{ horario.de_a }}</td>
                                 <td>Aula: <input type="text" name="aula_{{ horario.id }}" value="{{ horario.aula }}" maxlength=5></td>
                                 <td>Pab: <select name="pabellon_{{ horario.id }}">
