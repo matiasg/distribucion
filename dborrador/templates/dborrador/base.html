@@ -122,7 +122,12 @@
         </li>
 
     <h3>Otras opciones</h3>
-    <div id="actuar"><a href="{% url 'materias:administrar' %}">Administrar</a></div>
+    <form action="{% url 'materias:administrar' %}#encuestas" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="anno" value="{{ anno }}">
+        <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre.name }}">
+        <input class="actuar" type="submit" name="administrar" value="Volver a: administrar">
+    </form>
 
     </div>
 

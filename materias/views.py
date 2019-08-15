@@ -749,11 +749,12 @@ def generar_cargas_docentes(request, anno, cuatrimestre):
         return render(request, 'materias/generar_cargas.html', context)
 
 
+SIN_CARGO = ('sincargo', 'sin cargo')
 def _docentes_por_cargo():
     docentes = {(tipo_cargo.name, tipo_cargo.value): sorted(Mapeos.docentes_con_cargo_de_tipo(tipo_cargo),
                                                             key=lambda d: strxfrm(d.apellido_nombre))
                 for tipo_cargo in TipoDocentes}
-    docentes[('sincargo', 'sin cargo')] = Docente.objects.filter(cargos__len=0)
+    docentes[SIN_CARGO] = Docente.objects.filter(cargos__len=0)
     return docentes
 
 def _docentes_en_request(request):
@@ -848,15 +849,18 @@ def administrar_docentes(request):
 @permission_required('materias.add_turno')
 def administrar_un_docente(request, docente_id):
     docente = Docente.objects.get(pk=docente_id)
+    cargos = docente.cargos
+    cargo = Mapeos.tipos_de_cargo(cargos[0]).name if cargos else SIN_CARGO[0]
     context = {
         'docente': docente,
+        'cargo': cargo,
     }
     if request.method == 'POST':
         if 'salvar' in request.POST:
             form = DocenteForm(request.POST, instance=docente)
             if form.is_valid():
                 form.save()
-                return HttpResponseRedirect(reverse('materias:administrar_docentes'))
+                return HttpResponseRedirect(f"{reverse('materias:administrar_docentes')}#tipo_{cargo}")
             else:
                 logger.error(form.errors)
         elif 'borrar' in request.POST:
