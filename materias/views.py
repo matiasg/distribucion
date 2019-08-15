@@ -5,6 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_time
 from django.contrib.auth.decorators import permission_required, login_required
+from django.db.models import Max, Min
 
 from locale import strxfrm
 from collections import Counter, namedtuple, defaultdict
@@ -25,9 +26,7 @@ TIPO_DICT = {TipoMateria.B: 'Obligatorias',
              TipoMateria.N: 'Optativas no regulares'}
 
 
-
-def index(request):
-    # Llamada sin anno y cuatrimestre. Tomamos el período actual
+def anno_y_cuatrimestre_actuales():
     # Fechas inventadas de período actual:
     # Cuatrimestre de Verano: 1/1 al 15/3
     # Primer Cuatrimestre: 16/3 al 31/7
@@ -36,11 +35,17 @@ def index(request):
     anno = now.year
     mes_dia = (now.month, now.day)
     if mes_dia < (3, 16):
-        c = Cuatrimestres.V
+        cuatrimestre = Cuatrimestres.V
     elif mes_dia < (8, 1):
-        c = Cuatrimestres.P
+        cuatrimestre = Cuatrimestres.P
     else:
-        c = Cuatrimestres.S
+        cuatrimestre = Cuatrimestres.S
+    return anno, cuatrimestre
+
+
+def index(request):
+    # Llamada sin anno y cuatrimestre. Tomamos el período actual
+    anno, c = anno_y_cuatrimestre_actuales()
     return por_anno_y_cuatrimestre(request, f'{anno}{c.value}')
 
 
@@ -90,8 +95,6 @@ def administrar(request):
     if request.method == 'POST':
         anno = int(request.POST['anno'])
         cuatrimestre = request.POST['cuatrimestre']
-        annos = [anno]
-        cuatrimestres = [Cuatrimestres[cuatrimestre]]
 
         if 'turnos_alumnos' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
@@ -108,7 +111,7 @@ def administrar(request):
         elif 'generar_cargas_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:generar_cargas_docentes', args=(anno, cuatrimestre)))
         elif 'administrar_docentes' in request.POST:
-            return HttpResponseRedirect(reverse('materias:administrar_docentes'))
+            return HttpResponseRedirect(reverse('materias:administrar_docentes'), {'anno': anno, 'cuatrimestre': cuatrimestre})
         elif 'juntar_materias' in request.POST:
             return HttpResponseRedirect(reverse('materias:juntar_materias'))
         elif 'cargas_docentes' in request.POST:
@@ -121,13 +124,19 @@ def administrar(request):
             return HttpResponseRedirect(reverse('encuestas:administrar_habilitadas'))
         elif 'dborrador' in request.POST:
             return HttpResponseRedirect(reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0)))
+
     else:
-        anno_actual = timezone.now().year
-        annos = list(range(anno_actual - 3, anno_actual + 2))
-        cuatrimestres = [c for c in Cuatrimestres]
-        return render(request, 'materias/administrar.html', context={'annos': annos,
-                                                                     'cuatrimestres': cuatrimestres,
-                                                                     'actual': anno_actual})
+        anno, cuatrimestre = anno_y_cuatrimestre_actuales()
+        cuatrimestre = cuatrimestre.name
+
+    primer_anno = Turno.objects.aggregate(Min('anno'))['anno__min']
+    ultimo_anno = Turno.objects.aggregate(Max('anno'))['anno__max']
+    annos = list(range(primer_anno, ultimo_anno + 2))
+    cuatrimestres = list(Cuatrimestres)
+
+    return render(request, 'materias/administrar.html', context={'annos': annos,
+                                                                 'cuatrimestres': cuatrimestres,
+                                                                 'anno': anno, 'cuatrimestre': cuatrimestre})
 
 
 def administrar_general(request, anno, cuatrimestre, key_to_field, url, **kwargs):
@@ -153,7 +162,6 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url, **kwargs
                         setattr(objeto, field, v)
                         logger.debug('cambiando %s a obj. %s por %s', page_field, objeto, v)
                     objeto.save()
-
 
         return HttpResponseRedirect(reverse('materias:administrar'))
 
@@ -350,7 +358,7 @@ def administrar_cargas_docentes(request, anno, cuatrimestre):
                              if cargas.count() > 0 and d not in docentes_con_encuesta}
 
     context = {'anno': anno,
-               'cuatrimestre': cuatrimestre,
+               'cuatrimestre': Cuatrimestres[cuatrimestre],
                'docentes_con_cargas': docentes_con_cargas,
                'docentes_sin_cargas': docentes_sin_cargas,
                'diferencias_encuesta': diferencias_encuesta,
@@ -741,11 +749,12 @@ def generar_cargas_docentes(request, anno, cuatrimestre):
         return render(request, 'materias/generar_cargas.html', context)
 
 
+SIN_CARGO = ('sincargo', 'sin cargo')
 def _docentes_por_cargo():
     docentes = {(tipo_cargo.name, tipo_cargo.value): sorted(Mapeos.docentes_con_cargo_de_tipo(tipo_cargo),
                                                             key=lambda d: strxfrm(d.apellido_nombre))
                 for tipo_cargo in TipoDocentes}
-    docentes[('sincargo', 'sin cargo')] = Docente.objects.filter(cargos__len=0)
+    docentes[SIN_CARGO] = Docente.objects.filter(cargos__len=0)
     return docentes
 
 def _docentes_en_request(request):
@@ -840,15 +849,18 @@ def administrar_docentes(request):
 @permission_required('materias.add_turno')
 def administrar_un_docente(request, docente_id):
     docente = Docente.objects.get(pk=docente_id)
+    cargos = docente.cargos
+    cargo = Mapeos.tipos_de_cargo(cargos[0]).name if cargos else SIN_CARGO[0]
     context = {
         'docente': docente,
+        'cargo': cargo,
     }
     if request.method == 'POST':
         if 'salvar' in request.POST:
             form = DocenteForm(request.POST, instance=docente)
             if form.is_valid():
                 form.save()
-                return HttpResponseRedirect(reverse('materias:administrar_docentes'))
+                return HttpResponseRedirect(f"{reverse('materias:administrar_docentes')}#tipo_{cargo}")
             else:
                 logger.error(form.errors)
         elif 'borrar' in request.POST:

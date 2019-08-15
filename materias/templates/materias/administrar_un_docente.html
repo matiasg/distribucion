@@ -10,7 +10,7 @@
 </head>
 <body>
     <div id="actuar">
-        <a href="{% url 'materias:administrar_docentes' %}">Volver a todos los docentes</a>
+        <a href="{% url 'materias:administrar_docentes' %}#tipo_{{ cargo }}">Volver a todos los docentes</a>
     </div>
 
     {% if form.errors %}

@@ -12,12 +12,18 @@
 
 
 <body>
+    <form action="{% url 'materias:administrar' %}#docentes" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="anno" value="{{ anno }}">
+        <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre.name }}">
+        <input class="actuar" type="submit" name="administrar" value="Volver a: administrar">
+    </form>
+    
+    <hr>
+
     <form action="{% url 'materias:administrar_necesidades_docentes' anno cuatrimestre.name %}" method="post">
     {% csrf_token %}
     
-        <div id="actuar"> <a href="{% url 'materias:administrar' %}">Cancelar</a> </div>
-    
-        <hr>
 
         <table id=cargas_docentes>
             <thead>

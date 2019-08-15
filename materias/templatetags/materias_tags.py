@@ -22,3 +22,7 @@ def bien_o_mal(a, b):
     if a > b:
         return "maso"
     return "mal"
+
+@register.filter
+def ordenados(lista):
+    return sorted(lista)
