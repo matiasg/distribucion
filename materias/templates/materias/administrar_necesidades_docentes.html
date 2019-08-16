@@ -72,7 +72,7 @@
                         </tr>
                         {% for turno in turnos %}
                         <tr>
-                            <td class="fondo{{ turno.tipo }}">{{ turno.tipo }} {{ turno.numero }}</td>
+                            <td class="fondo{{ turno.tipo }}">{{ turno.tipo }} {{ turno.numero }}{% if turno.subnumero %} {{ turno.subnumero }}{% endif %}</td>
                             <td class="diayhora">{{ turno.horarios_info.diayhora }}</td>
                             <td><input type="number" name="necesidadprof_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_prof }}></td>
                             <td><input type="number" name="necesidadjtp_{{ turno.id }}" min=0 max=5 value={{ turno.necesidad_jtp }}></td>
