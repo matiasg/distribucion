@@ -15,7 +15,7 @@
         <tbody>
         {% for turno in turnos %}
             <tr>
-                <td class="fondo{{ turno.tipo }}">{{ turno.horarios_info.tipoynumero }}</td>
+                <td class="fondo{{ turno.tipo }}">{{ turno.horarios_info.tipoynumero }}{% if turno.subnumero %} {{ turno.subnumero }}{% endif %}</td>
                 <td class="diayhora">{{ turno.horarios_info.diayhora }}</td>
                 <td class="datosdoc">{{ turno.docentes }}</td>
                 <td class="aula">Aula: {{ turno.horarios_info.aula }}</td>
