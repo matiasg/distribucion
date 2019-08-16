@@ -26,8 +26,8 @@
             <tr>
                 <th>Docente</th>
                 <th>Cargo</th>
-                <th>Turno</th>
                 <th>Materia</th>
+                <th>Turno</th>
             </tr>
         </thead>
         <tbody>
@@ -35,8 +35,8 @@
             <tr>
                 <td><a href="{% url 'materias:cambiar_una_carga_publicada' carga.id %}">{{ carga.docente }}</a></td>
                 <td>{{ carga.cargo|cargo_nombre_largo }}
-                <td>{{ carga.turno.horarios_info.tipoynumero }}</td>
                 <td>{{ carga.turno.materia }}</td>
+                <td>{{ carga.turno.horarios_info.tipoynumero }}</td>
             </tr>
             {% endfor %}
         </tbody>
