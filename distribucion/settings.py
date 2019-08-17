@@ -11,6 +11,8 @@ SECRET_KEY = '@fb7dxhx7p^+(9b$em=38s$=$$-$9frcrj3wxi2%el&l#_d)j2'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 SESSION_COOKIE_SECURE = False
+SESSION_ENGINE = 'django.contrib.sessions.backends.file'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SECURE_SSL_REDIRECT = False
 CSRF_COOKIE_SECURE = False
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 12000
@@ -108,7 +110,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-ar'
 
 TIME_ZONE = 'America/Argentina/Buenos_Aires'
 

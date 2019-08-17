@@ -16,6 +16,8 @@ SECURE_BROWSER_XSS_FILTER = True
 CSRF_COOKIE_SECURE = False
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 12000
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.file'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 LOGIN_URL = '/admin/login'
 
 AUTH_USER_MODEL = 'usuarios.Usuario'
