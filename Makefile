@@ -1,3 +1,7 @@
+ifndef BRANCH
+BRANCH = master
+endif
+
 prebuild:
 	cat dockerfiles/dockerfile_header dockerfiles/dockerfile_body > Dockerfile
 
@@ -5,17 +9,18 @@ uba_prebuild:
 	cat dockerfiles/dockerfile_header dockerfiles/uba_docker_setting dockerfiles/dockerfile_body > Dockerfile
 
 build:
-	docker build -t distribucion .
+	docker build --build-arg BRANCH=${BRANCH} -t distribucion .
 	docker-compose build
 	docker volume create --name=distribucion_pgdata
 	docker-compose up --no-start
-	echo -e "sugerencia 1: correr \n\ndocker-compose run --rm web sh tools/create_db"
-	echo -e "sugerencia 2: correr \n\ndocker-compose run --rm bash python tools/dump_to_db.py"
+	@echo -e "\nsugerencia 1: correr \n\ndocker-compose run --rm web sh tools/create_db"
+	@echo -e "\nsugerencia 2: correr \n\ndocker-compose run --rm bash python tools/dump_to_db.py"
 
 rebuild:
-	docker build -t distribucion . --no-cache
+	@echo "Voy a hacer un rebuild en la branch ${BRANCH}"
+	docker build --build-arg BRANCH=${BRANCH} -t distribucion . --no-cache
 	docker-compose build
-	echo -e "sugerencia 1: correr \n\ndocker-compose run --rm web python manage.py migrate"
+	@echo -e "\nsugerencia 1: correr \n\ndocker-compose run --rm web python manage.py migrate"
 
 empezar:
 	docker-compose up
