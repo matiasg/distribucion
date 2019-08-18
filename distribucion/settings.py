@@ -6,6 +6,9 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 SECRET_KEY = '@fb7dxhx7p^+(9b$em=38s$=$$-$9frcrj3wxi2%el&l#_d)j2'
 SECURE_CONTENT_TYPE_NOSNIFF = True
