@@ -6,7 +6,6 @@ BRANCH=master
 curl --fail --silent --show-error --location https://codeload.github.com/matiasg/distribucion/tar.gz/${BRANCH} | tar xvz -C . distribucion-${BRANCH}/Makefile distribucion-${BRANCH}/dockerfiles distribucion-${BRANCH}/docker-compose.yaml
 mv distribucion-${BRANCH}/* .
 rmdir distribucion-${BRANCH}
-sed -i "s/BRANCH/${BRANCH}/" dockerfiles/dockerfile_body
 
 echo "Esta instalación se hace dentro de la uba?"
 select uba in "Si" "No"; do
@@ -26,6 +25,8 @@ $ make uba_prebuild
 
 En cualquier caso, los pasos que siguen son
 $ make build
+o, si querés una branch especial,
+$ BRANCH=mi_branch_querida make build
 
 Tal vez,
 $ docker-compose run --rm web sh tools/create_db
