@@ -40,6 +40,11 @@ services:
       - web
     networks:
       - nginx_network
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
 
 volumes:
   distribucion_pgdata:
