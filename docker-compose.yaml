@@ -12,7 +12,6 @@ services:
     volumes:
       - distribucion_pgdata:/var/lib/postgresql/data
       - static_volume:/codigo/distribucion/static
-      - nginx_conf:/codigo/distribucion/nginx_conf
     working_dir: /codigo/distribucion
     command: gunicorn --chdir /codigo/distribucion/distribucion --bind :8000 distribucion.wsgi:application
     depends_on:
@@ -33,8 +32,9 @@ services:
     image: nginx:1.17.2-alpine
     ports:
       - 8000:80
+      - 443:443
     volumes:
-      - nginx_conf:/etc/nginx/conf.d
+      - ./nginx_conf:/etc/nginx/conf.d
       - static_volume:/codigo/distribucion/static
     depends_on:
       - web
@@ -50,7 +50,6 @@ volumes:
   distribucion_pgdata:
     external: true
   static_volume:
-  nginx_conf:
 
 networks:
   nginx_network:

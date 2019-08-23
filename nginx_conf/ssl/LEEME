@@ -1,0 +1,8 @@
+Hacer aquí un symlink a los archivos de certificado y clave privada. Algo como
+
+$ ln -sf /path/al/certificado.pem cert.pem
+$ ln -sf /path/al/privkey.pem privkey.pem
+
+Los paths pueden a su vez ser symlinks.
+
+Además, cambiar en nginx.conf mi_sitio... por el sitio que aparece en el certificado.
