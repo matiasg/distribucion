@@ -16,11 +16,6 @@ select uba in "Si" "No"; do
 done
 
 
-docker create -ti --name borrar distribucion bash
-docker cp borrar:/codigo/distribucion/nginx_conf .
-docker rm borrar
-
-
 cat << EOE
 
 Si contestaste la pregunta anterior mal, podés hacer
@@ -35,8 +30,8 @@ $ make build
 o, si querés una branch especial,
 $ BRANCH=mi_branch_querida make build
 
-Tal vez,
 $ docker-compose run --rm web sh tools/create_db
+
 Con una db vacía se puede
 $ docker-compose run --rm bash python tools/dump_to_db.py
 $ make populate
@@ -47,5 +42,3 @@ Y luego, si querés usarlo con HTTPS, entrar a nginx_conf/ssl y leer el LEEME.
 Y finalmente, para arrancar los servicios,
 $ make empezar
 EOE
-
-

@@ -10,6 +10,9 @@ uba_prebuild:
 
 build:
 	docker build --build-arg BRANCH=${BRANCH} -t distribucion .
+	docker create -ti --name borrar distribucion bash
+	docker cp borrar:/codigo/distribucion/nginx_conf .
+	docker rm borrar
 	docker-compose build
 	docker volume create --name=distribucion_pgdata
 	docker-compose up --no-start
