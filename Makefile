@@ -2,6 +2,8 @@ ifndef BRANCH
 BRANCH = master
 endif
 
+NGINX_CONF = ./nginx_conf_de_repo
+
 prebuild:
 	cat dockerfiles/dockerfile_header dockerfiles/dockerfile_body > Dockerfile
 
@@ -11,7 +13,9 @@ uba_prebuild:
 build:
 	docker build --build-arg BRANCH=${BRANCH} -t distribucion .
 	docker create -ti --name borrar distribucion bash
-	docker cp borrar:/codigo/distribucion/nginx_conf .
+	mkdir -p ${NGINX_CONF}
+	docker cp borrar:/codigo/distribucion/nginx_conf/nginx.conf ${NGINX_CONF} 
+	docker cp borrar:/codigo/distribucion/nginx_conf/ssl ${NGINX_CONF}
 	docker rm borrar
 	docker-compose build
 	docker volume create --name=distribucion_pgdata

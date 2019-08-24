@@ -34,7 +34,7 @@ services:
       - 8000:80
       - 443:443
     volumes:
-      - ./nginx_conf:/etc/nginx/conf.d
+      - ./nginx_conf_de_repo:/etc/nginx/conf.d
       - static_volume:/codigo/distribucion/static
     depends_on:
       - web

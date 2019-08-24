@@ -36,8 +36,8 @@ Con una db vacía se puede
 $ docker-compose run --rm bash python tools/dump_to_db.py
 $ make populate
 
-Luego, editar nginx_conf/nginx.conf y cambiar 'mi_host...' por tu dominio.
-Y luego, si querés usarlo con HTTPS, entrar a nginx_conf/ssl y leer el LEEME.
+Luego, editar nginx_conf_from_repo/nginx.conf y cambiar 'mi_host...' por tu dominio.
+Y luego, si querés usarlo con HTTPS, entrar a nginx_conf_from_repo/ssl y leer el LEEME.
 
 Y finalmente, para arrancar los servicios,
 $ make empezar
