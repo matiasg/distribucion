@@ -6,7 +6,6 @@ BRANCH=master
 curl --fail --silent --show-error --location https://codeload.github.com/matiasg/distribucion/tar.gz/${BRANCH} | tar xvz -C . distribucion-${BRANCH}/Makefile distribucion-${BRANCH}/dockerfiles distribucion-${BRANCH}/docker-compose.yaml
 mv distribucion-${BRANCH}/* .
 rmdir distribucion-${BRANCH}
-sed -i "s/BRANCH/${BRANCH}/" dockerfiles/dockerfile_body
 
 echo "Esta instalación se hace dentro de la uba?"
 select uba in "Si" "No"; do
@@ -16,24 +15,30 @@ select uba in "Si" "No"; do
     esac
 done
 
-cat << EOE
 
+cat << EOE
 
 Si contestaste la pregunta anterior mal, podés hacer
 $ make prebuild
 o
 $ make uba_prebuild
 
-En cualquier caso, los pasos que siguen son
-$ make build
 
-Tal vez,
+En cualquier caso, los pasos que siguen son:
+
+$ make build
+o, si querés una branch especial,
+$ BRANCH=mi_branch_querida make build
+
 $ docker-compose run --rm web sh tools/create_db
+
+Con una db vacía se puede
 $ docker-compose run --rm bash python tools/dump_to_db.py
 $ make populate
 
-Y finalmente
+Luego, editar nginx_conf_from_repo/nginx.conf y cambiar 'mi_host...' por tu dominio.
+Y luego, si querés usarlo con HTTPS, entrar a nginx_conf_from_repo/ssl y leer el LEEME.
+
+Y finalmente, para arrancar los servicios,
 $ make empezar
 EOE
-
-

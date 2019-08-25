@@ -1,3 +1,6 @@
+# manuales
+/Dockerfile
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -55,6 +58,7 @@ coverage.xml
 *.log
 local_settings.py
 db.sqlite3
+/static
 
 # Flask stuff:
 instance/

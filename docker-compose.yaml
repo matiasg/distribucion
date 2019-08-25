@@ -5,16 +5,20 @@ services:
     image: postgres
     volumes:
       - distribucion_pgdata:/var/lib/postgresql/data
+    networks:
+      - db_network
   web:
     image: distribucion
     volumes:
       - distribucion_pgdata:/var/lib/postgresql/data
+      - static_volume:/codigo/distribucion/static
     working_dir: /codigo/distribucion
-    ports:
-      - "8000:8000"
-    command: python manage.py runserver --insecure 0.0.0.0:8000
+    command: gunicorn --chdir /codigo/distribucion/distribucion --bind :8000 distribucion.wsgi:application
     depends_on:
       - db
+    networks:
+      - nginx_network
+      - db_network
   bash:
     image: distribucion
     volumes:
@@ -24,6 +28,31 @@ services:
     depends_on:
       - db
 
+  nginx:
+    image: nginx:1.17.2-alpine
+    ports:
+      - 8000:8000
+      - 443:443
+    volumes:
+      - ./nginx_conf_de_repo:/etc/nginx/conf.d
+      - static_volume:/codigo/distribucion/static
+    depends_on:
+      - web
+    networks:
+      - nginx_network
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
+
 volumes:
   distribucion_pgdata:
     external: true
+  static_volume:
+
+networks:
+  nginx_network:
+    driver: bridge
+  db_network:
+    driver: bridge

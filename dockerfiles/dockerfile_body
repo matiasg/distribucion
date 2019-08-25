@@ -1,7 +1,9 @@
 RUN apt-get update && apt-get install -y git locales locales-all
+RUN pip install --upgrade pip
 
+ARG BRANCH
 RUN git clone https://github.com/matiasg/distribucion.git
-RUN cd distribucion && git checkout BRANCH && cd ..
+RUN cd distribucion && git checkout ${BRANCH:-master} && cd ..
 
 RUN cp distribucion/settings.py distribucion/distribucion/settings.py
 RUN chmod +x distribucion/tools/create_db
@@ -13,3 +15,4 @@ RUN pip install -r allocation/requirements.txt
 WORKDIR distribucion
 
 RUN pip install -r requirements.txt
+RUN python manage.py collectstatic --no-input

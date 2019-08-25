@@ -5,3 +5,4 @@ coloredlogs
 psycopg2-binary
 django-simple-history==2.7.2
 xlwt
+gunicorn
