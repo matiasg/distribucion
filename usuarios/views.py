@@ -2,7 +2,7 @@ import logging
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm, ReadOnlyPasswordHashField
 
 from .models import Usuario
 
@@ -22,6 +22,15 @@ class FormularioCreacionUsuario(UserCreationForm):
         usuario.groups.add(*self.cleaned_data['groups'])
         usuario.save()
         return usuario
+
+
+class FormularioCambioUsuario(UserChangeForm):
+    password = ReadOnlyPasswordHashField(label=("Password"),
+                                         help_text= ("Para cambiar el password <a href=\"../password/\">usar este link</a>."))
+
+    class Meta:
+        model = Usuario
+        fields = ('username', 'groups', 'password')
 
 
 def agregar(request):
