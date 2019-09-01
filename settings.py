@@ -11,20 +11,20 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # seguridad
-SECRET_KEY = get_random_secret_key()
 DEBUG = False
-ALLOWED_HOSTS = ['*']
+SECRET_KEY = get_random_secret_key()
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 12000
 
-SECURE_SSL_REDIRECT = False
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
 SESSION_ENGINE = 'django.contrib.sessions.backends.file'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SECURE_SSL_REDIRECT = False
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
 LOGIN_URL = '/admin/login'
+ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = 'usuarios.Usuario'
 
@@ -97,9 +97,48 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-ar'
 TIME_ZONE = 'America/Argentina/Buenos_Aires'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 STATIC_URL = '/static/'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+	'verbose': {
+            'format': '[{levelname}] ({asctime} {module}) {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+        },
+        'materias': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'encuestas': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'dborrador': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'allocation': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+    },
+}

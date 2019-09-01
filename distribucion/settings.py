@@ -10,6 +10,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
+DEBUG = True
 SECRET_KEY = '@fb7dxhx7p^+(9b$em=38s$=$$-$9frcrj3wxi2%el&l#_d)j2'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
@@ -21,10 +22,6 @@ CSRF_COOKIE_SECURE = False
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 12000
 
 LOGIN_URL = '/admin/login'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
 ALLOWED_HOSTS = ['localhost']
 
 
@@ -80,7 +77,6 @@ WSGI_APPLICATION = 'distribucion.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -134,9 +130,9 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
 	'verbose': {
-	    'format': '[{levelname}] ({asctime} {module}) {message}',
-	    'style': '{',
-	    },
+            'format': '[{levelname}] ({asctime} {module}) {message}',
+            'style': '{',
+        },
     },
     'handlers': {
         'console': {
