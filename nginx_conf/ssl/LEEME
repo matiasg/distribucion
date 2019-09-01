@@ -1,6 +1,6 @@
 Hacer aquí un symlink a los archivos de certificado y clave privada. Algo como
 
-$ ln -sf /path/al/certificado.pem cert.pem
+$ ln -sf /path/al/fullchain.pem fullchain.pem
 $ ln -sf /path/al/privkey.pem privkey.pem
 
 Los paths pueden a su vez ser symlinks.
