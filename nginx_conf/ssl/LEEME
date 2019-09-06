@@ -1,8 +1,12 @@
-Hacer aquí un symlink a los archivos de certificado y clave privada. Algo como
+Hacer aquí un symlink al directorio de archivos de certificado/clave.
 
-$ ln -sf /path/al/certificado.pem cert.pem
-$ ln -sf /path/al/privkey.pem privkey.pem
+Importante: si los .pem dentro del directorio son a su vez symlinks,
+todo el directorio a donde apunta tiene que estar linkeado aquí
 
-Los paths pueden a su vez ser symlinks.
+$ ln -sf /path/al/directorio/que/contiene/pems pems
 
-Además, cambiar en nginx.conf mi_sitio... por el sitio que aparece en el certificado.
+Además, cambiar en nginx.conf
+1. mi_sitio... por el sitio que aparece en el certificado.
+2. ssl_certificate y ssl_certificate_key para que apunten a fullchain.pem y privkey.pem
+   El prefijo /etc/nginx/conf.d/ssl/pems no hay que cambiarlo
+   porque es lo que figura en docker-compose.yaml
