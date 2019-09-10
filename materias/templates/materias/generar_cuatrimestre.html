@@ -26,7 +26,7 @@
         Año:
         <select name="anno">
             {% for a in annos %}
-            <option value="{{ a }}">{{ a }}</option>
+            <option value="{{ a }}" {% if a == anno %}selected{% endif %}>{{ a }}</option>
             {% endfor %}
         </select>
     </p>
