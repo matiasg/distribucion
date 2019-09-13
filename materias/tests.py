@@ -596,6 +596,13 @@ class TestPaginas(TestCase):
                                               materia__obligatoriedad=TipoMateria.N.name).count(),
                          0)
 
+        nuevo_turno11 = Turno.objects.get(anno=self.anno+1, cuatrimestre=self.cuatrimestre.name,
+                                          materia=self.materia1, numero=1)
+        self.assertEqual(Horario.objects.filter(turno=nuevo_turno11).count(), 2)
+
+        for horario in Horario.objects.filter(turno=nuevo_turno11):
+            self.assertIsNotNone(horario.aula)
+
     def test_copiar_cargas(self):
         self.client.login(username='autorizado', password='1234')
         response = self.client.get(reverse('materias:generar_cargas_docentes', args=(self.anno, self.cuatrimestre.name)))
