@@ -712,8 +712,8 @@ def generar_cuatrimestre(request, anno, cuatrimestre):
 
     else:
         context = {
-            'anno': anno,
-            'annos': list(range(anno + 1, anno + 3)),
+            'anno': anno + 3,
+            'annos': list(range(anno + 1, anno + 4)),
             'cuatrimestre': Cuatrimestres[cuatrimestre],
             'cuatrimestres': list(Cuatrimestres),
             'tipos': list(TipoMateria),
