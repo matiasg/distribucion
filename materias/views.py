@@ -707,7 +707,10 @@ def generar_cuatrimestre(request, anno, cuatrimestre):
                     if creado:
                         logger.info('Generé un nuevo turno: %s', nturno)
                         for horario in turno.horario_set.all():
-                            nhorario = Horario.objects.create(turno=nturno, dia=horario.dia, comienzo=horario.comienzo, final=horario.final)
+                            nhorario = Horario.objects.create(turno=nturno,
+                                                              dia=horario.dia, comienzo=horario.comienzo, final=horario.final,
+                                                              aula='', pabellon=Pabellon.Uno.value[0]
+                                                              )
         return HttpResponseRedirect(reverse('materias:administrar'))
 
     else:
