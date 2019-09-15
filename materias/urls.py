@@ -33,8 +33,6 @@ urlpatterns = [
          views.exportar_informacion, name='exportar_informacion'),
     path('generar_cuatrimestre/<int:anno>/<str:cuatrimestre>',
          views.generar_cuatrimestre, name='generar_cuatrimestre'),
-    path('generar_cargas_docentes/<int:anno>/<str:cuatrimestre>',
-         views.generar_cargas_docentes, name='generar_cargas_docentes'),
     path('administrar_docentes',
          views.administrar_docentes, name='administrar_docentes'),
     path('administrar_un_docente/<int:docente_id>',

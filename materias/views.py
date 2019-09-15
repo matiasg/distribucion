@@ -108,8 +108,6 @@ def administrar(request):
             return HttpResponseRedirect(reverse('materias:exportar_informacion', args=(anno, cuatrimestre)))
         elif 'generar_cuatrimestre' in request.POST:
             return HttpResponseRedirect(reverse('materias:generar_cuatrimestre', args=(anno, cuatrimestre)))
-        elif 'generar_cargas_docentes' in request.POST:
-            return HttpResponseRedirect(reverse('materias:generar_cargas_docentes', args=(anno, cuatrimestre)))
         elif 'administrar_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_docentes'), {'anno': anno, 'cuatrimestre': cuatrimestre})
         elif 'juntar_materias' in request.POST:
@@ -722,34 +720,6 @@ def generar_cuatrimestre(request, anno, cuatrimestre):
             'tipos': list(TipoMateria),
         }
         return render(request, 'materias/generar_cuatrimestre.html', context)
-
-
-@login_required
-@permission_required('dborrador.add_asignacion')
-def generar_cargas_docentes(request, anno, cuatrimestre):
-    if request.method == 'POST':
-        n_anno = int(request.POST['anno'])
-        n_cuatrimestre = Cuatrimestres[request.POST['cuatrimestre']]
-        logger.info('Voy a copiar a: %s, cuat: %s', n_anno, n_cuatrimestre)
-        with transaction.atomic():
-            cargas_ac = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
-            for tipo in TipoDocentes:
-                if not f'copiar_{tipo.name}' in request.POST:
-                    continue
-                for carga in Mapeos.cargas_de_tipo(cargas_ac, tipo):
-                    Carga.objects.create(docente=carga.docente, cargo=carga.cargo,
-                                         anno=n_anno, cuatrimestre=n_cuatrimestre.name)
-                    logger.debug('generé una carga para %s de %s', carga.docente, carga.cargo)
-        return HttpResponseRedirect(reverse('materias:administrar'))
-    else:
-        context = {
-            'anno': anno,
-            'annos': list(range(anno + 1, anno + 3)),
-            'cuatrimestre': Cuatrimestres[cuatrimestre],
-            'cuatrimestres': list(Cuatrimestres),
-            'tipos': list(TipoDocentes),
-        }
-        return render(request, 'materias/generar_cargas.html', context)
 
 
 SIN_CARGO = ('sincargo', 'sin cargo')
