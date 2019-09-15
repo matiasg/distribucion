@@ -26,7 +26,7 @@ urlpatterns = [
          views.cambiar_una_carga_publicada, name='cambiar_una_carga_publicada'),
     path('administrar_cargas_un_docente/<int:anno>/<str:cuatrimestre>/<int:docente_id>',
          views.administrar_cargas_de_un_docente, name='administrar_cargas_un_docente'),
-    path('juntar_materias', views.juntar_materias, name='juntar_materias'),
+    path('retocar_materias', views.retocar_materias, name='retocar_materias'),
     path('administrar_materia/<int:materia_id>/<int:anno>/<str:cuatrimestre>',
          views.administrar_materia, name='administrar_materia'),
     path('exportar_informacion/<int:anno>/<str:cuatrimestre>',

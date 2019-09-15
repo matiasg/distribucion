@@ -33,7 +33,7 @@
     </table>
 
     {% if esta_bien %}
-    <form action="{% url 'materias:juntar_materias' %}" method=post>
+    <form action="{% url 'materias:retocar_materias' %}" method=post>
     {% csrf_token %}
 
     <p>
@@ -63,7 +63,7 @@
     {% endif %}
 
     <div id="actuar">
-        <a href="{% url 'materias:juntar_materias' %}">Cancelar</a>
+        <a href="{% url 'materias:retocar_materias' %}">Cancelar</a>
     </div>
 
 </body>

@@ -11,7 +11,7 @@
 
 <body>
     <div id="actuar">
-        <a href="{% url 'materias:modificar_materias' %}">Cancelar</a>
+        <a href="{% url 'materias:retocar_materias' %}">Cancelar</a>
     </div>
     <form action="{% url 'materias:modificar_materia' materia.id %}" method="post">
         {% csrf_token %}

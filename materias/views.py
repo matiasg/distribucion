@@ -110,8 +110,8 @@ def administrar(request):
             return HttpResponseRedirect(reverse('materias:generar_cuatrimestre', args=(anno, cuatrimestre)))
         elif 'administrar_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_docentes'), {'anno': anno, 'cuatrimestre': cuatrimestre})
-        elif 'juntar_materias' in request.POST:
-            return HttpResponseRedirect(reverse('materias:juntar_materias'))
+        elif 'retocar_materias' in request.POST:
+            return HttpResponseRedirect(reverse('materias:retocar_materias'))
         elif 'cargas_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
         elif 'cargas_docentes_anuales' in request.POST:
@@ -250,7 +250,7 @@ def modificar_materia(request, materia_id):
         elif 'borrar' in request.POST:
             borrado = materia.delete()
             logger.warning('borre la materia %s (objetos borrados: %s)', materia, borrado)
-            return HttpResponseRedirect(reverse('materias:modificar_materias'))
+            return HttpResponseRedirect(reverse('materias:retocar_materias'))
     else:
         form = MateriaForm(instance=materia)
     context['form'] = form
@@ -557,8 +557,12 @@ def borrar_horario(request, horario_id):
 
 @login_required
 @permission_required('materias.add_turno')
-def juntar_materias(request):
+def retocar_materias(request):
     if request.method == 'POST':
+
+        if 'agreguemos' in request.POST:
+            return HttpResponseRedirect(reverse('materias:agregar_materia'))
+
         para_juntar = {Materia.objects.get(pk=int(k.split('_')[-1]))
                        for k, v in request.POST.items()
                        if k.startswith('juntar')}
@@ -578,12 +582,12 @@ def juntar_materias(request):
                         AliasDeMateria.objects.create(materia=queda, nombre=materia.nombre)
                         materia.delete()
 
-            return HttpResponseRedirect(reverse('materias:juntar_materias'))
+            return HttpResponseRedirect(reverse('materias:retocar_materias'))
 
         else:
             if not para_juntar:
                 logger.warning('pusieron juntar pero sin ninguna materia')
-                return HttpResponseRedirect(reverse('materias:juntar_materias'))
+                return HttpResponseRedirect(reverse('materias:retocar_materias'))
 
 
             turnos = {materia: {(t.anno, t.cuatrimestre) for t in materia.turno_set.all()} for materia in para_juntar}
