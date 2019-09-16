@@ -286,6 +286,8 @@ class TestPaginas(TestCase):
             'dborrador': 'dborrador/distribucion',
             'retocar_materias': 'materias/retocar_materias',
             'generar_cuatrimestre': 'materias/generar_cuatrimestre',
+            'ver_materias': f'materias/{self.anno}{self.cuatrimestre.value}',
+            'cargas_docentes_anuales': 'materias/cargas_docentes_anuales',
         }
         for boton, url in botones_urls.items():
             response = self.client.post('/materias/administrar',
