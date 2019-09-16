@@ -98,10 +98,6 @@ def administrar(request):
 
         if 'turnos_alumnos' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
-        elif 'agregar_materia' in request.POST:
-            return HttpResponseRedirect(reverse('materias:agregar_materia'))
-        elif 'modificar_materias' in request.POST:
-            return HttpResponseRedirect(reverse('materias:modificar_materias'))
         elif 'turnos_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_necesidades_docentes', args=(anno, cuatrimestre)))
         elif 'exportar_informacion' in request.POST:
@@ -226,16 +222,6 @@ def agregar_materia(request):
 
 @login_required
 @permission_required('materias.add_turno')
-def modificar_materias(request):
-    context = {
-        'materias': {TIPO_DICT[ob]: Materia.objects.filter(obligatoriedad=ob.name).order_by('nombre')
-                     for ob in TipoMateria}
-    }
-    return render(request, 'materias/modificar_materias.html', context)
-
-
-@login_required
-@permission_required('materias.add_turno')
 def modificar_materia(request, materia_id):
     materia = Materia.objects.get(pk=materia_id)
     context = {
@@ -247,7 +233,7 @@ def modificar_materia(request, materia_id):
             if form.is_valid():
                 form.save()
                 logger.info('salvé una materia modificada: %s', materia)
-                return HttpResponseRedirect(reverse('materias:modificar_materias'))
+                return HttpResponseRedirect(reverse('materias:retocar_materias'))
             else:
                 logger.error(form.errors)
         elif 'borrar' in request.POST:
