@@ -49,7 +49,7 @@ def maymin(materia):
 def convierte_a_horarios(text):
     dia = '({})'.format('|'.join(d.name for d in Dias))
     hora = r'(\d{1,2}(:\d{2})?)\b'
-    dia_y_hora = re.compile(fr'^({dia}):\s*({hora}) (?:a|-) ({hora})')
+    dia_y_hora = re.compile(fr'^({dia}):\s*({hora})\s*(?:a|-)\s*({hora})')
     dos_dias_y_hora = re.compile(fr'^({dia})\s*[+-]\s*({dia}):\s*({hora})\s*(?:a|-)\s*({hora})')
     tres_dias_y_hora = re.compile(fr'^({dia})\s*[+-]\s*({dia})\s*[+-]\s*({dia}):\s*({hora})\s*(?:a|-)\s*({hora})')
     cuatro_dias_y_hora = re.compile(fr'^({dia})\s*[+-]\s*({dia})\s*[+-]\s*({dia})\s*[+-]\s*({dia}):\s*({hora})\s*(?:a|-)\s*({hora})')
