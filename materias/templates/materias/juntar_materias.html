@@ -6,16 +6,16 @@
 
 <head>
 <h2>
-    Juntar materias que por error figuran como dos distintas
+    Juntar o agregar materias
 </h2>
 </head>
 
 <body>
     <div id="actuar">
-        <a href="{% url 'materias:administrar' %}">Volver a administrar materias</a>
+        <a href="{% url 'materias:administrar' %}">Volver a administrar</a>
     </div>
 
-    <form action="{% url 'materias:juntar_materias' %}" method="post">
+    <form action="{% url 'materias:retocar_materias' %}" method="post">
         {% csrf_token %}
 
        {% for obligatoriedad, o_materias in materias.items %}
@@ -27,12 +27,13 @@
             {% for materia in o_materias %}
             <li>
                 <input type="checkbox" name="juntar_{{ materia.id }}">
-                {{ materia }}
+                <a href="{% url 'materias:modificar_materia' materia.id %}">{{ materia }}</a>
             </li>
             {% endfor %}
         </ul>
 
         {% endfor %}
         <input id=actuar type="submit" name="juntemos" value="juntar">
+        <input id=actuar type="submit" name="agreguemos" value="agregar una materia">
     </form>
 </body>

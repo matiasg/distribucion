@@ -24,16 +24,16 @@
     <h3> Cuatrimestre a generar: </h3>
     <p>
         Año:
-        <select name="anno">
+        <select name="nuevo_anno">
             {% for a in annos %}
-            <option value="{{ a }}" {% if a == anno %}selected{% endif %}>{{ a }}</option>
+            <option value="{{ a }}" {% if a == anno_m3 %}selected{% endif %}>{{ a }}</option>
             {% endfor %}
         </select>
     </p>
 
     <p>
         Cuatrimestre:
-        <select name="cuatrimestre">
+        <select name="nuevo_cuatrimestre">
             {% for c in cuatrimestres %}
             <option value="{{ c.name }}" {% if c == cuatrimestre %}selected{% endif %}>{{ c.value }}</option>
             {% endfor %}

@@ -268,8 +268,7 @@ class TestPaginas(TestCase):
         response = self.client.get('/materias/administrar', follow=True)
         self.assertContains(response, 'administrar materias: alumnos y turnos')
         self.assertContains(response, 'administrar necesidades docentes')
-        self.assertContains(response, 'agregar una materia')
-        self.assertContains(response, 'modificar materias')
+        self.assertContains(response, 'retocar materias')
         self.assertContains(response, 'administrar encuestas')
         self.assertContains(response, 'distribuir docentes')
         self.assertEqual(len(response.redirect_chain), 0)
@@ -285,11 +284,10 @@ class TestPaginas(TestCase):
             'cargas_docentes_publicadas': 'materias/administrar_cargas_publicadas',
             'administrar_encuestas': 'encuestas/administrar_habilitadas',
             'dborrador': 'dborrador/distribucion',
-            'juntar_materias': 'materias/juntar_materias',
-            'agregar_materia': 'materias/modificar_materia',
-            'modificar_materias': 'materias/modificar_materias',
+            'retocar_materias': 'materias/retocar_materias',
             'generar_cuatrimestre': 'materias/generar_cuatrimestre',
-            'generar_cargas_docentes': 'materias/generar_cargas_docentes',
+            'ver_materias': f'materias/{self.anno}{self.cuatrimestre.value}',
+            'cargas_docentes_anuales': 'materias/cargas_docentes_anuales',
         }
         for boton, url in botones_urls.items():
             response = self.client.post('/materias/administrar',
@@ -543,11 +541,11 @@ class TestPaginas(TestCase):
         self.client.login(username='autorizado', password='1234')
         duplicada = Materia.objects.create(nombre='lacán 3', obligatoriedad=TipoMateria.B.name)
         # priemro consultamos la página
-        response = self.client.get(reverse('materias:juntar_materias'))
+        response = self.client.get(reverse('materias:retocar_materias'))
         for materia in [self.materia1, self.materia2, self.materia3,  duplicada]:
             self.assertContains(response, materia.nombre)
         # le decimos de juntar materias
-        response = self.client.post(reverse('materias:juntar_materias'),
+        response = self.client.post(reverse('materias:retocar_materias'),
                                     {f'juntar_{self.materia3.id}': True, f'juntar_{duplicada.id}': True})
         for materia, debe_estar in {self.materia1: False, self.materia2: False, self.materia3: True,  duplicada: True}.items():
             if debe_estar:
@@ -558,7 +556,7 @@ class TestPaginas(TestCase):
         dict_nec = {'necesidad_prof': 0, 'necesidad_jtp': 0, 'necesidad_ay1': 0, 'necesidad_ay2': 0}
         turno = Turno.objects.create(materia=self.materia3, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                      numero=2, tipo=TipoTurno.T.name, **dict_nec)
-        response = self.client.post(reverse('materias:juntar_materias'),
+        response = self.client.post(reverse('materias:retocar_materias'),
                                     {f'juntar_{self.materia3.id}': True, f'juntar_{duplicada.id}': True,
                                      'nombre': f'nombre_{duplicada.id}',
                                      'confirmar': True})
@@ -579,7 +577,7 @@ class TestPaginas(TestCase):
         response = self.client.get(reverse('materias:generar_cuatrimestre', args=(self.anno, self.cuatrimestre.name)))
         self.assertContains(response, f'value="{self.cuatrimestre.name}" selected>{self.cuatrimestre.value}')
         response = self.client.post(reverse('materias:generar_cuatrimestre', args=(self.anno, self.cuatrimestre.name)),
-                                    {'anno': self.anno+1, 'cuatrimestre': self.cuatrimestre.name,
+                                    {'nuevo_anno': self.anno+1, 'nuevo_cuatrimestre': self.cuatrimestre.name,
                                      f'copiar_{TipoMateria.B.name}': True,
                                      f'copiar_{TipoMateria.R.name}': True})
         for tipo in (TipoMateria.B, TipoMateria.R):
@@ -602,27 +600,6 @@ class TestPaginas(TestCase):
 
         for horario in Horario.objects.filter(turno=nuevo_turno11):
             self.assertIsNotNone(horario.aula)
-
-    def test_copiar_cargas(self):
-        self.client.login(username='autorizado', password='1234')
-        response = self.client.get(reverse('materias:generar_cargas_docentes', args=(self.anno, self.cuatrimestre.name)))
-        self.assertContains(response, f'value="{self.cuatrimestre.name}" selected>{self.cuatrimestre.value}')
-        for tipo in TipoDocentes:
-            self.assertContains(response, f'name="copiar_{tipo.name}" checked>')
-
-        n = Docente.objects.create(na_nombre='nemo', na_apellido='X', telefono='00 0000', email='nemo@nautilus.org',
-                                   cargos=[CargoDedicacion.TitExc.name])
-        for carded in CargoDedicacion:
-            Carga.objects.create(docente=n, cargo=carded.name, anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-
-        self.client.post(reverse('materias:generar_cargas_docentes', args=(self.anno, self.cuatrimestre.name)),
-                         {'anno': self.anno+1, 'cuatrimestre': self.cuatrimestre.name,
-                          f'copiar_{TipoDocentes.P.name}': True,
-                          f'copiar_{TipoDocentes.J.name}': True})
-        for carded in CargoDedicacion:
-            esperado = 1 if Mapeos.tipos_de_cargo(carded.name) in (TipoDocentes.P, TipoDocentes.J) else 0
-            self.assertEqual(Carga.objects.filter(anno=self.anno+1, cuatrimestre=self.cuatrimestre.name, cargo=carded.name).count(),
-                             esperado)
 
     def test_administrar_docentes(self):
         self.client.login(username='autorizado', password='1234')
@@ -712,7 +689,7 @@ class TestPaginas(TestCase):
     def test_agregar_y_modificar_materias(self):
         # miramos que modificar materias tiene links a todas las materias
         self.client.login(username='autorizado', password='1234')
-        response = self.client.get(reverse('materias:modificar_materias'))
+        response = self.client.get(reverse('materias:retocar_materias'))
         for materia in (self.materia1, self.materia2, self.materia3):
             url = reverse('materias:modificar_materia', args=(materia.id,))
             self.assertContains(response, f'href="{url}">{materia.nombre}')
@@ -736,7 +713,7 @@ class TestPaginas(TestCase):
         response = self.client.post(redirect_url, {'borrar': True, 'obligatoriedad': '?', 'nombre': 'no importa'}, follow=True)
         with self.assertRaises(Materia.DoesNotExist):
             nueva_materia.refresh_from_db()
-        self.assertEqual(response.redirect_chain[-1][0], reverse('materias:modificar_materias'))
+        self.assertEqual(response.redirect_chain[-1][0], reverse('materias:retocar_materias'))
 
     def test_agregar_y_borrar_docente(self):
         self.client.login(username='autorizado', password='1234')

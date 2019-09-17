@@ -98,22 +98,19 @@ def administrar(request):
 
         if 'turnos_alumnos' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
-        elif 'agregar_materia' in request.POST:
-            return HttpResponseRedirect(reverse('materias:agregar_materia'))
-        elif 'modificar_materias' in request.POST:
-            return HttpResponseRedirect(reverse('materias:modificar_materias'))
         elif 'turnos_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_necesidades_docentes', args=(anno, cuatrimestre)))
         elif 'exportar_informacion' in request.POST:
             return HttpResponseRedirect(reverse('materias:exportar_informacion', args=(anno, cuatrimestre)))
         elif 'generar_cuatrimestre' in request.POST:
             return HttpResponseRedirect(reverse('materias:generar_cuatrimestre', args=(anno, cuatrimestre)))
-        elif 'generar_cargas_docentes' in request.POST:
-            return HttpResponseRedirect(reverse('materias:generar_cargas_docentes', args=(anno, cuatrimestre)))
         elif 'administrar_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_docentes'), {'anno': anno, 'cuatrimestre': cuatrimestre})
-        elif 'juntar_materias' in request.POST:
-            return HttpResponseRedirect(reverse('materias:juntar_materias'))
+        elif 'retocar_materias' in request.POST:
+            return HttpResponseRedirect(reverse('materias:retocar_materias'))
+        elif 'ver_materias' in request.POST:
+            return HttpResponseRedirect(reverse('materias:por_anno_y_cuatrimestre',
+                                                args=(f'{anno}{Cuatrimestres[cuatrimestre].value}',)))
         elif 'cargas_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
         elif 'cargas_docentes_anuales' in request.POST:
@@ -225,16 +222,6 @@ def agregar_materia(request):
 
 @login_required
 @permission_required('materias.add_turno')
-def modificar_materias(request):
-    context = {
-        'materias': {TIPO_DICT[ob]: Materia.objects.filter(obligatoriedad=ob.name).order_by('nombre')
-                     for ob in TipoMateria}
-    }
-    return render(request, 'materias/modificar_materias.html', context)
-
-
-@login_required
-@permission_required('materias.add_turno')
 def modificar_materia(request, materia_id):
     materia = Materia.objects.get(pk=materia_id)
     context = {
@@ -246,13 +233,13 @@ def modificar_materia(request, materia_id):
             if form.is_valid():
                 form.save()
                 logger.info('salvé una materia modificada: %s', materia)
-                return HttpResponseRedirect(reverse('materias:modificar_materias'))
+                return HttpResponseRedirect(reverse('materias:retocar_materias'))
             else:
                 logger.error(form.errors)
         elif 'borrar' in request.POST:
             borrado = materia.delete()
             logger.warning('borre la materia %s (objetos borrados: %s)', materia, borrado)
-            return HttpResponseRedirect(reverse('materias:modificar_materias'))
+            return HttpResponseRedirect(reverse('materias:retocar_materias'))
     else:
         form = MateriaForm(instance=materia)
     context['form'] = form
@@ -559,8 +546,12 @@ def borrar_horario(request, horario_id):
 
 @login_required
 @permission_required('materias.add_turno')
-def juntar_materias(request):
+def retocar_materias(request):
     if request.method == 'POST':
+
+        if 'agreguemos' in request.POST:
+            return HttpResponseRedirect(reverse('materias:agregar_materia'))
+
         para_juntar = {Materia.objects.get(pk=int(k.split('_')[-1]))
                        for k, v in request.POST.items()
                        if k.startswith('juntar')}
@@ -580,12 +571,12 @@ def juntar_materias(request):
                         AliasDeMateria.objects.create(materia=queda, nombre=materia.nombre)
                         materia.delete()
 
-            return HttpResponseRedirect(reverse('materias:juntar_materias'))
+            return HttpResponseRedirect(reverse('materias:retocar_materias'))
 
         else:
             if not para_juntar:
                 logger.warning('pusieron juntar pero sin ninguna materia')
-                return HttpResponseRedirect(reverse('materias:juntar_materias'))
+                return HttpResponseRedirect(reverse('materias:retocar_materias'))
 
 
             turnos = {materia: {(t.anno, t.cuatrimestre) for t in materia.turno_set.all()} for materia in para_juntar}
@@ -690,14 +681,15 @@ def exportar_informacion(request, anno, cuatrimestre):
 @permission_required('materias.add_turno')
 def generar_cuatrimestre(request, anno, cuatrimestre):
     if request.method == 'POST':
-        n_anno = int(request.POST['anno'])
-        n_cuatrimestre = Cuatrimestres[request.POST['cuatrimestre']]
-        logger.info('Voy a copiar a: %s, cuat: %s', n_anno, n_cuatrimestre)
+        nuevo_anno = int(request.POST['nuevo_anno'])
+        nuevo_cuatrimestre = Cuatrimestres[request.POST['nuevo_cuatrimestre']]
+        logger.info('Voy a copiar (%s, %s) a (%s, %s)', anno, cuatrimestre, nuevo_anno, nuevo_cuatrimestre)
         with transaction.atomic():
             for turno in Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre):
                 tipo_materia = turno.materia.obligatoriedad
                 if f'copiar_{tipo_materia}' in request.POST:
-                    nturno, creado = Turno.objects.get_or_create(materia=turno.materia, anno=n_anno, cuatrimestre=n_cuatrimestre.name,
+                    nturno, creado = Turno.objects.get_or_create(materia=turno.materia,
+                                                                 anno=nuevo_anno, cuatrimestre=nuevo_cuatrimestre.name,
                                                                  numero=turno.numero, subnumero=turno.subnumero, tipo=turno.tipo,
                                                                  defaults={'necesidad_prof': turno.necesidad_prof,
                                                                            'necesidad_jtp': turno.necesidad_jtp,
@@ -711,45 +703,19 @@ def generar_cuatrimestre(request, anno, cuatrimestre):
                                                               dia=horario.dia, comienzo=horario.comienzo, final=horario.final,
                                                               aula='', pabellon=Pabellon.Uno.value[0]
                                                               )
+                        logger.debug('  y le puse %d horarios', turno.horario_set.count())
         return HttpResponseRedirect(reverse('materias:administrar'))
 
     else:
         context = {
-            'anno': anno + 3,
+            'anno': anno,
             'annos': list(range(anno + 1, anno + 4)),
+            'anno_m3': anno + 3,
             'cuatrimestre': Cuatrimestres[cuatrimestre],
             'cuatrimestres': list(Cuatrimestres),
             'tipos': list(TipoMateria),
         }
         return render(request, 'materias/generar_cuatrimestre.html', context)
-
-
-@login_required
-@permission_required('dborrador.add_asignacion')
-def generar_cargas_docentes(request, anno, cuatrimestre):
-    if request.method == 'POST':
-        n_anno = int(request.POST['anno'])
-        n_cuatrimestre = Cuatrimestres[request.POST['cuatrimestre']]
-        logger.info('Voy a copiar a: %s, cuat: %s', n_anno, n_cuatrimestre)
-        with transaction.atomic():
-            cargas_ac = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
-            for tipo in TipoDocentes:
-                if not f'copiar_{tipo.name}' in request.POST:
-                    continue
-                for carga in Mapeos.cargas_de_tipo(cargas_ac, tipo):
-                    Carga.objects.create(docente=carga.docente, cargo=carga.cargo,
-                                         anno=n_anno, cuatrimestre=n_cuatrimestre.name)
-                    logger.debug('generé una carga para %s de %s', carga.docente, carga.cargo)
-        return HttpResponseRedirect(reverse('materias:administrar'))
-    else:
-        context = {
-            'anno': anno,
-            'annos': list(range(anno + 1, anno + 3)),
-            'cuatrimestre': Cuatrimestres[cuatrimestre],
-            'cuatrimestres': list(Cuatrimestres),
-            'tipos': list(TipoDocentes),
-        }
-        return render(request, 'materias/generar_cargas.html', context)
 
 
 SIN_CARGO = ('sincargo', 'sin cargo')
