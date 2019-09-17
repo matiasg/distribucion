@@ -683,7 +683,7 @@ def generar_cuatrimestre(request, anno, cuatrimestre):
     if request.method == 'POST':
         nuevo_anno = int(request.POST['nuevo_anno'])
         nuevo_cuatrimestre = Cuatrimestres[request.POST['nuevo_cuatrimestre']]
-        logger.info('Voy a copiar a: %s, cuat: %s', nuevo_anno, nuevo_cuatrimestre)
+        logger.info('Voy a copiar (%s, %s) a (%s, %s)', anno, cuatrimestre, nuevo_anno, nuevo_cuatrimestre)
         with transaction.atomic():
             for turno in Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre):
                 tipo_materia = turno.materia.obligatoriedad
@@ -703,6 +703,7 @@ def generar_cuatrimestre(request, anno, cuatrimestre):
                                                               dia=horario.dia, comienzo=horario.comienzo, final=horario.final,
                                                               aula='', pabellon=Pabellon.Uno.value[0]
                                                               )
+                        logger.debug('  y le puse %d horarios', turno.horario_set.count())
         return HttpResponseRedirect(reverse('materias:administrar'))
 
     else:
