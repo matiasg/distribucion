@@ -94,7 +94,7 @@ cargo_tipoturno = {'Teórica': [CargoDedicacion.AsoExc],
 docentes_separador = re.compile('(?: +-+ *| *—  *| *-+ +)')
 docente_con_dias_al_final = re.compile('(.*[^\s])(\s*\((?i:lu|ma|mi|ju|vi|-)+\))')
 
-def salva_datos(html, anno, cuatrimestre):
+def salva_datos(html, anno, cuatrimestre, no_agregar_docentes=False):
     soup = BeautifulSoup(html, 'html.parser')
     comienzo = soup.find_all('div', attrs={'class': 'seccion'})[0]
 
@@ -189,67 +189,67 @@ def salva_datos(html, anno, cuatrimestre):
                 if creado:
                     logger.info('nuevo turno creado: %s', turno)
 
-
                 # docentes y cargas
-                cargos = cargo_tipoturno[tipoynumero[0]]
-                cargos_inferidos = [CargoDedicacion.AsoExc] * necesidad_prof + [CargoDedicacion.JTPSim] * necesidad_jtp \
-                                   + [CargoDedicacion.Ay1Sim] * necesidad_ay1 + [CargoDedicacion.Ay2Sim] * necesidad_ay2
-                cargos_inferidos += [cargos_inferidos[-1]] * (len(turno_docentes) - len(cargos_inferidos))
-                for i, docente in enumerate(turno_docentes):
-                    m = docente_con_dias_al_final.search(docente)
-                    if m:
-                        docente = m.group(1)
-                    docente = string.capwords(docente.strip())
-                    # evitamos el docente '' que aparece en turnos sin asignaciones
-                    if not docente:
-                        continue
+                if not no_agregar_docentes:
+                    cargos = cargo_tipoturno[tipoynumero[0]]
+                    cargos_inferidos = [CargoDedicacion.AsoExc] * necesidad_prof + [CargoDedicacion.JTPSim] * necesidad_jtp \
+                                       + [CargoDedicacion.Ay1Sim] * necesidad_ay1 + [CargoDedicacion.Ay2Sim] * necesidad_ay2
+                    cargos_inferidos += [cargos_inferidos[-1]] * (len(turno_docentes) - len(cargos_inferidos))
+                    for i, docente in enumerate(turno_docentes):
+                        m = docente_con_dias_al_final.search(docente)
+                        if m:
+                            docente = m.group(1)
+                        docente = string.capwords(docente.strip())
+                        # evitamos el docente '' que aparece en turnos sin asignaciones
+                        if not docente:
+                            continue
 
-                    cargo = cargos_inferidos[i].name
+                        cargo = cargos_inferidos[i].name
 
-                    # intento encontrar docente
-                    docentes_qs = Docente.objects.annotate(na=Concat('na_nombre', Value(' '), 'na_apellido'))
-                    posibles_docentes = docentes_qs.filter(na=docente)
+                        # intento encontrar docente
+                        docentes_qs = Docente.objects.annotate(na=Concat('na_nombre', Value(' '), 'na_apellido'))
+                        posibles_docentes = docentes_qs.filter(na=docente)
 
-                    doc = None
-                    if posibles_docentes.count() == 1:
-                        doc = posibles_docentes.first()
-                        logger.debug('docente existente: %s', doc)
-                    elif posibles_docentes.count() > 1:
-                        logger.error('ah, no, hay más de un docente con el mismo nombre: %s', posibles_docentes)
-                        raise RuntimeError('problema con docentes: más de uno con el mismo nombre: {}'.format(docente))
-                    else:   # Todavía podríamos encontrar alguno que se llame parecido. Lo buscamos con distancia de edición
-                        # Nota: el .replace() que sigue es horrible. No encontré nada mejor.
-                        # Todo el escaping es muy automático y las funciones para escapar en SQL están
-                        # medio escondidas. Lo más cercano que vi es
-                        #     from django.db import connection
-                        #     cursor = connection.cursor()
-                        #     cursor.mogrify(docente)
-                        # Pero no (me) funciona.
-                        # TODO para el que mantenga este software: encontrá algo mejor. Suerte.
-                        template = "%(function)s(%(expressions)s, '{}')".format(docente.replace("'", "''"))
-                        docentes_lvns = docentes_qs.annotate(similar=Func(F('na'),
-                                                                          function='levenshtein',
-                                                                          template=template))
-                        docentes_parecidos = docentes_lvns.filter(similar__lt=3)
-                        if docentes_parecidos.count() > 0:
-                            doc = docentes_parecidos.order_by('similar').first()
-                            logger.warning('Encontré un docente que parece ser %s. Es %s. Los considero la misma persona.',
-                                           docente, doc)
+                        doc = None
+                        if posibles_docentes.count() == 1:
+                            doc = posibles_docentes.first()
+                            logger.debug('docente existente: %s', doc)
+                        elif posibles_docentes.count() > 1:
+                            logger.error('ah, no, hay más de un docente con el mismo nombre: %s', posibles_docentes)
+                            raise RuntimeError('problema con docentes: más de uno con el mismo nombre: {}'.format(docente))
+                        else:   # Todavía podríamos encontrar alguno que se llame parecido. Lo buscamos con distancia de edición
+                            # Nota: el .replace() que sigue es horrible. No encontré nada mejor.
+                            # Todo el escaping es muy automático y las funciones para escapar en SQL están
+                            # medio escondidas. Lo más cercano que vi es
+                            #     from django.db import connection
+                            #     cursor = connection.cursor()
+                            #     cursor.mogrify(docente)
+                            # Pero no (me) funciona.
+                            # TODO para el que mantenga este software: encontrá algo mejor. Suerte.
+                            template = "%(function)s(%(expressions)s, '{}')".format(docente.replace("'", "''"))
+                            docentes_lvns = docentes_qs.annotate(similar=Func(F('na'),
+                                                                              function='levenshtein',
+                                                                              template=template))
+                            docentes_parecidos = docentes_lvns.filter(similar__lt=3)
+                            if docentes_parecidos.count() > 0:
+                                doc = docentes_parecidos.order_by('similar').first()
+                                logger.warning('Encontré un docente que parece ser %s. Es %s. Los considero la misma persona.',
+                                               docente, doc)
 
-                    if doc is None:
-                        palabras_na = docente.split()
-                        palabras_nombre = 1 if len(palabras_na) < 3 else 2
-                        nombre = ' '.join(palabras_na[:palabras_nombre])
-                        apellido = ' '.join(palabras_na[palabras_nombre:])
-                        doc = Docente.objects.create(na_nombre=nombre, na_apellido=apellido, cargos=[cargo])
-                        logger.info('agregue a: %s', doc)
+                        if doc is None:
+                            palabras_na = docente.split()
+                            palabras_nombre = 1 if len(palabras_na) < 3 else 2
+                            nombre = ' '.join(palabras_na[:palabras_nombre])
+                            apellido = ' '.join(palabras_na[palabras_nombre:])
+                            doc = Docente.objects.create(na_nombre=nombre, na_apellido=apellido, cargos=[cargo])
+                            logger.info('agregue a: %s', doc)
 
-                    carga, creada = Carga.objects.get_or_create(docente=doc,
-                                                                turno=turno,
-                                                                anno=anno, cuatrimestre=cuatrimestre,
-                                                                defaults={'cargo': cargo})
-                    if creada:
-                        logger.info('Carga docente: %s -> %s', doc.nombre, turno)
+                        carga, creada = Carga.objects.get_or_create(docente=doc,
+                                                                    turno=turno,
+                                                                    anno=anno, cuatrimestre=cuatrimestre,
+                                                                    defaults={'cargo': cargo})
+                        if creada:
+                            logger.info('Carga docente: %s -> %s', doc.nombre, turno)
 
                 # horarios
                 horarios = convierte_a_horarios(rows[1].text)
@@ -272,10 +272,12 @@ def parse():
     parser.add_argument('cuatrimestre',
                         choices=[c.value for c in Cuatrimestres],
                         help='Cuatrimestre del que se quiere tomar la información')
+    parser.add_argument('--no-agregar-docentes', action='store_true',
+                        help='No crear docentes nuevos ni agregarles cargos')
     return parser.parse_args()
 
 if __name__ == '__main__':
     args = parse()
     cuatrimestre_name = get_key_enum(Cuatrimestres)[args.cuatrimestre]
     html = lee_horarios_anteriores(args.año, args.cuatrimestre.lower())
-    salva_datos(html, args.año, cuatrimestre_name)
+    salva_datos(html, args.año, cuatrimestre_name, args.no_agregar_docentes)
