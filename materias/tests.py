@@ -577,7 +577,7 @@ class TestPaginas(TestCase):
         response = self.client.get(reverse('materias:generar_cuatrimestre', args=(self.anno, self.cuatrimestre.name)))
         self.assertContains(response, f'value="{self.cuatrimestre.name}" selected>{self.cuatrimestre.value}')
         response = self.client.post(reverse('materias:generar_cuatrimestre', args=(self.anno, self.cuatrimestre.name)),
-                                    {'anno': self.anno+1, 'cuatrimestre': self.cuatrimestre.name,
+                                    {'nuevo_anno': self.anno+1, 'nuevo_cuatrimestre': self.cuatrimestre.name,
                                      f'copiar_{TipoMateria.B.name}': True,
                                      f'copiar_{TipoMateria.R.name}': True})
         for tipo in (TipoMateria.B, TipoMateria.R):
