@@ -681,14 +681,15 @@ def exportar_informacion(request, anno, cuatrimestre):
 @permission_required('materias.add_turno')
 def generar_cuatrimestre(request, anno, cuatrimestre):
     if request.method == 'POST':
-        n_anno = int(request.POST['anno'])
-        n_cuatrimestre = Cuatrimestres[request.POST['cuatrimestre']]
-        logger.info('Voy a copiar a: %s, cuat: %s', n_anno, n_cuatrimestre)
+        nuevo_anno = int(request.POST['nuevo_anno'])
+        nuevo_cuatrimestre = Cuatrimestres[request.POST['nuevo_cuatrimestre']]
+        logger.info('Voy a copiar a: %s, cuat: %s', nuevo_anno, nuevo_cuatrimestre)
         with transaction.atomic():
             for turno in Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre):
                 tipo_materia = turno.materia.obligatoriedad
                 if f'copiar_{tipo_materia}' in request.POST:
-                    nturno, creado = Turno.objects.get_or_create(materia=turno.materia, anno=n_anno, cuatrimestre=n_cuatrimestre.name,
+                    nturno, creado = Turno.objects.get_or_create(materia=turno.materia,
+                                                                 anno=nuevo_anno, cuatrimestre=nuevo_cuatrimestre.name,
                                                                  numero=turno.numero, subnumero=turno.subnumero, tipo=turno.tipo,
                                                                  defaults={'necesidad_prof': turno.necesidad_prof,
                                                                            'necesidad_jtp': turno.necesidad_jtp,
@@ -706,8 +707,9 @@ def generar_cuatrimestre(request, anno, cuatrimestre):
 
     else:
         context = {
-            'anno': anno + 3,
+            'anno': anno,
             'annos': list(range(anno + 1, anno + 4)),
+            'anno_m3': anno + 3,
             'cuatrimestre': Cuatrimestres[cuatrimestre],
             'cuatrimestres': list(Cuatrimestres),
             'tipos': list(TipoMateria),
