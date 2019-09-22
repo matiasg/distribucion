@@ -27,11 +27,35 @@
 <table id="administrar_materia">
     <thead> <tr> <td>Día</td> <td>Comienzo</td> <td>Final</td> <td>borrar</td> </tr> </thead>
     <tbody>
-        {% for horario in turno.horario_set.all|dictsort:"dia" %}
+        {% for horario in horarios %}
         <tr>
-            <td>{{ horario.dia }}</td>
-            <td>{{ horario.comienzo|time:"H:i" }}</td>
-            <td>{{ horario.final|time:"H:i" }}</td>
+
+            <td>
+                <select name="existente_{{ horario.id }}_dia">
+                    <option value="">------</option>
+                    {% for dia in dias %}
+                        <option value="{{ dia.name }}" {% if dia.name == horario.dia %}selected{% endif %}>{{ dia.value.0 }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <select name="existente_{{ horario.id }}_comienzo">
+                    {% for hora in horas %}
+                    <option value="{{ hora.0 }}" {% if horario.comienzo|time:"H:i" == hora.1 %}selected{% endif %}>
+                        {{ hora.1 }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <select name="existente_{{ horario.id }}_final">
+                    {% for hora in horas %}
+                    <option value="{{ hora.0 }}" {% if horario.final|time:"H:i" == hora.1 %}selected{% endif %}>
+                        {{ hora.1 }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </td>
             <td><input type="button" id="borrar_horario" data-horario="{{ horario.id }}" value="Borrar horario"></td>
         </tr>
         {% endfor %}
@@ -39,7 +63,7 @@
         {% for i in turno.horario_set.all|restantes_hasta:turnosmax %}
         <tr>
             <td>
-                <select name="dia{{ i }}">
+                <select name="nuevo_{{ i }}_dia">
                     <option value="">------</option>
                     {% for dia in dias %}
                     <option value="{{ dia.name }}">{{ dia.value.0 }}</option>
@@ -47,31 +71,27 @@
                 </select>
             </td>
             <td>
-                <select name="comienzo{{ i }}">
+                <select name="nuevo_{{ i }}_comienzo">
                     {% for hora in horas %}
                     <option value="{{ hora.0 }}"> {{ hora.1 }} </option>
                     {% endfor %}
                 </select>
             </td>
             <td>
-                <select name="final{{ i }}">
+                <select name="nuevo_{{ i }}_final">
                     {% for hora in horas %}
                     <option value="{{ hora.0 }}"> {{ hora.1 }} </option>
                     {% endfor %}
                 </select>
             </td>
-            <td>
-                <button>Agregar horario</button>
-            </td>
+            <td></td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
-</form>
 
-<form action="{% url 'materias:cambiar_turno' turno.id %}" method="post">
-{% csrf_token %}
-<input type="submit" name="volver" value="volver">
+<input type="submit" name="cambiar" value="cambiar">
+<input type="submit" name="cancelar" value="cancelar">
 </form>
 
 <div class="borrar_horario_dialogo" url="{% url 'materias:borrar_horario' 31415926535 %}">
