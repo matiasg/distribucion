@@ -501,27 +501,41 @@ def borrar_turno(request, turno_id):
 @permission_required('materias.add_turno')
 def cambiar_turno(request, turno_id):
     turno = Turno.objects.get(pk=turno_id)
-
-    if 'volver' in request.POST:
+    if 'cancelar' in request.POST:
         return HttpResponseRedirect(reverse('materias:administrar_materia', args=_turno_a_materia_args(turno)))
 
-    # TODO: en este momento, cualquier botón de "agregar horario" da lo mismo. Todos agregan el primer horario
-    # que tenga dia, comienzo y final completado. Si hay más de uno, agregan solo el primero.
-    # Habría que permitir un botón general de "agregar horarios"
-    for horario_agregado in range(TURNOS_MAX):
-        try:
-            dia = request.POST[f'dia{horario_agregado}']
-            comienzo = parse_time(request.POST[f'comienzo{horario_agregado}'])
-            final = parse_time(request.POST[f'final{horario_agregado}'])
-            horario = Horario.objects.create(dia=dia, comienzo=comienzo, final=final, turno=turno,
-                                             aula='', pabellon='')
-            break
-        except:
-            pass
+    elif 'cambiar' in request.POST:
+        def dia_com_fin(pre_key):
+            dia_value = request.POST[f'{pre_key}_dia']
+            dia = Dias[dia_value]
+            comienzo = parse_time(request.POST[f'{pre_key}_comienzo'])
+            final = parse_time(request.POST[f'{pre_key}_final'])
+            if comienzo is None or final is None:
+                raise KeyError
+            return dia, comienzo, final
+
+        for horario in turno.horario_set.all():
+            try:
+                dia, comienzo, final = dia_com_fin(f'existente_{horario.id}')
+                horario.dia = dia.name
+                horario.comienzo = comienzo
+                horario.final = final
+                horario.save()
+            except KeyError:
+                pass
+
+        for horario_agregado in range(TURNOS_MAX):
+            try:
+                dia, comienzo, final = dia_com_fin(f'nuevo_{horario_agregado}')
+                horario = Horario.objects.create(dia=dia.name, comienzo=comienzo, final=final, turno=turno,
+                                                 aula='', pabellon='')
+            except KeyError:
+                pass
 
     else:
         context = {
             'turno': turno,
+            'horarios': sorted(turno.horario_set.all()),
             'turnosmax': TURNOS_MAX,
             'materia': turno.materia,
             'tipoturno': TipoTurno[turno.tipo],
@@ -532,7 +546,8 @@ def cambiar_turno(request, turno_id):
         }
         return render(request, 'materias/cambiar_turno.html', context)
 
-    return HttpResponseRedirect(reverse('materias:cambiar_turno', args=(turno_id,)))
+    # return HttpResponseRedirect(reverse('materias:cambiar_turno', args=(turno_id,)))
+    return HttpResponseRedirect(reverse('materias:administrar_materia', args=_turno_a_materia_args(turno)))
 
 
 @login_required
