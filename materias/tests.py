@@ -476,19 +476,32 @@ class TestPaginas(TestCase):
         self.client.login(username='autorizado', password='1234')
         url = reverse('materias:cambiar_turno', args=(self.turno11.id,))
         response = self.client.post(url, follow=True)
-        # hay botones para borrar y agregar horarios
+        # hay botones para borrar horarios, cambiar y cancelar
         for horario in self.turno11.horario_set.all():
             boton = f'input type="button" id="borrar_horario" data-horario="{horario.id}" value="Borrar horario">'
             self.assertContains(response, boton)
-        self.assertContains(response, '<button>Agregar horario</button>')
+        self.assertContains(response, '<input type="submit" name="cambiar" value="cambiar">')
+        self.assertContains(response, '<input type="submit" name="cancelar" value="cancelar">')
         # se puede agregar un horario
         self.assertEqual(self.turno11.horario_set.count(), 2)
-        self.client.post(url, {'dia2': Dias.Vi.name, 'comienzo2': '01:23:45', 'final2': '12:34:56'},
+        self.client.post(url, {'nuevo_2_dia': Dias.Vi.name, 'nuevo_2_comienzo': '01:23:45', 'nuevo_2_final': '12:34:56',
+                               'cambiar': True},
                          follow=True)
         self.assertEqual(self.turno11.horario_set.count(), 3)
         nuevo_horario = Horario.objects.get(turno=self.turno11, comienzo=datetime.time(1, 23, 45))
         self.assertEqual(nuevo_horario.dia, Dias.Vi.name)
         self.assertEqual(nuevo_horario.final, datetime.time(12, 34, 56))
+        # se puede cambiar un horario existente
+        data = {f'existente_{nuevo_horario.id}_dia': Dias.Ju.name,
+                f'existente_{nuevo_horario.id}_comienzo': '10:47:41',
+                f'existente_{nuevo_horario.id}_final': '10:47:42',
+                'cambiar': True}
+        self.client.post(url, data, follow=True)
+        self.assertEqual(self.turno11.horario_set.count(), 3)
+        nuevo_horario.refresh_from_db()
+        self.assertEqual(nuevo_horario.dia, Dias.Ju.name)
+        self.assertEqual(nuevo_horario.comienzo, datetime.time(10, 47, 41))
+        self.assertEqual(nuevo_horario.final, datetime.time(10, 47, 42))
 
     def test_borrar_horario(self):
         self.client.login(username='autorizado', password='1234')
