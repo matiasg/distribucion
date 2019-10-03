@@ -132,9 +132,8 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
     for cuatrimestre in cuatrimestres:
         # CargasPedidas
         cargas = int(datos[f'cargas{cuatrimestre}'])
-        cargas_pedidas, _ = CargasPedidas.objects.get_or_create(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
-                                                                defaults={'fecha_encuesta': fecha_encuesta, 'cargas': 1})
-        cargas_pedidas.cargas = cargas
+        cargas_pedidas = CargasPedidas.objects.create(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
+                                                      fecha_encuesta=fecha_encuesta, cargas=cargas)
         cargas_pedidas.save()
 
         opciones_cuat = []
@@ -146,19 +145,10 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
                 logger.debug('miro preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
                              docente, turno, peso, fecha_encuesta)
 
-                pref, creada = PreferenciasDocente.objects.get_or_create(docente=docente, turno=turno,
-                                                                         defaults={'peso': peso,
-                                                                                   'fecha_encuesta': fecha_encuesta})
-                if creada:
-                    logger.info('Agrego preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
-                                docente, turno, peso, fecha_encuesta)
-                else:
-                    if pref.peso != peso:
-                        logger.warning('Le cambio el peso a la preferencia de %s por %s. De %s a %s',
-                                       docente, turno, pref.peso, peso)
-                        pref.peso = peso
-                        pref.fecha_encuesta = fecha_encuesta
-                        pref.save()
+                pref = PreferenciasDocente.objects.create(docente=docente, turno=turno,
+                                                          peso=peso, fecha_encuesta=fecha_encuesta)
+                logger.info('Agrego preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
+                            docente, turno, peso, fecha_encuesta)
                 opciones_cuat.append(pref)
         opciones[Cuatrimestres[cuatrimestre]] = opciones_cuat
     return opciones, otros_datos
