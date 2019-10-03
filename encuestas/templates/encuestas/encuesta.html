@@ -40,7 +40,7 @@
             cuatrimestre de verano
             {% endif %}
         </div>
-        <div id=pregunta>Cantidad de turnos a cubrir:
+        <div id=pregunta>Cantidad de turnos que quiere cubrir:
             <input id=cargas type="number" name="cargas{{ cuatrimestre.name }}" min=0 max=3 value=
             {% if cuatrimestre.name == "P" %} {{ cargasP }}
             {% elif cuatrimestre.name == "S" %} {{ cargasS }}
