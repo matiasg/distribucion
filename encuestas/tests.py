@@ -6,6 +6,7 @@ from django.forms import ValidationError
 
 import re
 import datetime
+import time
 
 from materias.models import (Docente, Carga, Cargos, Materia, Turno, TipoTurno, TipoMateria,
                              CargoDedicacion, Cuatrimestres)
@@ -278,3 +279,28 @@ class TestEncuesta(TestCase):
                                     follow=True)
         self.assertNotContains(response, 'Gracias')
         self.assertContains(response, '[error]  No me dijiste quién sos')
+
+    def test_encuesta_dos_veces(self):
+        c = Cuatrimestres.P.name
+        opciones = {}
+        for opcion in range(1, 6):
+            turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
+                                         numero=1, tipo=TipoTurno.T.name,
+                                         necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+            opciones[f'opcion{c}{opcion}'] = turno.id
+            opciones[f'peso{c}{opcion}'] = 0
+        response = self.client.post(f'/encuestas/encuesta/{self.anno}/{c}/{TipoDocentes.P.name}',
+                                    {'docente': self.docente.id,
+                                     **opciones,
+                                     'telefono': '+54911 1234-5678', 'email': 'juan@dm.uba.ar',
+                                     f'cargas{c}': 1, 'comentario': 'pero qué corno'},
+                                    follow=True)
+        self.assertEqual(PreferenciasDocente.objects.count(), 5)
+        time.sleep(0.1)
+        response = self.client.post(f'/encuestas/encuesta/{self.anno}/{c}/{TipoDocentes.P.name}',
+                                    {'docente': self.docente.id,
+                                     **opciones,
+                                     'telefono': '+54911 1234-5678', 'email': 'juan@dm.uba.ar',
+                                     f'cargas{c}': 1, 'comentario': 'pero qué corno'},
+                                    follow=True)
+        self.assertEqual(PreferenciasDocente.objects.count(), 10)
