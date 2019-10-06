@@ -221,6 +221,7 @@ def encuesta(request, anno, cuatrimestres, tipo_docente):
         'opciones_por_cuatrimestre': opciones_por_cuatrimestre,
         'anno': anno,
         'cuatrimestres': cuatrimestres,
+        'cuatrimestres_texto': GrupoCuatrimestral[cuatrimestres].value,
         'tipo_docente': tipo_docente,
         'maximo_peso': 20,
         'email': '', 'telefono': '', 'comentario': '',

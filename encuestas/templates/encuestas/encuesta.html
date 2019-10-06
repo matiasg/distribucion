@@ -11,7 +11,7 @@
 </div>
 {% endif %}
 
-<div id="titulo">Encuesta para {{ anno }}</div>
+<div id="titulo">Encuesta para {{ anno }}, cuatrimestre{{ cuatrimestres_texto|length|pluralize }}: {{ cuatrimestres_texto }}</div>
 
 <form action="{% url 'encuestas:encuesta' anno cuatrimestres tipo_docente %}" method="post">
 {% csrf_token %}
