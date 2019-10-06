@@ -120,3 +120,16 @@ class TestMapeos(TestCase):
         self.assertEqual(set(Mapeos.docentes_con_cargo_de_tipo(TipoDocentes.J)), set())
         self.assertEqual(set(Mapeos.docentes_con_cargo_de_tipo(TipoDocentes.A1)), {self.n})
         self.assertEqual(set(Mapeos.docentes_con_cargo_de_tipo(TipoDocentes.A2)), set())
+
+    def test_necesidades_no_cubiertas(self):
+        anno = 2108
+        cuatrimestre = Cuatrimestres.S.name
+        turno = Turno.objects.create(materia=self.materia, anno=anno, cuatrimestre=cuatrimestre,
+                                           numero=7, tipo=TipoTurno.T.name,
+                                           necesidad_prof=1, necesidad_jtp=8, necesidad_ay1=3, necesidad_ay2=2)
+        self.assertEqual(Mapeos.necesidades_no_cubiertas(turno, TipoDocentes.J), 8)
+        carga1 = Carga.objects.create(docente=self.n, turno=turno, cargo=CargoDedicacion.JTPExc.name, anno=anno, cuatrimestre=cuatrimestre)
+        self.assertEqual(Mapeos.necesidades_no_cubiertas(turno, TipoDocentes.J), 7)
+        carga2 = Carga.objects.create(docente=self.n, turno=turno, cargo=CargoDedicacion.TitExc.name, anno=anno, cuatrimestre=cuatrimestre)
+        self.assertEqual(Mapeos.necesidades_no_cubiertas(turno, TipoDocentes.J), 7)
+

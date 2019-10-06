@@ -159,6 +159,12 @@ class Mapeos:
             return turno.necesidad_ay2
 
     @staticmethod
+    def necesidades_no_cubiertas(turno, tipo_docente):
+        ''' Turno -> TipoDocentes -> int ( = turno.necesidades - #{cargas de tipo_docente} )'''
+        cubiertas = len([c for c in turno.carga_set.all() if Mapeos.tipo_de_carga(c) == tipo_docente])
+        return Mapeos.necesidades(turno, tipo_docente) - cubiertas
+
+    @staticmethod
     def filtrar_cargas_de_tipo_ge(tipo_docente, cargas):
         '''TipoDocentes -> [Carga] -> [Carga]'''
         return [carga
