@@ -174,7 +174,7 @@ def _generar_contexto(anno, cuatrimestre, tipo_docente):
     turnos_ac = Mapeos.encuesta_tipo_turno(tipo).filter(anno=anno, cuatrimestre=cuatrimestre)
 
     turnos = [TurnoParaEncuesta(-1, '', True)]
-    turnos += [TurnoParaEncuesta(turno.id, f'{turno} ({turno.horarios_info().diayhora})', turno.dificil_de_cubrir)
+    turnos += [TurnoParaEncuesta(turno.id, f'{turno} ({turno.horarios_info().diayhora or "sin horario"})', turno.dificil_de_cubrir)
                for turno in sorted(turnos_ac, key=lambda t: (strxfrm(t.materia.nombre), t.numero))]
 
     opciones = [OpcionesParaEncuesta(i, i <= 2, -1, 1)
