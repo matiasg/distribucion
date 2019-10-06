@@ -341,10 +341,10 @@ class TestEncuesta(TestCase):
                                             desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
         response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), cs.name, tipo)))
 
-        self.assertNotContains(response, 'disabled')
+        self.assertContains(response, 'disabled', count=2)
 
         Carga.objects.create(turno=self.turno, anno=self.turno.anno, cuatrimestre=self.turno.cuatrimestre,
                              docente=self.docente, cargo=CargoDedicacion.TitExc.name)
 
         response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), cs.name, tipo)))
-        self.assertContains(response, 'disabled')
+        self.assertContains(response, 'disabled', count=5)
