@@ -10,7 +10,7 @@ import time
 
 from materias.models import (Docente, Carga, Cargos, Materia, Turno, TipoTurno, TipoMateria,
                              CargoDedicacion, Cuatrimestres)
-from materias.misc import TipoDocentes
+from materias.misc import TipoDocentes, Mapeos
 from .models import PreferenciasDocente, OtrosDatos, CargasPedidas, EncuestasHabilitadas, GrupoCuatrimestral
 from .views import checkear_y_salvar
 
@@ -325,10 +325,26 @@ class TestEncuesta(TestCase):
             self.assertNotContains(response, f'opcion{cuatri.name}{esperadas + 1}')
 
         # hay una explicación de los pesos
-        self.assertContains(response, 'cuanto mayor es el peso')
+        self.assertContains(response, 'Cuanto mayor es el peso')
         # si un turnoo no necesita docentes no se debe poder elegir
         self.assertNotContains(response, 'disabled')
         self.turno.necesidad_prof = 0
         self.turno.save()
+        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), cs.name, tipo)))
+        self.assertContains(response, 'disabled')
+
+    def test_turnos_con_docentes_distribuidos_van_disabled(self):
+        cs = GrupoCuatrimestral.VPS
+        now = timezone.now()
+        tipo = TipoDocentes.P.name
+        EncuestasHabilitadas.objects.create(anno=self.anno, cuatrimestres=cs.name, tipo_docente=tipo,
+                                            desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
+        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), cs.name, tipo)))
+
+        self.assertNotContains(response, 'disabled')
+
+        Carga.objects.create(turno=self.turno, anno=self.turno.anno, cuatrimestre=self.turno.cuatrimestre,
+                             docente=self.docente, cargo=CargoDedicacion.TitExc.name)
+
         response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), cs.name, tipo)))
         self.assertContains(response, 'disabled')
