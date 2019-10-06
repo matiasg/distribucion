@@ -115,6 +115,7 @@ class TestEncuesta(TestCase):
     def test_turnos_correctos(self):
         response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.P.name, TipoDocentes.J.name)))
         self.assertContains(response, self.turno.materia.nombre)
+        self.assertContains(response, f'{self.turno} (sin horario)')
 
     def test_turnos_otros_cuatrimestres(self):
         now = timezone.now()
