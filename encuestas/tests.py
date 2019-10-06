@@ -11,7 +11,7 @@ import time
 from materias.models import (Docente, Carga, Cargos, Materia, Turno, TipoTurno, TipoMateria,
                              CargoDedicacion, Cuatrimestres)
 from materias.misc import TipoDocentes
-from .models import PreferenciasDocente, OtrosDatos, CargasPedidas, EncuestasHabilitadas
+from .models import PreferenciasDocente, OtrosDatos, CargasPedidas, EncuestasHabilitadas, GrupoCuatrimestral
 from .views import checkear_y_salvar
 
 
@@ -305,3 +305,30 @@ class TestEncuesta(TestCase):
                                      f'cargas{c}': 1, 'comentario': 'pero qué corno'},
                                     follow=True)
         self.assertEqual(PreferenciasDocente.objects.count(), 10)
+
+    def test_texto_como_pedido(self):
+        cs = GrupoCuatrimestral.VPS
+        now = timezone.now()
+        tipo = TipoDocentes.P.name
+        EncuestasHabilitadas.objects.create(anno=self.anno, cuatrimestres=cs.name, tipo_docente=tipo,
+                                            desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
+        self.turno.dificil_de_cubrir = True
+        self.turno.save()
+        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), cs.name, tipo)))
+
+        # no hay más opciones que las esperadas
+        opciones_esperadas = {Cuatrimestres.V: 2, Cuatrimestres.P: 5, Cuatrimestres.S: 5}
+        for cuatri, esperadas in opciones_esperadas.items():
+            for opcion in range(1, esperadas + 1):
+                self.assertContains(response, f'opcion{cuatri.name}{opcion}')
+                self.assertContains(response, f'peso{cuatri.name}{opcion}')
+            self.assertNotContains(response, f'opcion{cuatri.name}{esperadas + 1}')
+
+        # hay una explicación de los pesos
+        self.assertContains(response, 'cuanto mayor es el peso')
+        # si un turnoo no necesita docentes no se debe poder elegir
+        self.assertNotContains(response, 'disabled')
+        self.turno.necesidad_prof = 0
+        self.turno.save()
+        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), cs.name, tipo)))
+        self.assertContains(response, 'disabled')
