@@ -154,6 +154,11 @@ class TestModels(TestCase):
         docentes = sorted(Docente.objects.all(), key=lambda d: strxfrm(d.apellido_nombre))
         self.assertEquals(list(docentes), [a, b, c])
 
+    def horarios_sin_dos_puntos_si_no_hay(self):
+        self.assertEquals(self.turno.horarios_info().diayhora, '')
+        Horario.objects.create(turno=self.turno, dia=Dias.Lu.name, comienzo=datetime.time(7), final=datetime.time(9), aula='', pabellon='0')
+        self.assertEquals(self.turno.horarios_info().diayhora, 'Lu: 7 a 9')
+
 
 
 class TestPaginas(TestCase):

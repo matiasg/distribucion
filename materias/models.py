@@ -165,10 +165,14 @@ class Turno(models.Model):
         tipo = f'{TipoTurno[self.tipo].value}'
         tipoynumero = f'{tipo} {self.numero}' if self.numero else tipo
         horarios = sorted(self.horario_set.all())
-        dias = join([h.dia for h in horarios])
-        horas = join([h.de_a() for h in horarios])
+        if horarios:
+            dias = join([h.dia for h in horarios])
+            horas = join([h.de_a() for h in horarios])
+            dias_y_horas = f'{dias}: {horas}'
+        else:
+            dias_y_horas = ''
         aulas = join([h.aula_y_pabellon() for h in horarios])
-        return TurnoInfo(tipoynumero, f'{dias}: {horas}', aulas)
+        return TurnoInfo(tipoynumero, dias_y_horas, aulas)
 
     def __lt__(self, other):
         if other.__class__ is self.__class__:
