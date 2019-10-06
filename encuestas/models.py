@@ -36,6 +36,11 @@ class CargasPedidas(models.Model):
     fecha_encuesta = models.DateTimeField()
 
 
+class CargasDeclaradas(models.Model):
+    otros_datos = models.ForeignKey(OtrosDatos, on_delete=models.CASCADE)
+    declaradas = models.PositiveIntegerField(validators=[MaxValueValidator(6)])
+
+
 class GrupoCuatrimestral(Enum):
     V = 'Verano'
     P = '1'
