@@ -51,6 +51,7 @@ class Mapeos:
 
     @staticmethod
     def tipo_de_carga(carga):
+        '''Carga -> TipoDocentes'''
         return Mapeos.cargos_a_tipo[Cargos[carga.cargo[:3]]]
 
     @staticmethod
