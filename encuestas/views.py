@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required, login_required
 from django.core.validators import EmailValidator
 
-from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres, TipoDocentes
+from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres, TipoDocentes, AnnoCuatrimestre
 from materias.misc import Mapeos
 from encuestas.models import (PreferenciasDocente, OtrosDatos, CargasPedidas, EncuestasHabilitadas,
                               GrupoCuatrimestral, telefono_validator)
@@ -155,7 +155,7 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
 
 
 DocenteParaEncuesta = namedtuple('DocenteParaEncuesta', ['id', 'nombre'])
-TurnoParaEncuesta = namedtuple('TurnoParaEncuesta', ['id', 'texto', 'dificil_de_cubrir'])
+TurnoParaEncuesta = namedtuple('TurnoParaEncuesta', ['id', 'texto', 'dificil_de_cubrir', 'no_elegible'])
 OpcionesParaEncuesta = namedtuple('OpcionesParaEncuesta', ['numero', 'lista_corta', 'turno_elegido', 'peso'])
 OpcionesPorCuatrimestre = namedtuple('OpcionesPorCuatrimestre', ['opciones', 'turnos'])
 
@@ -171,14 +171,18 @@ def _generar_docentes(anno, tipo_docente):
 
 def _generar_contexto(anno, cuatrimestre, tipo_docente):
     tipo = TipoDocentes[tipo_docente]
-    turnos_ac = Mapeos.encuesta_tipo_turno(tipo).filter(anno=anno, cuatrimestre=cuatrimestre)
+    ac = AnnoCuatrimestre(anno, cuatrimestre)
+    turnos_ac = Mapeos.turnos_de_tipo_y_ac(tipo, ac)
+    necesidades = Mapeos.turno_y_necesidad(tipo, ac)
 
-    turnos = [TurnoParaEncuesta(-1, '', True)]
-    turnos += [TurnoParaEncuesta(turno.id, f'{turno} ({turno.horarios_info().diayhora or "sin horario"})', turno.dificil_de_cubrir)
+    turnos = [TurnoParaEncuesta(-1, '', True, False)]
+    turnos += [TurnoParaEncuesta(turno.id, f'{turno} ({turno.horarios_info().diayhora or "sin horario"})',
+                                 turno.dificil_de_cubrir, Mapeos.necesidades_no_cubiertas(turno, tipo) <= 0)
                for turno in sorted(turnos_ac, key=lambda t: (strxfrm(t.materia.nombre), t.numero))]
 
-    opciones = [OpcionesParaEncuesta(i, i <= 2, -1, 1)
-                for i in range(1, 6)]  # las opciones 1 y 2 tienen que ser de las difíciles
+    cantidad_de_opciones = 2 if cuatrimestre == Cuatrimestres.V.name else 5
+    opciones = [OpcionesParaEncuesta(i, i <= (cantidad_de_opciones - 1) // 2, -1, 1)
+                for i in range(1, cantidad_de_opciones + 1)]  # las opciones 1 y 2 tienen que ser de las difíciles
 
 
     return OpcionesPorCuatrimestre(opciones, turnos)
