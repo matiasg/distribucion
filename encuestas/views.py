@@ -142,7 +142,7 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
         cargas_pedidas.save()
 
         opciones_cuat = []
-        for opcion in range(1, _turnos_maximos_por_cuatrimestre(cuatrimestre)):
+        for opcion in range(1, _turnos_maximos_por_cuatrimestre(cuatrimestre) + 1):
             opcion_id = int(datos[f'opcion{cuatrimestre}{opcion}'])
             if opcion_id >= 0:
                 turno = Turno.objects.get(pk=opcion_id)
