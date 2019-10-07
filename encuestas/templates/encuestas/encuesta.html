@@ -13,27 +13,38 @@
 
 <div id="titulo">Encuesta para {{ anno }}, cuatrimestre{{ cuatrimestres_texto|length|pluralize }}: {{ cuatrimestres_texto }}</div>
 
+<hr>
+<div id="subtitulo">Tener en cuenta</div>
+<ul>
+    <li>En cada turno pedido se debe poner un peso. Cuanto mayor es el peso, menor es la probabilidad de tener que dictar ese turno.</li>
+    <li>Los pesos de cada docente se normalizan (da lo mismo poner todos 1 que todos 20, por ejemplo).</li>
+</ul>
+
 <form action="{% url 'encuestas:encuesta' anno cuatrimestres tipo_docente %}" method="post">
 {% csrf_token %}
 
 <hr>
-
 <p>
-    <div id="subtitulo">Docente:</div>
-    <select name="docente">
-        {% for docente in docentes %}
-        <option value="{{ docente.id }}"
-                {% if docente.id == docente_selected %}selected{% endif %}
-        >{{ docente.nombre }}</option>
-        {% endfor %}
-    </select>
+    <div id="subtitulo">Docente</div>
+    <div class="grande">
+        <select name="docente">
+            {% for docente in docentes %}
+            <option value="{{ docente.id }}"
+                    {% if docente.id == docente_selected %}selected{% endif %}
+            >{{ docente.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</p>
+<p>
+    <div id="subtitulo">Cantidad de turnos que tiene que cubrir en el período de la encuesta</div>
+    <input id=cargas type="number" name="cargas_declaradas" min=0 max=6 value=
+                         {% if cuatrimestres_texto == "todos" %}2
+                         {% else %}1{% endif %}
+    >
 </p>
 
 <hr>
-En cada turno pedido se debe poner un peso. Cuanto mayor es el peso, menor es la chance de tener que dictar ese turno.
-Los pesos de cada docente se normalizan (da lo mismo poner todos 1 que todos 10, por ejemplo).
-<hr>
-
 {% for cuatrimestre, infocuat in opciones_por_cuatrimestre.items %}
     <p>
         <div id="subtitulo">Preferencias para el
