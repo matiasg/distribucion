@@ -79,8 +79,8 @@ def cambiar_habilitacion(request, habilitacion_id):
 def _turnos_minimos_por_cuatrimestre(cuatrimestre, docente):
     minimos = {
         Cuatrimestres.V.name: 2,
-        Cuatrimestres.P.name: 4,
-        Cuatrimestres.S.name: 4
+        Cuatrimestres.P.name: 5,
+        Cuatrimestres.S.name: 5
     }
     # TODO: queremos que dependa del docente?
     return minimos[cuatrimestre]
