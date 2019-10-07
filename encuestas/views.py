@@ -9,7 +9,7 @@ from django.core.validators import EmailValidator
 
 from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres, TipoDocentes, AnnoCuatrimestre
 from materias.misc import Mapeos
-from encuestas.models import (PreferenciasDocente, OtrosDatos, CargasDeclaradas, CargasPedidas,
+from encuestas.models import (PreferenciasDocente, OtrosDatos, CargasPedidas,
                               EncuestasHabilitadas, GrupoCuatrimestral, telefono_validator)
 from encuestas.forms import HabilitacionDeEncuestaForm
 
@@ -124,12 +124,8 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
     otros_datos.email = email
     otros_datos.telefono = telefono
     otros_datos.comentario = datos['comentario']
+    otros_datos.cargas_declaradas = int(datos['cargas_declaradas'])
     otros_datos.save()
-
-    # CargasDeclaradas
-    cargas_declaradas, _ = CargasDeclaradas.objects.get_or_create(otros_datos=otros_datos, defaults={'declaradas': 0})
-    cargas_declaradas.declaradas = int(datos['cargas_declaradas'])
-    cargas_declaradas.save()
 
     #  PreferenciasDocente
     opciones = {}

@@ -11,7 +11,7 @@ import time
 from materias.models import (Docente, Carga, Cargos, Materia, Turno, TipoTurno, TipoMateria,
                              CargoDedicacion, Cuatrimestres)
 from materias.misc import TipoDocentes, Mapeos
-from .models import PreferenciasDocente, OtrosDatos, CargasDeclaradas, CargasPedidas, EncuestasHabilitadas, GrupoCuatrimestral
+from .models import PreferenciasDocente, OtrosDatos, CargasPedidas, EncuestasHabilitadas, GrupoCuatrimestral
 from .views import checkear_y_salvar
 
 
@@ -185,12 +185,10 @@ class TestEncuesta(TestCase):
         self.assertEqual(od.telefono,  '+54911 1234-5678')
         self.assertEqual(od.email,  'juan@dm.uba.ar')
         self.assertContains(response, 'Gracias')
+        self.assertEqual(od.cargas_declaradas, 1)
 
         cp = CargasPedidas.objects.get(anno=self.anno, cuatrimestre=c, docente=self.docente)
         self.assertEqual(cp.cargas, 1)
-
-        cd = CargasDeclaradas.objects.get(otros_datos=od)
-        self.assertEqual(cd.declaradas, 1)
 
     def test_orden_docentes(self):
         for docente in [5, 1, 3, 8, 9, 6, 0, 7, 2, 4]:
@@ -311,7 +309,7 @@ class TestEncuesta(TestCase):
                                      f'cargas{c}': 1, 'comentario': 'pero qué corno'},
                                     follow=True)
         self.assertEqual(PreferenciasDocente.objects.count(), 10)
-        self.assertEqual(CargasDeclaradas.objects.first().declaradas, 2)
+        self.assertEqual(OtrosDatos.objects.first().cargas_declaradas, 2)
 
     def test_texto_como_pedido(self):
         cs = GrupoCuatrimestral.VPS

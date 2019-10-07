@@ -26,6 +26,7 @@ class OtrosDatos(models.Model):
     comentario = models.TextField()
     email = models.EmailField()
     telefono = models.CharField(validators=[telefono_validator], max_length=17, blank=True)
+    cargas_declaradas = models.PositiveIntegerField(validators=[MaxValueValidator(6)], default=0)
 
 
 class CargasPedidas(models.Model):
@@ -34,11 +35,6 @@ class CargasPedidas(models.Model):
     cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
     cargas = models.PositiveIntegerField(validators=[MaxValueValidator(3)])
     fecha_encuesta = models.DateTimeField()
-
-
-class CargasDeclaradas(models.Model):
-    otros_datos = models.ForeignKey(OtrosDatos, on_delete=models.CASCADE)
-    declaradas = models.PositiveIntegerField(validators=[MaxValueValidator(6)])
 
 
 class GrupoCuatrimestral(Enum):
