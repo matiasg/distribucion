@@ -76,14 +76,19 @@ def cambiar_habilitacion(request, habilitacion_id):
     return render(request, 'encuestas/cambiar_habilitacion.html', context)
 
 
-def _turnos_minimos_por_cuatrimestre(cuatrimestre, docente):
-    minimos = {
+def _turnos_maximos_por_cuatrimestre(cuatrimestre):
+    maximos = {
         Cuatrimestres.V.name: 2,
         Cuatrimestres.P.name: 5,
         Cuatrimestres.S.name: 5
     }
+    return maximos[cuatrimestre]
+
+
+def _turnos_minimos_por_cuatrimestre(cuatrimestre, docente):
     # TODO: queremos que dependa del docente?
-    return minimos[cuatrimestre]
+    return _turnos_maximos_por_cuatrimestre(cuatrimestre)
+
 
 def _nombre_cuat_error(cuatrimestre):
     nombres = {
@@ -137,7 +142,7 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
         cargas_pedidas.save()
 
         opciones_cuat = []
-        for opcion in range(1, 6):
+        for opcion in range(1, _turnos_maximos_por_cuatrimestre(cuatrimestre)):
             opcion_id = int(datos[f'opcion{cuatrimestre}{opcion}'])
             if opcion_id >= 0:
                 turno = Turno.objects.get(pk=opcion_id)
