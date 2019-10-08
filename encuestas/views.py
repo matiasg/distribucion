@@ -7,10 +7,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required, login_required
 from django.core.validators import EmailValidator
 
-from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres, TipoDocentes
+from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres, TipoDocentes, AnnoCuatrimestre
 from materias.misc import Mapeos
-from encuestas.models import (PreferenciasDocente, OtrosDatos, CargasPedidas, EncuestasHabilitadas,
-                              GrupoCuatrimestral, telefono_validator)
+from encuestas.models import (PreferenciasDocente, OtrosDatos, CargasPedidas,
+                              EncuestasHabilitadas, GrupoCuatrimestral, telefono_validator)
 from encuestas.forms import HabilitacionDeEncuestaForm
 
 from locale import strxfrm
@@ -76,14 +76,19 @@ def cambiar_habilitacion(request, habilitacion_id):
     return render(request, 'encuestas/cambiar_habilitacion.html', context)
 
 
-def _turnos_minimos_por_cuatrimestre(cuatrimestre, docente):
-    minimos = {
+def _turnos_maximos_por_cuatrimestre(cuatrimestre):
+    maximos = {
         Cuatrimestres.V.name: 2,
-        Cuatrimestres.P.name: 4,
-        Cuatrimestres.S.name: 4
+        Cuatrimestres.P.name: 5,
+        Cuatrimestres.S.name: 5
     }
+    return maximos[cuatrimestre]
+
+
+def _turnos_minimos_por_cuatrimestre(cuatrimestre, docente):
     # TODO: queremos que dependa del docente?
-    return minimos[cuatrimestre]
+    return _turnos_maximos_por_cuatrimestre(cuatrimestre)
+
 
 def _nombre_cuat_error(cuatrimestre):
     nombres = {
@@ -124,21 +129,20 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
     otros_datos.email = email
     otros_datos.telefono = telefono
     otros_datos.comentario = datos['comentario']
+    otros_datos.cargas_declaradas = int(datos['cargas_declaradas'])
     otros_datos.save()
-
 
     #  PreferenciasDocente
     opciones = {}
     for cuatrimestre in cuatrimestres:
         # CargasPedidas
         cargas = int(datos[f'cargas{cuatrimestre}'])
-        cargas_pedidas, _ = CargasPedidas.objects.get_or_create(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
-                                                                defaults={'fecha_encuesta': fecha_encuesta, 'cargas': 1})
-        cargas_pedidas.cargas = cargas
+        cargas_pedidas = CargasPedidas.objects.create(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
+                                                      fecha_encuesta=fecha_encuesta, cargas=cargas)
         cargas_pedidas.save()
 
         opciones_cuat = []
-        for opcion in range(1, 6):
+        for opcion in range(1, _turnos_maximos_por_cuatrimestre(cuatrimestre) + 1):
             opcion_id = int(datos[f'opcion{cuatrimestre}{opcion}'])
             if opcion_id >= 0:
                 turno = Turno.objects.get(pk=opcion_id)
@@ -146,26 +150,17 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
                 logger.debug('miro preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
                              docente, turno, peso, fecha_encuesta)
 
-                pref, creada = PreferenciasDocente.objects.get_or_create(docente=docente, turno=turno,
-                                                                         defaults={'peso': peso,
-                                                                                   'fecha_encuesta': fecha_encuesta})
-                if creada:
-                    logger.info('Agrego preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
-                                docente, turno, peso, fecha_encuesta)
-                else:
-                    if pref.peso != peso:
-                        logger.warning('Le cambio el peso a la preferencia de %s por %s. De %s a %s',
-                                       docente, turno, pref.peso, peso)
-                        pref.peso = peso
-                        pref.fecha_encuesta = fecha_encuesta
-                        pref.save()
+                pref = PreferenciasDocente.objects.create(docente=docente, turno=turno,
+                                                          peso=peso, fecha_encuesta=fecha_encuesta)
+                logger.info('Agrego preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
+                            docente, turno, peso, fecha_encuesta)
                 opciones_cuat.append(pref)
         opciones[Cuatrimestres[cuatrimestre]] = opciones_cuat
     return opciones, otros_datos
 
 
 DocenteParaEncuesta = namedtuple('DocenteParaEncuesta', ['id', 'nombre'])
-TurnoParaEncuesta = namedtuple('TurnoParaEncuesta', ['id', 'texto', 'dificil_de_cubrir'])
+TurnoParaEncuesta = namedtuple('TurnoParaEncuesta', ['id', 'texto', 'dificil_de_cubrir', 'no_elegible'])
 OpcionesParaEncuesta = namedtuple('OpcionesParaEncuesta', ['numero', 'lista_corta', 'turno_elegido', 'peso'])
 OpcionesPorCuatrimestre = namedtuple('OpcionesPorCuatrimestre', ['opciones', 'turnos'])
 
@@ -181,14 +176,18 @@ def _generar_docentes(anno, tipo_docente):
 
 def _generar_contexto(anno, cuatrimestre, tipo_docente):
     tipo = TipoDocentes[tipo_docente]
-    turnos_ac = Mapeos.encuesta_tipo_turno(tipo).filter(anno=anno, cuatrimestre=cuatrimestre)
+    ac = AnnoCuatrimestre(anno, cuatrimestre)
+    turnos_ac = Mapeos.turnos_de_tipo_y_ac(tipo, ac)
+    necesidades = Mapeos.turno_y_necesidad(tipo, ac)
 
-    turnos = [TurnoParaEncuesta(-1, '', True)]
-    turnos += [TurnoParaEncuesta(turno.id, f'{turno} ({turno.horarios_info().diayhora})', turno.dificil_de_cubrir)
+    turnos = [TurnoParaEncuesta(-1, '', True, False)]
+    turnos += [TurnoParaEncuesta(turno.id, f'{turno} ({turno.horarios_info().diayhora or "sin horario"})',
+                                 turno.dificil_de_cubrir, Mapeos.necesidades_no_cubiertas(turno, tipo) <= 0)
                for turno in sorted(turnos_ac, key=lambda t: (strxfrm(t.materia.nombre), t.numero))]
 
-    opciones = [OpcionesParaEncuesta(i, i <= 2, -1, 1)
-                for i in range(1, 6)]  # las opciones 1 y 2 tienen que ser de las difíciles
+    cantidad_de_opciones = 2 if cuatrimestre == Cuatrimestres.V.name else 5
+    opciones = [OpcionesParaEncuesta(i, i <= (cantidad_de_opciones - 1) // 2, -1, 1)
+                for i in range(1, cantidad_de_opciones + 1)]  # las opciones 1 y 2 tienen que ser de las difíciles
 
 
     return OpcionesPorCuatrimestre(opciones, turnos)
@@ -231,6 +230,7 @@ def encuesta(request, anno, cuatrimestres, tipo_docente):
         'opciones_por_cuatrimestre': opciones_por_cuatrimestre,
         'anno': anno,
         'cuatrimestres': cuatrimestres,
+        'cuatrimestres_texto': GrupoCuatrimestral[cuatrimestres].value,
         'tipo_docente': tipo_docente,
         'maximo_peso': 20,
         'email': '', 'telefono': '', 'comentario': '',

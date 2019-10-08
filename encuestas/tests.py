@@ -6,11 +6,12 @@ from django.forms import ValidationError
 
 import re
 import datetime
+import time
 
 from materias.models import (Docente, Carga, Cargos, Materia, Turno, TipoTurno, TipoMateria,
                              CargoDedicacion, Cuatrimestres)
-from materias.misc import TipoDocentes
-from .models import PreferenciasDocente, OtrosDatos, CargasPedidas, EncuestasHabilitadas
+from materias.misc import TipoDocentes, Mapeos
+from .models import PreferenciasDocente, OtrosDatos, CargasPedidas, EncuestasHabilitadas, GrupoCuatrimestral
 from .views import checkear_y_salvar
 
 
@@ -30,7 +31,7 @@ class TestEncuesta(TestCase):
                                                   necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0,
                                                   dificil_de_cubrir=True)
         self.otros_datos = {'telefono': '+54911 1234-5678', 'email': 'nadie@gmail.com', 'comentario': '',
-                            f'cargas{Cuatrimestres.P.name}': 1}
+                            f'cargas{Cuatrimestres.P.name}': 1, 'cargas_declaradas': 1}
         now = timezone.now()
         for tipo in TipoDocentes:
             EncuestasHabilitadas.objects.create(anno=self.anno, cuatrimestres=Cuatrimestres.P.name, tipo_docente=tipo.name,
@@ -114,6 +115,7 @@ class TestEncuesta(TestCase):
     def test_turnos_correctos(self):
         response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.P.name, TipoDocentes.J.name)))
         self.assertContains(response, self.turno.materia.nombre)
+        self.assertContains(response, f'{self.turno} (sin horario)')
 
     def test_turnos_otros_cuatrimestres(self):
         now = timezone.now()
@@ -172,6 +174,7 @@ class TestEncuesta(TestCase):
             opciones[f'peso{c}{opcion}'] = 0
         response = self.client.post(f'/encuestas/encuesta/{self.anno}/{c}/{TipoDocentes.P.name}',
                                     {'docente': self.docente.id,
+                                     'cargas_declaradas': 1,
                                      **opciones,
                                      'telefono': '+54911 1234-5678', 'email': 'juan@dm.uba.ar',
                                      f'cargas{c}': 1, 'comentario': 'pero qué corno'},
@@ -182,6 +185,7 @@ class TestEncuesta(TestCase):
         self.assertEqual(od.telefono,  '+54911 1234-5678')
         self.assertEqual(od.email,  'juan@dm.uba.ar')
         self.assertContains(response, 'Gracias')
+        self.assertEqual(od.cargas_declaradas, 1)
 
         cp = CargasPedidas.objects.get(anno=self.anno, cuatrimestre=c, docente=self.docente)
         self.assertEqual(cp.cargas, 1)
@@ -278,3 +282,74 @@ class TestEncuesta(TestCase):
                                     follow=True)
         self.assertNotContains(response, 'Gracias')
         self.assertContains(response, '[error]  No me dijiste quién sos')
+
+    def test_encuesta_dos_veces(self):
+        c = Cuatrimestres.P.name
+        opciones = {}
+        for opcion in range(1, 6):
+            turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
+                                         numero=1, tipo=TipoTurno.T.name,
+                                         necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+            opciones[f'opcion{c}{opcion}'] = turno.id
+            opciones[f'peso{c}{opcion}'] = 0
+        response = self.client.post(f'/encuestas/encuesta/{self.anno}/{c}/{TipoDocentes.P.name}',
+                                    {'docente': self.docente.id,
+                                     'cargas_declaradas': 1,
+                                     **opciones,
+                                     'telefono': '+54911 1234-5678', 'email': 'juan@dm.uba.ar',
+                                     f'cargas{c}': 1, 'comentario': 'pero qué corno'},
+                                    follow=True)
+        self.assertEqual(PreferenciasDocente.objects.count(), 5)
+        time.sleep(0.1)
+        response = self.client.post(f'/encuestas/encuesta/{self.anno}/{c}/{TipoDocentes.P.name}',
+                                    {'docente': self.docente.id,
+                                     'cargas_declaradas': 2,
+                                     **opciones,
+                                     'telefono': '+54911 1234-5678', 'email': 'juan@dm.uba.ar',
+                                     f'cargas{c}': 1, 'comentario': 'pero qué corno'},
+                                    follow=True)
+        self.assertEqual(PreferenciasDocente.objects.count(), 10)
+        self.assertEqual(OtrosDatos.objects.first().cargas_declaradas, 2)
+
+    def test_texto_como_pedido(self):
+        cs = GrupoCuatrimestral.VPS
+        now = timezone.now()
+        tipo = TipoDocentes.P.name
+        EncuestasHabilitadas.objects.create(anno=self.anno, cuatrimestres=cs.name, tipo_docente=tipo,
+                                            desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
+        self.turno.dificil_de_cubrir = True
+        self.turno.save()
+        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), cs.name, tipo)))
+
+        # no hay más opciones que las esperadas
+        opciones_esperadas = {Cuatrimestres.V: 2, Cuatrimestres.P: 5, Cuatrimestres.S: 5}
+        for cuatri, esperadas in opciones_esperadas.items():
+            for opcion in range(1, esperadas + 1):
+                self.assertContains(response, f'opcion{cuatri.name}{opcion}')
+                self.assertContains(response, f'peso{cuatri.name}{opcion}')
+            self.assertNotContains(response, f'opcion{cuatri.name}{esperadas + 1}')
+
+        # hay una explicación de los pesos
+        self.assertContains(response, 'Cuanto mayor es el peso')
+        # si un turnoo no necesita docentes no se debe poder elegir
+        self.assertNotContains(response, 'disabled')
+        self.turno.necesidad_prof = 0
+        self.turno.save()
+        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), cs.name, tipo)))
+        self.assertContains(response, 'disabled')
+
+    def test_turnos_con_docentes_distribuidos_van_disabled(self):
+        cs = GrupoCuatrimestral.VPS
+        now = timezone.now()
+        tipo = TipoDocentes.P.name
+        EncuestasHabilitadas.objects.create(anno=self.anno, cuatrimestres=cs.name, tipo_docente=tipo,
+                                            desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
+        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), cs.name, tipo)))
+
+        self.assertContains(response, 'disabled', count=2)
+
+        Carga.objects.create(turno=self.turno, anno=self.turno.anno, cuatrimestre=self.turno.cuatrimestre,
+                             docente=self.docente, cargo=CargoDedicacion.TitExc.name)
+
+        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), cs.name, tipo)))
+        self.assertContains(response, 'disabled', count=5)

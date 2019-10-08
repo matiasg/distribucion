@@ -26,6 +26,7 @@ class OtrosDatos(models.Model):
     comentario = models.TextField()
     email = models.EmailField()
     telefono = models.CharField(validators=[telefono_validator], max_length=17, blank=True)
+    cargas_declaradas = models.PositiveIntegerField(validators=[MaxValueValidator(6)], default=0)
 
 
 class CargasPedidas(models.Model):
