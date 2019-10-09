@@ -472,7 +472,7 @@ class TestPaginas(TestCase):
         url = reverse('materias:administrar_materia', args=(self.materia1.id, self.anno, self.cuatrimestre.name))
         response = self.client.post(url, {'agregar_turno_T': True}, follow=True)
         # se generó un turno nuevo
-        self.assertContains(response, f'{TipoTurno.T.value} 5')
+        self.assertRegex(response.content.decode(), f'{TipoTurno.T.value}\s*\n.*value=5')
         nuevo_turno = Turno.objects.get(materia=self.materia1, tipo=TipoTurno.T.name, numero=5)
         # no tiene horarios
         self.assertEqual(nuevo_turno.horario_set.count(), 0)
@@ -490,6 +490,7 @@ class TestPaginas(TestCase):
         # se puede agregar un horario
         self.assertEqual(self.turno11.horario_set.count(), 2)
         self.client.post(url, {'nuevo_2_dia': Dias.Vi.name, 'nuevo_2_comienzo': '01:23:45', 'nuevo_2_final': '12:34:56',
+                               'numero_turno': self.turno11.numero, 'subnumero_turno': self.turno11.subnumero,
                                'cambiar': True},
                          follow=True)
         self.assertEqual(self.turno11.horario_set.count(), 3)
@@ -500,6 +501,7 @@ class TestPaginas(TestCase):
         data = {f'existente_{nuevo_horario.id}_dia': Dias.Ju.name,
                 f'existente_{nuevo_horario.id}_comienzo': '10:47:41',
                 f'existente_{nuevo_horario.id}_final': '10:47:42',
+                'numero_turno': self.turno11.numero, 'subnumero_turno': self.turno11.subnumero,
                 'cambiar': True}
         self.client.post(url, data, follow=True)
         self.assertEqual(self.turno11.horario_set.count(), 3)

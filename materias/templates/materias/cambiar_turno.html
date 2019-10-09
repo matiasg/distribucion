@@ -14,15 +14,20 @@
 <h1>
     Materia: <a href="{% url 'materias:administrar_materia' materia.id turno.anno turno.cuatrimestre %}">{{ materia }}</a>
 </h1>
+
+<form action="{% url 'materias:cambiar_turno' turno.id %}" method="post">
+{% csrf_token %}
+
 <h2>
-    {{ tipoturno.value }} {{ turno.numero }}
+    {{ tipoturno.value }}
+    <input type="number" class="numeros_chicos" name="numero_turno" min=0 max=10 value={{ turno.numero }}>
+    subnúmero:
+    <input type="text" class="numeros_chicos" name="subnumero_turno" value={{ turno.subnumero }}>
+    (por ejemplo, (A-L). Casi siempre es vacío)
 </h2>
 <h2>
     Horarios:
 </h2>
-
-<form action="{% url 'materias:cambiar_turno' turno.id %}" method="post">
-{% csrf_token %}
 
 <table id="administrar_materia">
     <thead> <tr> <td>Día</td> <td>Comienzo</td> <td>Final</td> <td>borrar</td> </tr> </thead>
