@@ -3,6 +3,7 @@ from django.test.utils import setup_test_environment
 from django.utils import timezone
 from django.urls import reverse
 from django.forms import ValidationError
+from django.contrib.auth.models import Permission
 
 import re
 import datetime
@@ -13,6 +14,7 @@ from materias.models import (Docente, Carga, Cargos, Materia, Turno, TipoTurno, 
 from materias.misc import TipoDocentes, Mapeos
 from .models import PreferenciasDocente, OtrosDatos, CargasPedidas, EncuestasHabilitadas, GrupoCuatrimestral
 from .views import checkear_y_salvar
+from usuarios.models import Usuario
 
 
 class TestEncuesta(TestCase):
@@ -36,6 +38,9 @@ class TestEncuesta(TestCase):
         for tipo in TipoDocentes:
             EncuestasHabilitadas.objects.create(anno=self.anno, cuatrimestres=Cuatrimestres.P.name, tipo_docente=tipo.name,
                                                 desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
+        Usuario.objects.create_user(username='desautorizado', password='123')
+        autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
+        autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='dborrador', codename='add_asignacion'))
 
     def test_pocos_turnos(self):
         datos = self.otros_datos
@@ -260,6 +265,26 @@ class TestEncuesta(TestCase):
                                                                        f'{Cuatrimestres.V.name}{Cuatrimestres.P.name}{Cuatrimestres.S.name}',
                                                                        'P')), follow=True)
         self.assertEqual(response.status_code, 200)
+
+    def test_habilitar_encuesta(self):
+        self.client.login(username='autorizado', password='1234')
+        now = timezone.now()
+        response = self.client.get(reverse('encuestas:administrar_habilitadas'), follow=True)
+        self.assertContains(response, 'Habilitar otra encuesta')
+
+        cuatrimestres = f'{Cuatrimestres.V.name}{Cuatrimestres.P.name}{Cuatrimestres.S.name}'
+        response = self.client.post(reverse('encuestas:agregar_habilitacion'),
+                                    {'anno': 2050, 'cuatrimestres': cuatrimestres,
+                                     'tipo_docente': TipoDocentes.J.name,
+                                     'desde': '01/01/2050 00:00', 'hasta': '07/01/2050 12:34',
+                                     },
+                                    follow=True)
+        self.assertEqual(EncuestasHabilitadas.objects.filter(anno=2050).count(), 1)
+        habilitacion = EncuestasHabilitadas.objects.get(anno=2050)
+        self.assertEqual(habilitacion.cuatrimestres, cuatrimestres)
+        self.assertEqual(habilitacion.tipo_docente, TipoDocentes.J.name)
+        self.assertEqual(habilitacion.desde, datetime.datetime(2050, 1, 1, 0, 0, 0).astimezone(datetime.timezone.utc))
+        self.assertEqual(habilitacion.hasta, datetime.datetime(2050, 1, 7, 12, 34, 0).astimezone(datetime.timezone.utc))
 
     def test_encuesta_no_habilitada(self):
         response = self.client.get(reverse('encuestas:encuesta', args=(2100, 'VPS', 'P')), follow=True)
