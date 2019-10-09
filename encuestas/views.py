@@ -228,7 +228,10 @@ def mandar_mail(opciones, otros_datos, anno, cuatrimestres, tipo_docente):
         teléfono: {otros_datos.telefono}
     '''
     from_email = 'distribuciones@dm.uba.ar'
-    send_mail(subject, mensaje, from_email, [otros_datos.email])
+    try:
+        send_mail(subject, mensaje, from_email, [otros_datos.email])
+    except Exception as e:  # TODO: poner una excepción adecuada
+        logger.exception('no puedo mandar el mail')
 
 
 def encuesta(request, anno, cuatrimestres, tipo_docente):
