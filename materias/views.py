@@ -505,6 +505,10 @@ def cambiar_turno(request, turno_id):
         return HttpResponseRedirect(reverse('materias:administrar_materia', args=_turno_a_materia_args(turno)))
 
     elif 'cambiar' in request.POST:
+        turno.numero = int(request.POST['numero_turno'])
+        turno.subnumero = request.POST['subnumero_turno'].strip()
+        turno.save()
+
         def dia_com_fin(pre_key):
             dia_value = request.POST[f'{pre_key}_dia']
             dia = Dias[dia_value]

@@ -243,8 +243,7 @@ class Horario(models.Model):
 
 
 telefono_validator = RegexValidator(regex=r'^\+?[0-9 -]{9,15}$',
-                                    message=("El teléfono debe contener +, -, números, espacios "
-                                             "y tener entre 9 y 15 caracteres"))
+                                    message=('El celular debe ser del estilo "area número" (por ejemplo, +11 1234-5678)'))
 
 class Docente(models.Model):
     na_nombre = models.CharField(max_length=30)

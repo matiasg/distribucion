@@ -144,7 +144,8 @@ td.pabellon
 }
 
 .tabla_numeros_chicos table input,
-table.tabla_numeros_chicos input
+table.tabla_numeros_chicos input,
+input.numeros_chicos
 {
   width: 5em;
   font-size: large;
