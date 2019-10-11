@@ -89,6 +89,20 @@ def filtra_materias(**kwargs):
 
     return materias
 
+
+@login_required
+@permission_required('materias.view_docente')
+def pagina_de_administrar_con_ac(request, anno, cuatrimestre):
+    primer_anno = Turno.objects.aggregate(Min('anno'))['anno__min']
+    ultimo_anno = Turno.objects.aggregate(Max('anno'))['anno__max']
+    annos = list(range(primer_anno, ultimo_anno + 2))
+    cuatrimestres = list(Cuatrimestres)
+
+    return render(request, 'materias/administrar.html', context={'annos': annos,
+                                                                 'cuatrimestres': cuatrimestres,
+                                                                 'anno': anno, 'cuatrimestre': cuatrimestre})
+
+
 @login_required
 @permission_required('materias.view_docente')
 def administrar(request):
@@ -126,14 +140,7 @@ def administrar(request):
         anno, cuatrimestre = anno_y_cuatrimestre_actuales()
         cuatrimestre = cuatrimestre.name
 
-    primer_anno = Turno.objects.aggregate(Min('anno'))['anno__min']
-    ultimo_anno = Turno.objects.aggregate(Max('anno'))['anno__max']
-    annos = list(range(primer_anno, ultimo_anno + 2))
-    cuatrimestres = list(Cuatrimestres)
-
-    return render(request, 'materias/administrar.html', context={'annos': annos,
-                                                                 'cuatrimestres': cuatrimestres,
-                                                                 'anno': anno, 'cuatrimestre': cuatrimestre})
+    return pagina_de_administrar_con_ac(request, anno, cuatrimestre)
 
 
 def administrar_general(request, anno, cuatrimestre, key_to_field, url, **kwargs):
