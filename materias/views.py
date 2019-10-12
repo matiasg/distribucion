@@ -90,8 +90,6 @@ def filtra_materias(**kwargs):
     return materias
 
 
-@login_required
-@permission_required('materias.view_docente')
 def pagina_de_administrar_con_ac(request, anno, cuatrimestre):
     primer_anno = Turno.objects.aggregate(Min('anno'))['anno__min']
     ultimo_anno = Turno.objects.aggregate(Max('anno'))['anno__max']
@@ -103,13 +101,30 @@ def pagina_de_administrar_con_ac(request, anno, cuatrimestre):
                                                                  'anno': anno, 'cuatrimestre': cuatrimestre})
 
 
+def anno_y_cuatrimestre_de_request(request):
+    anno = request.session.get('anno', None)
+    cuatrimestre = request.session.get('cuatrimestre', None)
+
+    if request.method == 'POST':
+        anno = request.POST.get('anno', anno)
+        cuatrimestre = request.POST.get('cuatrimestre', cuatrimestre)
+
+    if anno is None:
+        anno, cuatrimestre = anno_y_cuatrimestre_actuales()
+    else:
+        anno = int(anno)
+        request.session['anno'] = anno
+        request.session['cuatrimestre'] = cuatrimestre
+
+    return anno, cuatrimestre
+
+
 @login_required
 @permission_required('materias.view_docente')
 def administrar(request):
-    if request.method == 'POST':
-        anno = int(request.POST['anno'])
-        cuatrimestre = request.POST['cuatrimestre']
+    anno, cuatrimestre = anno_y_cuatrimestre_de_request(request)
 
+    if request.method == 'POST':
         if 'turnos_alumnos' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
         elif 'turnos_docentes' in request.POST:
@@ -119,7 +134,7 @@ def administrar(request):
         elif 'generar_cuatrimestre' in request.POST:
             return HttpResponseRedirect(reverse('materias:generar_cuatrimestre', args=(anno, cuatrimestre)))
         elif 'administrar_docentes' in request.POST:
-            return administrar_docentes(request, anno=anno, cuatrimestre=cuatrimestre)
+            return HttpResponseRedirect(reverse('materias:administrar_docentes'))
         elif 'retocar_materias' in request.POST:
             return HttpResponseRedirect(reverse('materias:retocar_materias'))
         elif 'ver_materias' in request.POST:
@@ -135,10 +150,6 @@ def administrar(request):
             return HttpResponseRedirect(reverse('encuestas:administrar_habilitadas'))
         elif 'dborrador' in request.POST:
             return HttpResponseRedirect(reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0)))
-
-    else:
-        anno, cuatrimestre = anno_y_cuatrimestre_actuales()
-        cuatrimestre = cuatrimestre.name
 
     return pagina_de_administrar_con_ac(request, anno, cuatrimestre)
 
@@ -759,7 +770,7 @@ def _docentes_en_request(request):
 
 @login_required
 @permission_required('materias.add_turno')
-def administrar_docentes(request, **kwargs):
+def administrar_docentes(request):
     if request.method == 'POST':
         if 'juntar' in request.POST:
             docentes = _docentes_en_request(request)
@@ -836,8 +847,6 @@ def administrar_docentes(request, **kwargs):
 
     context = {
         'docentes': _docentes_por_cargo(),
-        'anno': kwargs['anno'],
-        'cuatrimestre': Cuatrimestres[kwargs['cuatrimestre']],
     }
     return render(request, 'materias/administrar_docentes.html', context)
 
