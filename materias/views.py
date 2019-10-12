@@ -154,7 +154,7 @@ def administrar(request):
     return pagina_de_administrar_con_ac(request, anno, cuatrimestre)
 
 
-def administrar_general(request, anno, cuatrimestre, key_to_field, url, **kwargs):
+def administrar_general(request, anno, cuatrimestre, key_to_field, url, seccion='materias', **kwargs):
     if 'cambiar' in request.POST:
         with transaction.atomic():
 
@@ -178,7 +178,7 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url, **kwargs
                         logger.debug('cambiando %s a obj. %s por %s', page_field, objeto, v)
                     objeto.save()
 
-        return pagina_de_administrar_con_ac(request, anno, cuatrimestre)
+        return HttpResponseRedirect(f"{reverse('materias:administrar')}#{seccion}")
 
     else:
         materias = filtra_materias(anno=anno, cuatrimestre=cuatrimestre)
@@ -203,7 +203,8 @@ def administrar_alumnos(request, anno, cuatrimestre):
                               'pabellon': ('pabellon', str)}
                     }
 
-    return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_alumnos.html')
+    return administrar_general(request, anno, cuatrimestre, key_to_field,
+                               'materias/administrar_alumnos.html', seccion='materias')
 
 
 @login_required
@@ -228,7 +229,7 @@ def administrar_necesidades_docentes(request, anno, cuatrimestre):
     necesidades_y_recursos = {tipo: (necesidades[tipo], recursos[tipo]) for tipo in TipoDocentes}
 
     return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_necesidades_docentes.html',
-                               necesidades_y_recursos=necesidades_y_recursos)
+                               seccion='docentes', necesidades_y_recursos=necesidades_y_recursos)
 
 
 @login_required
