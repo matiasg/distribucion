@@ -59,4 +59,22 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <h3>Docentes con cargo sin cargas asignadas</h3>
+    <table id="cargas_docentes">
+        <thead>
+            <tr>
+                <td>Docente</td> <td>Cargo</td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for docente in sin_cargas %}
+            <tr>
+                <td><a href="{% url 'materias:agregar_carga_y_distribuir' docente.id %}">{{ docente.nombre }}</a></td>
+                <td>{{ docente.cargos|join:" - " }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
 </body>

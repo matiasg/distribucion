@@ -436,10 +436,14 @@ def administrar_cargas_publicadas(request, anno, cuatrimestre):
                                                turno__isnull=False).order_by('docente__na_apellido', 'docente__na_nombre')
     cargas_no_distribuidas = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre,
                                                   turno__isnull=True).order_by('docente__na_apellido', 'docente__na_nombre')
+    docentes_con_cargo_sin_cargas = set(Docente.objects.filter(cargos__len__gt=0).all()) \
+                                    - {c.docente for c in cargas_distribuidas} \
+                                    - {c.docente for c in cargas_no_distribuidas}
 
     context = {
         'distribuidas': cargas_distribuidas,
         'no_distribuidas': cargas_no_distribuidas,
+        'sin_cargas': docentes_con_cargo_sin_cargas,
         'anno': anno,
         'cuatrimestre': Cuatrimestres[cuatrimestre],
     }
@@ -472,6 +476,12 @@ def cambiar_una_carga_publicada(request, carga_id):
                    'turnos': [NoTurno()] + list(turnos.order_by('materia', 'numero', 'tipo')),
                    }
         return render(request, 'materias/cambiar_una_carga_publicada.html', context)
+
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def agregar_carga_y_distribuir(request, docente_id):
+    pass
 
 
 @login_required
