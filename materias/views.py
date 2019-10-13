@@ -294,7 +294,7 @@ def cargas_docentes_anuales(request, anno):
                             for c in range(a_generar):
                                 Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre, docente=docente, cargo=cargo)
 
-            return HttpResponseRedirect(f"{reverse('materias:administrar')}#encuestas")
+            return HttpResponseRedirect(f"{reverse('materias:administrar')}#docentes")
 
         elif 'generar' in request.POST:
             for docente in Docente.objects.filter(cargos__len__gt=0):
