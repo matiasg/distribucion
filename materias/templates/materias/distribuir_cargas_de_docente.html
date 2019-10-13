@@ -19,9 +19,7 @@
 <form id="cambio_de_carga" action="{% url 'materias:agregar_carga_y_distribuir' docente.id anno cuatrimestre %}" method="post">
     {% csrf_token %}
 
-    <div id="actuar">
-        <a href="{% url 'materias:administrar_cargas_publicadas' anno cuatrimestre %}">Cancelar cambio</a>
-    </div>
+    <input id="actuar" type="submit" name="cancelar" value="cancelar">
 
     <table>
         <thead> <tr> <th>cargo</th> <th>turno</th> </tr> </thead>
@@ -41,9 +39,6 @@
         </tbody>
     </table>
 
-    <div id="actuar">
-        <div id="cambiar_carga_publicada" value="Salvar">Salvar</div>
-        <input type="hidden" name="salvar">
-    </div>
+    <input id="actuar" type="submit" name="cambiar" value="salvar">
 
 </form>

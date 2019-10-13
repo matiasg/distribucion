@@ -483,16 +483,29 @@ def cambiar_una_carga_publicada(request, carga_id):
 @permission_required('dborrador.add_asignacion')
 def agregar_carga_y_distribuir(request, docente_id, anno, cuatrimestre):
     docente = Docente.objects.get(pk=docente_id)
-    cargas = []
-    for cargo in docente.cargos:
-        carga, creada = Carga.objects.get_or_create(docente=docente, cargo=cargo, anno=anno, cuatrimestre=cuatrimestre)
-        if creada:
-            logger.info('generé carga: %s', carga)
-        cargas.append(carga)
-    turnos = [NoTurno()] + list(Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre).order_by('materia', 'numero', 'tipo'))
-    return render(request, 'materias/distribuir_cargas_de_docente.html',
-                  {'docente': docente, 'cargas': cargas, 'turnos': turnos,
-                   'anno': anno, 'cuatrimestre': cuatrimestre})
+    if request.method == 'POST':
+        if 'cambiar' in request.POST:
+            for carga in Carga.objects.filter(docente=docente, anno=anno, cuatrimestre=cuatrimestre).all():
+                turno_id = int(request.POST[f'carga_{carga.id}'])
+                carga.turno = Turno.objects.get(pk=turno_id) if turno_id >= 0 else None
+                logger.debug('nuevo turno para %s: %s', docente, carga.turno)
+                carga.save()
+        elif 'cancelar' in request.POST:
+            para_borrar = Carga.objects.filter(docente=docente, anno=anno, cuatrimestre=cuatrimestre, turno=None).all()
+            logger.info('borro cargas: %s', para_borrar)
+            para_borrar.delete()
+        return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas', args=(anno, cuatrimestre)))
+    else:
+        cargas = []
+        for cargo in docente.cargos:
+            carga, creada = Carga.objects.get_or_create(docente=docente, cargo=cargo, anno=anno, cuatrimestre=cuatrimestre)
+            if creada:
+                logger.info('generé carga: %s', carga)
+            cargas.append(carga)
+        turnos = [NoTurno()] + list(Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre).order_by('materia', 'numero', 'tipo'))
+        return render(request, 'materias/distribuir_cargas_de_docente.html',
+                      {'docente': docente, 'cargas': cargas, 'turnos': turnos,
+                       'anno': anno, 'cuatrimestre': cuatrimestre})
 
 
 
