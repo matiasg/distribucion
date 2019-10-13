@@ -439,6 +439,7 @@ def administrar_cargas_publicadas(request, anno, cuatrimestre):
     docentes_con_cargo_sin_cargas = set(Docente.objects.filter(cargos__len__gt=0).all()) \
                                     - {c.docente for c in cargas_distribuidas} \
                                     - {c.docente for c in cargas_no_distribuidas}
+    docentes_con_cargo_sin_cargas = sorted(docentes_con_cargo_sin_cargas, key=lambda d: strxfrm(f'{d.apellido_nombre}'))
 
     context = {
         'distribuidas': cargas_distribuidas,
