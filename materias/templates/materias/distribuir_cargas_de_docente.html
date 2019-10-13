@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+{% load static %}
+{% load materias_tags %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+
+<link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
+<script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
+<script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
+<script src="{% static 'materias/scripts.js' %}"></script>
+
+<h2>
+    Cambiar la{{ cargas|pluralize }} carga{{ cargas|pluralize }} docente{{ cargas|pluralize }} de {{ docente }} de {{ anno }},
+    cuatrimestre {{ cuatrimestre }}
+</h2>
+
+<form id="cambio_de_carga" action="{% url 'materias:agregar_carga_y_distribuir' docente.id anno cuatrimestre %}" method="post">
+    {% csrf_token %}
+
+    <input id="actuar" type="submit" name="cancelar" value="cancelar">
+
+    <table>
+        <thead> <tr> <th>cargo</th> <th>turno</th> </tr> </thead>
+        <tbody>
+            {% for carga in cargas %}
+            <tr>
+                <td>{{ carga.cargo }}</td>
+                <td>
+                    <select name="carga_{{ carga.id }}">
+                        {% for t in turnos %}
+                        <option value="{{ t.id }}">{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <input id="actuar" type="submit" name="cambiar" value="salvar">
+
+</form>
