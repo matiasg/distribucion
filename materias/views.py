@@ -480,8 +480,19 @@ def cambiar_una_carga_publicada(request, carga_id):
 
 @login_required
 @permission_required('dborrador.add_asignacion')
-def agregar_carga_y_distribuir(request, docente_id):
-    pass
+def agregar_carga_y_distribuir(request, docente_id, anno, cuatrimestre):
+    docente = Docente.objects.get(pk=docente_id)
+    cargas = []
+    for cargo in docente.cargos:
+        carga, creada = Carga.objects.get_or_create(docente=docente, cargo=cargo, anno=anno, cuatrimestre=cuatrimestre)
+        if creada:
+            logger.info('generé carga: %s', carga)
+        cargas.append(carga)
+    turnos = [NoTurno()] + list(Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre).order_by('materia', 'numero', 'tipo'))
+    return render(request, 'materias/distribuir_cargas_de_docente.html',
+                  {'docente': docente, 'cargas': cargas, 'turnos': turnos,
+                   'anno': anno, 'cuatrimestre': cuatrimestre})
+
 
 
 @login_required

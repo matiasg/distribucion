@@ -70,7 +70,7 @@
         <tbody>
             {% for docente in sin_cargas %}
             <tr>
-                <td><a href="{% url 'materias:agregar_carga_y_distribuir' docente.id %}">{{ docente.nombre }}</a></td>
+                <td><a href="{% url 'materias:agregar_carga_y_distribuir' docente.id anno cuatrimestre.name %}">{{ docente.nombre }}</a></td>
                 <td>{{ docente.cargos|join:" - " }}</td>
             </tr>
             {% endfor %}
