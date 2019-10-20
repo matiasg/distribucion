@@ -13,10 +13,10 @@
 
 <h2>
     Cambiar la{{ cargas|pluralize }} carga{{ cargas|pluralize }} docente{{ cargas|pluralize }} de {{ docente }} de {{ anno }},
-    cuatrimestre {{ cuatrimestre }}
+    cuatrimestre {{ cuatrimestre.value }}
 </h2>
 
-<form id="cambio_de_carga" action="{% url 'materias:agregar_carga_y_distribuir' docente.id anno cuatrimestre %}" method="post">
+<form id="cambio_de_carga" action="{% url 'materias:agregar_carga_y_distribuir' docente.id anno cuatrimestre.name %}" method="post">
     {% csrf_token %}
 
     <input id="actuar" type="submit" name="cancelar" value="cancelar">

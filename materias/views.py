@@ -505,7 +505,7 @@ def agregar_carga_y_distribuir(request, docente_id, anno, cuatrimestre):
         turnos = [NoTurno()] + list(Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre).order_by('materia', 'numero', 'tipo'))
         return render(request, 'materias/distribuir_cargas_de_docente.html',
                       {'docente': docente, 'cargas': cargas, 'turnos': turnos,
-                       'anno': anno, 'cuatrimestre': cuatrimestre})
+                       'anno': anno, 'cuatrimestre': Cuatrimestres[cuatrimestre]})
 
 
 
