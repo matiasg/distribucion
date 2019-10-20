@@ -534,7 +534,7 @@ def administrar_materia(request, materia_id, anno, cuatrimestre):
             'materia': materia,
             'turnos': sorted(Turno.objects.filter(materia=materia, anno=anno, cuatrimestre=cuatrimestre)),
             'anno': anno,
-            'cuatrimestre': cuatrimestre,
+            'cuatrimestre': Cuatrimestres[cuatrimestre],
             'tipoturno': {t.name: t.value for t in TipoTurno},
         }
         return render(request, 'materias/administrar_materia.html', context)
