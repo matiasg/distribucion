@@ -18,6 +18,10 @@
     {{ materia }}
 </h2>
 
+<div class="actuar">
+    <a href="{% url 'materias:administrar_alumnos' anno cuatrimestre.name %}">Volver a materias de {{ anno }}, cuat {{ cuatrimestre.value }}</a>
+</div>
+
 <table id="administrar_materia">
     <thead>
         <tr> <th>tipo</th> <th>horario</th> <th>borrar</th> </tr>
@@ -50,6 +54,6 @@
 {% csrf_token %}
 
 {% for nombre, valor in tipoturno.items %}
-<input type="submit" name="agregar_turno_{{ nombre }}" value="Agregar un turno de {{ valor }}">
+    <input class="actuar" type="submit" name="agregar_turno_{{ nombre }}" value="Agregar un turno de {{ valor }}">
 {% endfor %}
 </form>
