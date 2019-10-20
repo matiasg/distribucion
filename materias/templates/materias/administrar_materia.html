@@ -10,13 +10,17 @@
 <script src="{% static 'materias/scripts.js' %}"></script>
 
 <h1>
-    Administrar materias de: <a href="{% url 'materias:administrar_alumnos' anno cuatrimestre %}">
-        {{ anno }}, cuatrimestre {{ cuatrimestre }}
+    Administrar materias de: <a href="{% url 'materias:administrar_alumnos' anno cuatrimestre.name %}">
+        {{ anno }}, cuatrimestre {{ cuatrimestre.value }}
     </a>
 </h1>
 <h2>
     {{ materia }}
 </h2>
+
+<div class="actuar">
+    <a href="{% url 'materias:administrar_alumnos' anno cuatrimestre.name %}">Volver a materias de {{ anno }}, cuat {{ cuatrimestre.value }}</a>
+</div>
 
 <table id="administrar_materia">
     <thead>
@@ -46,10 +50,10 @@
     ¿Confirmás que querés borrar este turno?
 </div>
 
-<form action="{% url 'materias:administrar_materia' materia.id anno cuatrimestre %}" method="post">
+<form action="{% url 'materias:administrar_materia' materia.id anno cuatrimestre.name %}" method="post">
 {% csrf_token %}
 
 {% for nombre, valor in tipoturno.items %}
-<input type="submit" name="agregar_turno_{{ nombre }}" value="Agregar un turno de {{ valor }}">
+    <input class="actuar" type="submit" name="agregar_turno_{{ nombre }}" value="Agregar un turno de {{ valor }}">
 {% endfor %}
 </form>
