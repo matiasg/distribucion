@@ -5,6 +5,7 @@ from django.contrib.auth.models import Permission
 from psycopg2.extras import NumericRange
 
 import re
+import datetime
 
 from dborrador.models import Preferencia, Asignacion, Intento, IntentoRegistrado
 from dborrador.views import hacer_distribucion, _cambiar_docente, NoTurno
@@ -92,6 +93,19 @@ class TestPreparar(TestCase):
         self.assertTrue(pref_otro_anno in todas)
         self.assertTrue(pref_otro_cuatri in todas)
 
+    def test_copio_ultimas_preferencias(self):
+        self._agrega_preferencias()
+        turno3 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                      numero=3, tipo=TipoTurno.A.name,
+                                      necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        now_mas_delta = timezone.now() + datetime.timedelta(seconds=15)
+        pref_doc = PreferenciasDocente.objects.create(docente=self.docente, turno=turno3, peso=1, fecha_encuesta=now_mas_delta)
+
+        response = self.client.get('/dborrador/preparar/2100/P', follow=True)
+        copiadas = Preferencia.objects.filter(preferencia__turno__anno=2100,
+                                              preferencia__turno__cuatrimestre=Cuatrimestres.P.name)
+        self.assertEqual(copiadas.count(), 1)
+        self.assertEqual(copiadas.first().preferencia.turno, turno3)
 
 
 class TestPaginaPrincipal(TestCase):
@@ -106,7 +120,6 @@ class TestPaginaPrincipal(TestCase):
         response = self.client.get('/dborrador/')
         self.assertContains(response, '<select name="anno">')
         self.assertContains(response, '<select name="cuatrimestre">')
-
 
 
 class TestVerDistribucion(TestCase):
