@@ -60,10 +60,12 @@ def _anno_cuat_tipos_context():
         'tipos': [t for t in TipoDocentes]}
     return context
 
+
 @login_required
 @permission_required('dborrador.add_asignacion')
 def index(request):
     return render(request, 'dborrador/base.html', _anno_cuat_tipos_context())
+
 
 @login_required
 @permission_required('dborrador.add_asignacion')

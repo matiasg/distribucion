@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'encuestas/encuestas.css' %}">
+
+<head>
+    <h2>
+        Encuestas múltiples para {{ anno }}, cuatrimestre {{ cuatrimestre.value }}
+    </h2>
+</head>
+
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>docente</th>
+                <th>encuestas</th>
+            </tr>
+        </thead>
+        {% for docente in docentes %}
+        <tr>
+            <td>{{ docente.apellido_nombre }}</td>
+            <td>{{ docente.pedidos }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>

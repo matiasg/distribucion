@@ -15,4 +15,6 @@ urlpatterns = [
          views.administrar_habilitadas, name='administrar_habilitadas'),
     path('encuesta/<int:anno>/<str:cuatrimestres>/<str:tipo_docente>',
          views.encuesta, name='encuesta'),
+    path('ver_encuestas_multiples/<int:anno>/<str:cuatrimestre>',
+         views.ver_encuestas_multiples, name='ver_encuestas_multiples'),
 ]
