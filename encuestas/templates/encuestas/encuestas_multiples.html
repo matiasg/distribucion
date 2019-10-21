@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 {% load static %}
 <link rel="stylesheet" type="text/css" href="{% static 'encuestas/encuestas.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
 
 <head>
     <h2>
@@ -9,6 +10,7 @@
 </head>
 
 <body>
+    <a id=actuar href="{% url 'materias:administrar' %}#encuestas">Volver a administrar</a>
     <table>
         <thead>
             <tr>
