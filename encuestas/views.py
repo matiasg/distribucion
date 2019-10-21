@@ -280,5 +280,6 @@ def encuestas_de_un_docente(request, docente_id, anno, cuatrimestre):
                                       .order_by('-fecha_encuesta')
     return render(request, 'encuestas/encuestas_de_un_docente.html',
                   {'anno': anno, 'cuatrimestre': Cuatrimestres[cuatrimestre],
+                   'docente': docente,
                    'preferencias': preferencias,
                    })
