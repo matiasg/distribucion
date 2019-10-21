@@ -18,7 +18,11 @@
         </thead>
         {% for docente in docentes %}
         <tr>
-            <td>{{ docente.apellido_nombre }}</td>
+            <td>
+                <a href="{% url 'encuestas:encuestas_de_un_docente' docente.id anno cuatrimestre.name %}">
+                {{ docente.apellido_nombre }}
+                </a>
+            </td>
             <td>{{ docente.pedidos }}</td>
         </tr>
         {% endfor %}

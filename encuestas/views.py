@@ -271,3 +271,14 @@ def ver_encuestas_multiples(request, anno, cuatrimestre):
                    'docentes': docentes_con_pedidos,
                    })
 
+
+@login_required
+@permission_required('dborrador.add_asignacion')
+def encuestas_de_un_docente(request, docente_id, anno, cuatrimestre):
+    docente = Docente.objects.get(pk=docente_id)
+    preferencias = PreferenciasDocente.objects.filter(docente=docente, turno__anno=anno, turno__cuatrimestre=cuatrimestre) \
+                                      .order_by('-fecha_encuesta')
+    return render(request, 'encuestas/encuestas_de_un_docente.html',
+                  {'anno': anno, 'cuatrimestre': Cuatrimestres[cuatrimestre],
+                   'preferencias': preferencias,
+                   })

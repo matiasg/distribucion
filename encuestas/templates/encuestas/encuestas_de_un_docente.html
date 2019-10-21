@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'encuestas/encuestas.css' %}">
+
+<head>
+    <h2>
+        Encuestas de {{ docente }} para {{ anno }}, cuatrimestre {{ cuatrimestre.value }}
+    </h2>
+</head>
+
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>fecha</th>
+                <th>turno</th>
+                <th>peso</th>
+            </tr>
+        </thead>
+        {% for preferencia in preferencias %}
+        <tr>
+            <td>{{ preferencia.fecha_encuesta }}</td>
+            <td>{{ preferencia.turno }}</td>
+            <td>{{ preferencia.peso }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
