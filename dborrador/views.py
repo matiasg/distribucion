@@ -41,6 +41,15 @@ def copiar_anno_y_cuatrimestre(anno, cuatrimestre):
                                                    docente=docente)
         fecha_ultima_encuesta = prefs.aggregate(Max('fecha_encuesta'))['fecha_encuesta__max']
         prefs_ultimas = prefs.filter(fecha_encuesta=fecha_ultima_encuesta)
+        # chequeo que no haya repetidos
+        # En la encuesta ya se chequea pero lo repito por si cambio algo
+        # XXX: no quiero tirar una excepción acá pero no copiar no es la solución.
+        #      Quizás haya que agregar una página de chequeos antes de distribuir?
+        cantidad_turnos = len({pref.turno for pref in prefs_ultimas})
+        if cantidad_turnos < prefs_ultimas.count():
+            logger.error('El docente %s tiene preferencias con turnos repetidos: %s. No copio sus preferencias.',
+                         docente, prefs_ultimas)
+            continue
 
         peso_total = sum(pref.peso for pref in prefs_ultimas)
         logger.debug('considerando %d prefs para %s. Peso total: %s',
