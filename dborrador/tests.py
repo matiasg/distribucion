@@ -304,6 +304,28 @@ class TestDistribuir(TestCase):
         self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 3)).count(), 0)
         self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 1)).count(), 1)
 
+    def test_distribuir_no_borra_otros_cuatrimestres(self):
+        otro_cuat = Cuatrimestres.S
+        turno_otro_cuat = Turno.objects.create(materia=self.materia, anno=self.ac.anno, cuatrimestre=otro_cuat.name,
+                                               numero=1, tipo=TipoTurno.A.name,
+                                               necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        carga_otro_cuat = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitSim.name,
+                                               anno=self.ac.anno, cuatrimestre=otro_cuat.name)
+        now = timezone.now()
+        pref_ahora = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1, fecha_encuesta=now)
+        Preferencia.objects.create(preferencia=pref_ahora, peso_normalizado=1)
+        pref_otro_cuat = PreferenciasDocente.objects.create(docente=self.docente1, turno=turno_otro_cuat, peso=1, fecha_encuesta=now)
+        Preferencia.objects.create(preferencia=pref_otro_cuat, peso_normalizado=1)
+
+        hacer_distribucion(self.ac, TipoDocentes.P, 1)
+        self.assertEqual(Asignacion.objects.count(), 1)
+
+        hacer_distribucion(AnnoCuatrimestre(2100, otro_cuat.name), TipoDocentes.P, 0)
+        self.assertEqual(Asignacion.objects.count(), 2)
+        turnos_asignados = {a.turno for a in Asignacion.objects.all()}
+        self.assertEqual(turnos_asignados, {self.turno2, turno_otro_cuat})
+
+
 
 class TestModel(TestCase):
 
