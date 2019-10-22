@@ -19,6 +19,7 @@ from .misc import Distribucion
 from materias.models import (Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria, TipoTurno,
                              choice_enum, AnnoCuatrimestre, TipoDocentes,)
 from materias.misc import Mapeos, NoTurno
+from materias.views import anno_y_cuatrimestre_de_request
 from encuestas.models import PreferenciasDocente, OtrosDatos
 
 from allocation import allocating
@@ -261,9 +262,10 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
 @login_required
 @permission_required('dborrador.add_asignacion')
 def empezar_a_distribuir(request):
-    anno = int(request.POST['anno'])
-    cuatrimestre = request.POST['cuatrimestre']
-    distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0))
+    anno, cuatrimestre = anno_y_cuatrimestre_de_request(request)
+    max_intento = IntentoRegistrado.maximo_intento(anno, cuatrimestre)
+    distribucion_url = reverse('dborrador:distribucion',
+                               args=(anno, cuatrimestre, max_intento.algoritmo, max_intento.manual))
     return HttpResponseRedirect(distribucion_url)
 
 

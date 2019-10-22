@@ -149,7 +149,7 @@ def administrar(request):
         elif 'administrar_encuestas' in request.POST:
             return HttpResponseRedirect(reverse('encuestas:administrar_habilitadas'))
         elif 'dborrador' in request.POST:
-            return HttpResponseRedirect(reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0)))
+            return HttpResponseRedirect(reverse('dborrador:empezar'))
 
     return pagina_de_administrar_con_ac(request, anno, cuatrimestre)
 
