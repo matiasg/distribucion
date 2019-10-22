@@ -363,7 +363,8 @@ def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_man
 
         IntentoRegistrado.objects.filter(intento__gt=intento.valor, anno=anno, cuatrimestre=cuatrimestre).delete()
 
-        para_borrar = Asignacion.objects.filter(intentos__startswith__gt=intento.valor)
+        para_borrar = Asignacion.objects.filter(intentos__startswith__gt=intento.valor,
+                                                carga__turno__anno=anno, carga__turno__cuatrimestre=cuatrimestre)
         logger.warning('Borro %d asignaciones', para_borrar.count())
         para_borrar.delete()
 
