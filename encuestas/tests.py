@@ -3,6 +3,7 @@ from django.test.utils import setup_test_environment
 from django.utils import timezone
 from django.urls import reverse
 from django.forms import ValidationError
+from django.contrib.auth.models import Permission
 
 import re
 import datetime
@@ -10,7 +11,8 @@ import time
 
 from materias.models import (Docente, Carga, Cargos, Materia, Turno, TipoTurno, TipoMateria,
                              CargoDedicacion, Cuatrimestres)
-from materias.misc import TipoDocentes, Mapeos
+from materias.misc import TipoDocentes, Mapeos, Cargos, Docente
+from usuarios.models import Usuario
 from .models import PreferenciasDocente, OtrosDatos, CargasPedidas, EncuestasHabilitadas, GrupoCuatrimestral
 from .views import checkear_y_salvar
 
@@ -353,3 +355,43 @@ class TestEncuesta(TestCase):
 
         response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), cs.name, tipo)))
         self.assertContains(response, 'disabled', count=5)
+
+
+class TestPaginas(TestCase):
+
+    def setUp(self):
+        self.anno = 2080
+        self.cuatrimestre = Cuatrimestres.S
+        self.materia = Materia.objects.create(nombre='lacan 1', obligatoriedad=TipoMateria.B.name)
+        self.dict_nec = {'necesidad_prof': 0, 'necesidad_jtp': 0, 'necesidad_ay1': 0, 'necesidad_ay2': 0}
+        self.turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                          numero=1, tipo=TipoTurno.T.name, **self.dict_nec)
+        self.n = Docente.objects.create(na_nombre='nemo', na_apellido='X', telefono='00 0000', email='nemo@nautilus.org',
+                                        cargos=[CargoDedicacion.TitExc.name])
+
+        Usuario.objects.create_user(username='desautorizado', password='123')
+        autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
+        autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='dborrador', codename='add_asignacion'))
+
+    def test_ver_encuestas_multiples(self):
+        self.client.login(username='autorizado', password='1234')
+        now = timezone.now()
+        now_mas_delta = now + datetime.timedelta(seconds=10)
+        pref1 = PreferenciasDocente.objects.create(docente=self.n, turno=self.turno, cargo=Cargos.Tit.name,
+                                                   peso=1, fecha_encuesta=now)
+        cargas1 = CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=self.cuatrimestre.name, cargas=1,
+                                               fecha_encuesta=now)
+        datos = OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                          fecha_encuesta=now_mas_delta, comentario='importante comentario', cargas_declaradas=1)
+
+        pref2 = PreferenciasDocente.objects.create(docente=self.n, turno=self.turno, cargo=Cargos.Tit.name,
+                                                   peso=2, fecha_encuesta=now_mas_delta)
+        cargas2 = CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=self.cuatrimestre.name, cargas=1,
+                                               fecha_encuesta=now_mas_delta)
+
+        response = self.client.get(reverse('encuestas:ver_encuestas_multiples', args=(self.anno, self.cuatrimestre.name)))
+        self.assertContains(response, self.n.apellido_nombre)
+
+        response = self.client.get(reverse('encuestas:encuestas_de_un_docente', args=(self.n.id, self.anno, self.cuatrimestre.name)))
+        self.assertContains(response, self.n.nombre)
+        self.assertContains(response, str(self.turno), count=2)

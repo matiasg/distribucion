@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'encuestas/encuestas.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+
+<head>
+    <h2>
+        Encuestas de {{ docente.nombre }} para {{ anno }}, cuatrimestre {{ cuatrimestre.value }}
+    </h2>
+</head>
+
+<body>
+    <a id=actuar href="{% url 'encuestas:ver_encuestas_multiples' anno cuatrimestre.name %}">Volver a ver encuestas múltiples</a>
+    <table>
+        <thead>
+            <tr>
+                <th>fecha</th>
+                <th>turno</th>
+                <th>peso</th>
+            </tr>
+        </thead>
+        {% regroup preferencias by fecha_encuesta as encuestas %}
+        {% for encuesta in encuestas %}
+        <tr>
+            <td rowspan={{ encuesta.list|length|add:"1" }}>{{ encuesta.grouper|date:"d/m/Y" }} {{ encuesta.grouper|time:"H:i:s" }}</td>
+        </tr>
+        {% for preferencia in encuesta.list %}
+        <tr>
+            <td>{{ preferencia.turno }}</td>
+            <td>{{ preferencia.peso }}</td>
+        </tr>
+        {% endfor %}
+        {% endfor %}
+    </table>
+</body>

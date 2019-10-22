@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'encuestas/encuestas.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+
+<head>
+    <h2>
+        Encuestas múltiples para {{ anno }}, cuatrimestre {{ cuatrimestre.value }}
+    </h2>
+</head>
+
+<body>
+    <a id=actuar href="{% url 'materias:administrar' %}#encuestas">Volver a administrar</a>
+    <table>
+        <thead>
+            <tr>
+                <th>docente</th>
+                <th>encuestas</th>
+            </tr>
+        </thead>
+        {% for docente in docentes %}
+        <tr>
+            <td>
+                <a href="{% url 'encuestas:encuestas_de_un_docente' docente.id anno cuatrimestre.name %}">
+                {{ docente.apellido_nombre }}
+                </a>
+            </td>
+            <td>{{ docente.pedidos }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
