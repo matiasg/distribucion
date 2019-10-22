@@ -326,7 +326,6 @@ class TestDistribuir(TestCase):
         self.assertEqual(turnos_asignados, {self.turno2, turno_otro_cuat})
 
 
-
 class TestModel(TestCase):
 
     def setUp(self):
