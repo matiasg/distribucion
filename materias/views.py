@@ -149,7 +149,7 @@ def administrar(request):
         elif 'administrar_encuestas' in request.POST:
             return HttpResponseRedirect(reverse('encuestas:administrar_habilitadas'))
         elif 'dborrador' in request.POST:
-            return HttpResponseRedirect(reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0)))
+            return HttpResponseRedirect(reverse('dborrador:empezar'))
 
     return pagina_de_administrar_con_ac(request, anno, cuatrimestre)
 
@@ -344,11 +344,12 @@ def administrar_cargas_docentes(request, anno, cuatrimestre):
     docentes_sin_cargas = sorted(set(docentes) - set(docentes_con_cargas),
                                  key=lambda d: d.na_apellido)
     # docentes con diferencias con la encuesta
-    docentes_y_cargas_encuesta = {cp.docente: cp.cargas for cp in CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all()}
+    docentes_y_cargas_encuesta = {cp.docente: cp.cargas
+                                  for cp in CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all()}
     # calculo diferencias contra encuesta
     diferencias_encuesta = {d: (len(docentes_y_cargas_nuestras[d]),
                                 docentes_y_cargas_encuesta[d],
-                                OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=d).first())
+                                OtrosDatos.objects.filter(anno=anno, cuatrimestre__contains=cuatrimestre, docente=d).first())
                             for d in sorted(set(docentes_y_cargas_nuestras) & set(docentes_y_cargas_encuesta),
                                             key=lambda d: strxfrm(d.apellido_nombre))
                             if len(docentes_y_cargas_nuestras[d]) != docentes_y_cargas_encuesta[d]
@@ -404,9 +405,11 @@ def administrar_cargas_de_un_docente(request, anno, cuatrimestre, docente_id):
 
     else:
         try:
-            cargas_pedidas = CargasPedidas.objects.get(anno=anno, cuatrimestre=cuatrimestre, docente=docente).cargas
+            cargas_pedidas = CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=docente) \
+                                                  .order_by('fecha_encuesta').last() \
+                                                  .cargas
             completo_la_encuesta = True
-        except CargasPedidas.DoesNotExist:
+        except (CargasPedidas.DoesNotExist, AttributeError):
             cargas_pedidas = 0
             completo_la_encuesta = False
         cargas = docente.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre)

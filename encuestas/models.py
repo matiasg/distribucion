@@ -7,6 +7,14 @@ from enum import Enum
 from materias.models import Turno, Docente, Cuatrimestres, Cargos, TipoDocentes, choice_enum, telefono_validator
 
 
+class GrupoCuatrimestral(Enum):
+    V = 'Verano'
+    P = '1'
+    S = '2'
+    VP = 'V. y 1'
+    VPS = 'todos'
+
+
 class PreferenciasDocente(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
@@ -22,7 +30,7 @@ class OtrosDatos(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
     fecha_encuesta = models.DateTimeField()
     anno = models.IntegerField()
-    cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
+    cuatrimestre = models.CharField(max_length=3, choices=choice_enum(GrupoCuatrimestral))
     comentario = models.TextField()
     email = models.EmailField()
     telefono = models.CharField(validators=[telefono_validator], max_length=17, blank=True)
@@ -35,14 +43,6 @@ class CargasPedidas(models.Model):
     cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
     cargas = models.PositiveIntegerField(validators=[MaxValueValidator(3)])
     fecha_encuesta = models.DateTimeField()
-
-
-class GrupoCuatrimestral(Enum):
-    V = 'Verano'
-    P = '1'
-    S = '2'
-    VP = 'V. y 1'
-    VPS = 'todos'
 
 
 class EncuestasHabilitadas(models.Model):

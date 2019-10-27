@@ -19,6 +19,7 @@ from .misc import Distribucion
 from materias.models import (Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria, TipoTurno,
                              choice_enum, AnnoCuatrimestre, TipoDocentes,)
 from materias.misc import Mapeos, NoTurno
+from materias.views import anno_y_cuatrimestre_de_request
 from encuestas.models import PreferenciasDocente, OtrosDatos
 
 from allocation import allocating
@@ -40,6 +41,15 @@ def copiar_anno_y_cuatrimestre(anno, cuatrimestre):
                                                    docente=docente)
         fecha_ultima_encuesta = prefs.aggregate(Max('fecha_encuesta'))['fecha_encuesta__max']
         prefs_ultimas = prefs.filter(fecha_encuesta=fecha_ultima_encuesta)
+        # chequeo que no haya repetidos
+        # En la encuesta ya se chequea pero lo repito por si cambio algo
+        # XXX: no quiero tirar una excepción acá pero no copiar no es la solución.
+        #      Quizás haya que agregar una página de chequeos antes de distribuir?
+        cantidad_turnos = len({pref.turno for pref in prefs_ultimas})
+        if cantidad_turnos < prefs_ultimas.count():
+            logger.error('El docente %s tiene preferencias con turnos repetidos: %s. No copio sus preferencias.',
+                         docente, prefs_ultimas)
+            continue
 
         peso_total = sum(pref.peso for pref in prefs_ultimas)
         logger.debug('considerando %d prefs para %s. Peso total: %s',
@@ -203,7 +213,8 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     asignaciones_fijas = Distribucion.ya_distribuidas_por_cargo(anno_cuat)
     necesidades_por_turno = Mapeos.necesidades_por_turno_y_tipo(anno_cuat)
 
-    preferencias = Preferencia.objects.order_by('preferencia__cargo',
+    preferencias = Preferencia.objects.filter(preferencia__turno__anno=anno, preferencia__turno__cuatrimestre=cuatrimestre) \
+                                      .order_by('preferencia__cargo',
                                                 'peso_normalizado',
                                                 'preferencia__docente__na_apellido')
     preferencias_por_turno = {turno: preferencias.filter(preferencia__turno=turno).all()
@@ -261,9 +272,10 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
 @login_required
 @permission_required('dborrador.add_asignacion')
 def empezar_a_distribuir(request):
-    anno = int(request.POST['anno'])
-    cuatrimestre = request.POST['cuatrimestre']
-    distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0))
+    anno, cuatrimestre = anno_y_cuatrimestre_de_request(request)
+    max_intento = IntentoRegistrado.maximo_intento(anno, cuatrimestre)
+    distribucion_url = reverse('dborrador:distribucion',
+                               args=(anno, cuatrimestre, max_intento.algoritmo, max_intento.manual))
     return HttpResponseRedirect(distribucion_url)
 
 
@@ -361,7 +373,8 @@ def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_man
 
         IntentoRegistrado.objects.filter(intento__gt=intento.valor, anno=anno, cuatrimestre=cuatrimestre).delete()
 
-        para_borrar = Asignacion.objects.filter(intentos__startswith__gt=intento.valor)
+        para_borrar = Asignacion.objects.filter(intentos__startswith__gt=intento.valor,
+                                                carga__turno__anno=anno, carga__turno__cuatrimestre=cuatrimestre)
         logger.warning('Borro %d asignaciones', para_borrar.count())
         para_borrar.delete()
 
