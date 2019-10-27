@@ -170,19 +170,19 @@ class TestPaginas(TestCase):
         self.materia2 = Materia.objects.create(nombre='lacan 2', obligatoriedad=TipoMateria.B.name)
         self.materia3 = Materia.objects.create(nombre='lacan 3', obligatoriedad=TipoMateria.B.name)
 
-        dict_nec = {'necesidad_prof': 0, 'necesidad_jtp': 0, 'necesidad_ay1': 0, 'necesidad_ay2': 0}
+        self.dict_nec = {'necesidad_prof': 0, 'necesidad_jtp': 0, 'necesidad_ay1': 0, 'necesidad_ay2': 0}
         self.turno11 = Turno.objects.create(materia=self.materia1, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
-                                            numero=1, tipo=TipoTurno.T.name, **dict_nec)
+                                            numero=1, tipo=TipoTurno.T.name, **self.dict_nec)
         self.turno12 = Turno.objects.create(materia=self.materia1, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
-                                            numero=2, tipo=TipoTurno.T.name, **dict_nec)
+                                            numero=2, tipo=TipoTurno.T.name, **self.dict_nec)
         self.turno13 = Turno.objects.create(materia=self.materia1, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
-                                            numero=3, tipo=TipoTurno.T.name, **dict_nec)
+                                            numero=3, tipo=TipoTurno.T.name, **self.dict_nec)
         self.turno14 = Turno.objects.create(materia=self.materia1, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
-                                            numero=4, tipo=TipoTurno.T.name, **dict_nec)
+                                            numero=4, tipo=TipoTurno.T.name, **self.dict_nec)
         self.turno21 = Turno.objects.create(materia=self.materia2, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
-                                            numero=1, tipo=TipoTurno.T.name, **dict_nec)
+                                            numero=1, tipo=TipoTurno.T.name, **self.dict_nec)
         self.turno22 = Turno.objects.create(materia=self.materia2, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
-                                            numero=2, tipo=TipoTurno.T.name, **dict_nec)
+                                            numero=2, tipo=TipoTurno.T.name, **self.dict_nec)
 
         siete, ocho, nueve, diez = datetime.time(7), datetime.time(8), datetime.time(9), datetime.time(10)
         aula_pab = {'aula': 'no', 'pabellon': '0'}
@@ -207,6 +207,7 @@ class TestPaginas(TestCase):
                                         cargos=[CargoDedicacion.TitExc.name])
         self.m = Docente.objects.create(na_nombre='mario', na_apellido='Y', telefono='00 0000', email='mario@nautilus.org',
                                         cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
+
     def test_pagina_principal_con_y_sin_turnos(self):
         response = self.client.get(f'/materias/{self.anno}{self.cuatrimestre.value}')
         self.assertContains(response, '<div class="seccion">Obligatorias</div>' )
@@ -573,9 +574,8 @@ class TestPaginas(TestCase):
             else:
                 self.assertNotContains(response, materia.nombre)
         # pido juntarlas
-        dict_nec = {'necesidad_prof': 0, 'necesidad_jtp': 0, 'necesidad_ay1': 0, 'necesidad_ay2': 0}
         turno = Turno.objects.create(materia=self.materia3, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
-                                     numero=2, tipo=TipoTurno.T.name, **dict_nec)
+                                     numero=2, tipo=TipoTurno.T.name, **self.dict_nec)
         response = self.client.post(reverse('materias:retocar_materias'),
                                     {f'juntar_{self.materia3.id}': True, f'juntar_{duplicada.id}': True,
                                      'nombre': f'nombre_{duplicada.id}',
@@ -588,10 +588,9 @@ class TestPaginas(TestCase):
 
     def test_copiar_turnos(self):
         # agrego una materia optativa
-        dict_nec = {'necesidad_prof': 0, 'necesidad_jtp': 0, 'necesidad_ay1': 0, 'necesidad_ay2': 0}
         materia4 = Materia.objects.create(nombre='lacan 4', obligatoriedad=TipoMateria.N.name)
         turno41 = Turno.objects.create(materia=materia4, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
-                                       numero=1, tipo=TipoTurno.T.name, **dict_nec)
+                                       numero=1, tipo=TipoTurno.T.name, **self.dict_nec)
 
         self.client.login(username='autorizado', password='1234')
         response = self.client.get(reverse('materias:generar_cuatrimestre', args=(self.anno, self.cuatrimestre.name)))
@@ -749,6 +748,39 @@ class TestPaginas(TestCase):
         with self.assertRaises(Docente.DoesNotExist):
             nuevo_docente.refresh_from_db()
         self.assertEqual(response.redirect_chain[-1][0], reverse('materias:administrar_docentes'))
+
+    def test_agregar_cargas_y_distribuir(self):
+        self.client.login(username='autorizado', password='1234')
+        anno = 2345
+        cuatrimestre = Cuatrimestres.P
+        self._agrega_docentes()
+
+        turno = Turno.objects.create(materia=self.materia1, anno=anno, cuatrimestre=cuatrimestre.name,
+                                      numero=1, tipo=TipoTurno.T.name, **self.dict_nec)
+
+        url = reverse('materias:agregar_carga_y_distribuir', args=(self.m.id, anno, cuatrimestre.name))
+        response = self.client.get(url)
+        # se crearon dos cargas sin turno
+        cargas_nuevas = Carga.objects.filter(docente=self.m, anno=anno, cuatrimestre=cuatrimestre.name)
+        self.assertEqual(cargas_nuevas.count(), 2)
+        for carga in cargas_nuevas.all():
+            self.assertContains(response, f'<select name="carga_{carga.id}">')
+        # cancelo la generación
+        response = self.client.post(url, {'cancelar': 'cancelar'})
+        # se borran las cargas
+        cargas_nuevas = Carga.objects.filter(docente=self.m, anno=anno, cuatrimestre=cuatrimestre.name)
+        self.assertEqual(cargas_nuevas.count(), 0)
+
+        # vuelvo a generarlas y distribuyo en turno
+        self.client.get(url)
+        cargas_nuevas = Carga.objects.filter(docente=self.m, anno=anno, cuatrimestre=cuatrimestre.name)
+        self.assertEqual(cargas_nuevas.count(), 2)
+        post_data = {f'carga_{carga.id}': str(turno.id) for carga in cargas_nuevas}
+        post_data['cambiar'] = 'salvar'
+        response = self.client.post(url, post_data)
+        for carga in cargas_nuevas:
+            carga.refresh_from_db()
+            self.assertEqual(carga.turno, turno)
 
 
 class TestCasosBorde(TestCase):

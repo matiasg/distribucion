@@ -10,12 +10,9 @@
 
 <body>
 
-   <form action="{% url 'materias:administrar' %}#encuestas" method="post">
-        {% csrf_token %}
-        <input type="hidden" name="anno" value="{{ anno }}">
-        <input type="hidden" name="cuatrimestre" value="{{ cuatrimestre.name }}">
-        <input class="actuar" type="submit" name="administrar" value="Cancelar">
-    </form>
+    <div id="actuar">
+        <a href="{% url 'materias:administrar' %}#docentes">Cancelar</a>
+    </div>
 
     <hr>
     <form action="{% url 'materias:cargas_docentes_anuales' anno %}" method="post">

@@ -89,13 +89,42 @@ def filtra_materias(**kwargs):
 
     return materias
 
+
+def pagina_de_administrar_con_ac(request, anno, cuatrimestre):
+    primer_anno = Turno.objects.aggregate(Min('anno'))['anno__min']
+    ultimo_anno = Turno.objects.aggregate(Max('anno'))['anno__max']
+    annos = list(range(primer_anno, ultimo_anno + 2))
+    cuatrimestres = list(Cuatrimestres)
+
+    return render(request, 'materias/administrar.html', context={'annos': annos,
+                                                                 'cuatrimestres': cuatrimestres,
+                                                                 'anno': anno, 'cuatrimestre': cuatrimestre})
+
+
+def anno_y_cuatrimestre_de_request(request):
+    anno = request.session.get('anno', None)
+    cuatrimestre = request.session.get('cuatrimestre', None)
+
+    if request.method == 'POST':
+        anno = request.POST.get('anno', anno)
+        cuatrimestre = request.POST.get('cuatrimestre', cuatrimestre)
+
+    if anno is None:
+        anno, cuatrimestre = anno_y_cuatrimestre_actuales()
+    else:
+        anno = int(anno)
+        request.session['anno'] = anno
+        request.session['cuatrimestre'] = cuatrimestre
+
+    return anno, cuatrimestre
+
+
 @login_required
 @permission_required('materias.view_docente')
 def administrar(request):
-    if request.method == 'POST':
-        anno = int(request.POST['anno'])
-        cuatrimestre = request.POST['cuatrimestre']
+    anno, cuatrimestre = anno_y_cuatrimestre_de_request(request)
 
+    if request.method == 'POST':
         if 'turnos_alumnos' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_alumnos', args=(anno, cuatrimestre)))
         elif 'turnos_docentes' in request.POST:
@@ -105,7 +134,7 @@ def administrar(request):
         elif 'generar_cuatrimestre' in request.POST:
             return HttpResponseRedirect(reverse('materias:generar_cuatrimestre', args=(anno, cuatrimestre)))
         elif 'administrar_docentes' in request.POST:
-            return HttpResponseRedirect(reverse('materias:administrar_docentes'), {'anno': anno, 'cuatrimestre': cuatrimestre})
+            return HttpResponseRedirect(reverse('materias:administrar_docentes'))
         elif 'retocar_materias' in request.POST:
             return HttpResponseRedirect(reverse('materias:retocar_materias'))
         elif 'ver_materias' in request.POST:
@@ -122,21 +151,10 @@ def administrar(request):
         elif 'dborrador' in request.POST:
             return HttpResponseRedirect(reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0)))
 
-    else:
-        anno, cuatrimestre = anno_y_cuatrimestre_actuales()
-        cuatrimestre = cuatrimestre.name
-
-    primer_anno = Turno.objects.aggregate(Min('anno'))['anno__min']
-    ultimo_anno = Turno.objects.aggregate(Max('anno'))['anno__max']
-    annos = list(range(primer_anno, ultimo_anno + 2))
-    cuatrimestres = list(Cuatrimestres)
-
-    return render(request, 'materias/administrar.html', context={'annos': annos,
-                                                                 'cuatrimestres': cuatrimestres,
-                                                                 'anno': anno, 'cuatrimestre': cuatrimestre})
+    return pagina_de_administrar_con_ac(request, anno, cuatrimestre)
 
 
-def administrar_general(request, anno, cuatrimestre, key_to_field, url, **kwargs):
+def administrar_general(request, anno, cuatrimestre, key_to_field, url, seccion='materias', **kwargs):
     if 'cambiar' in request.POST:
         with transaction.atomic():
 
@@ -160,7 +178,7 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url, **kwargs
                         logger.debug('cambiando %s a obj. %s por %s', page_field, objeto, v)
                     objeto.save()
 
-        return HttpResponseRedirect(reverse('materias:administrar'))
+        return HttpResponseRedirect(f"{reverse('materias:administrar')}#{seccion}")
 
     else:
         materias = filtra_materias(anno=anno, cuatrimestre=cuatrimestre)
@@ -185,7 +203,8 @@ def administrar_alumnos(request, anno, cuatrimestre):
                               'pabellon': ('pabellon', str)}
                     }
 
-    return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_alumnos.html')
+    return administrar_general(request, anno, cuatrimestre, key_to_field,
+                               'materias/administrar_alumnos.html', seccion='materias')
 
 
 @login_required
@@ -210,7 +229,7 @@ def administrar_necesidades_docentes(request, anno, cuatrimestre):
     necesidades_y_recursos = {tipo: (necesidades[tipo], recursos[tipo]) for tipo in TipoDocentes}
 
     return administrar_general(request, anno, cuatrimestre, key_to_field, 'materias/administrar_necesidades_docentes.html',
-                               necesidades_y_recursos=necesidades_y_recursos)
+                               seccion='docentes', necesidades_y_recursos=necesidades_y_recursos)
 
 
 @login_required
@@ -275,7 +294,7 @@ def cargas_docentes_anuales(request, anno):
                             for c in range(a_generar):
                                 Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre, docente=docente, cargo=cargo)
 
-            return HttpResponseRedirect(f"{reverse('materias:administrar')}#encuestas")
+            return HttpResponseRedirect(f"{reverse('materias:administrar')}#docentes")
 
         elif 'generar' in request.POST:
             for docente in Docente.objects.filter(cargos__len__gt=0):
@@ -417,10 +436,15 @@ def administrar_cargas_publicadas(request, anno, cuatrimestre):
                                                turno__isnull=False).order_by('docente__na_apellido', 'docente__na_nombre')
     cargas_no_distribuidas = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre,
                                                   turno__isnull=True).order_by('docente__na_apellido', 'docente__na_nombre')
+    docentes_con_cargo_sin_cargas = set(Docente.objects.filter(cargos__len__gt=0).all()) \
+                                    - {c.docente for c in cargas_distribuidas} \
+                                    - {c.docente for c in cargas_no_distribuidas}
+    docentes_con_cargo_sin_cargas = sorted(docentes_con_cargo_sin_cargas, key=lambda d: strxfrm(f'{d.apellido_nombre}'))
 
     context = {
         'distribuidas': cargas_distribuidas,
         'no_distribuidas': cargas_no_distribuidas,
+        'sin_cargas': docentes_con_cargo_sin_cargas,
         'anno': anno,
         'cuatrimestre': Cuatrimestres[cuatrimestre],
     }
@@ -456,6 +480,36 @@ def cambiar_una_carga_publicada(request, carga_id):
 
 
 @login_required
+@permission_required('dborrador.add_asignacion')
+def agregar_carga_y_distribuir(request, docente_id, anno, cuatrimestre):
+    docente = Docente.objects.get(pk=docente_id)
+    if request.method == 'POST':
+        if 'cambiar' in request.POST:
+            for carga in Carga.objects.filter(docente=docente, anno=anno, cuatrimestre=cuatrimestre).all():
+                turno_id = int(request.POST[f'carga_{carga.id}'])
+                carga.turno = Turno.objects.get(pk=turno_id) if turno_id >= 0 else None
+                logger.debug('nuevo turno para %s: %s', docente, carga.turno)
+                carga.save()
+        elif 'cancelar' in request.POST:
+            para_borrar = Carga.objects.filter(docente=docente, anno=anno, cuatrimestre=cuatrimestre, turno=None).all()
+            logger.info('borro cargas: %s', para_borrar)
+            para_borrar.delete()
+        return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas', args=(anno, cuatrimestre)))
+    else:
+        cargas = []
+        for cargo in docente.cargos:
+            carga, creada = Carga.objects.get_or_create(docente=docente, cargo=cargo, anno=anno, cuatrimestre=cuatrimestre)
+            if creada:
+                logger.info('generé carga: %s', carga)
+            cargas.append(carga)
+        turnos = [NoTurno()] + list(Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre).order_by('materia', 'numero', 'tipo'))
+        return render(request, 'materias/distribuir_cargas_de_docente.html',
+                      {'docente': docente, 'cargas': cargas, 'turnos': turnos,
+                       'anno': anno, 'cuatrimestre': Cuatrimestres[cuatrimestre]})
+
+
+
+@login_required
 @permission_required('materias.add_turno')
 def agregar_turno(request, materia_id, tipo, anno, cuatrimestre):
     materia = Materia.objects.get(pk=materia_id)
@@ -480,7 +534,7 @@ def administrar_materia(request, materia_id, anno, cuatrimestre):
             'materia': materia,
             'turnos': sorted(Turno.objects.filter(materia=materia, anno=anno, cuatrimestre=cuatrimestre)),
             'anno': anno,
-            'cuatrimestre': cuatrimestre,
+            'cuatrimestre': Cuatrimestres[cuatrimestre],
             'tipoturno': {t.name: t.value for t in TipoTurno},
         }
         return render(request, 'materias/administrar_materia.html', context)

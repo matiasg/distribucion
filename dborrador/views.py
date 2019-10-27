@@ -38,12 +38,15 @@ def copiar_anno_y_cuatrimestre(anno, cuatrimestre):
         prefs = PreferenciasDocente.objects.filter(turno__anno=anno,
                                                    turno__cuatrimestre=cuatrimestre,
                                                    docente=docente)
-        peso_total = sum(pref.peso for pref in prefs)
-        logger.debug('considerando %d prefs para %s. Peso total: %s',
-                     prefs.count(), docente, peso_total)
+        fecha_ultima_encuesta = prefs.aggregate(Max('fecha_encuesta'))['fecha_encuesta__max']
+        prefs_ultimas = prefs.filter(fecha_encuesta=fecha_ultima_encuesta)
 
-        for pref in prefs:
-            peso_normalizado = pref.peso / peso_total if peso_total else 1 / prefs.count()
+        peso_total = sum(pref.peso for pref in prefs_ultimas)
+        logger.debug('considerando %d prefs para %s. Peso total: %s',
+                     prefs_ultimas.count(), docente, peso_total)
+
+        for pref in prefs_ultimas:
+            peso_normalizado = pref.peso / peso_total if peso_total else 1 / prefs_ultimas.count()
             pref_copia = Preferencia.objects.create(preferencia=pref,
                                                     peso_normalizado=peso_normalizado)
             copiadas += 1
@@ -57,10 +60,12 @@ def _anno_cuat_tipos_context():
         'tipos': [t for t in TipoDocentes]}
     return context
 
+
 @login_required
 @permission_required('dborrador.add_asignacion')
 def index(request):
     return render(request, 'dborrador/base.html', _anno_cuat_tipos_context())
+
 
 @login_required
 @permission_required('dborrador.add_asignacion')

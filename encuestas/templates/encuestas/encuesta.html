@@ -16,8 +16,8 @@
 <hr>
 <div id="subtitulo">Tener en cuenta</div>
 <ul>
-    <li>En cada turno pedido se debe poner un peso. Cuanto mayor es el peso, menor es la probabilidad de tener que dictar ese turno.</li>
-    <li>Los pesos de cada docente se normalizan (da lo mismo poner todos 1 que todos 20, por ejemplo).</li>
+    <li>En cada turno pedido se debe poner un peso entre 0 y 20. Cuanto mayor es el peso, menor es la probabilidad de tener que dictar ese turno.</li>
+    <li>Los pesos de cada docente se normalizan con norma 1.</li>
 </ul>
 
 <form action="{% url 'encuestas:encuesta' anno cuatrimestres tipo_docente %}" method="post">
@@ -95,7 +95,7 @@
 
 <p>
     <div id="subtitulo">Celular</div>
-    <input type="tel" name="telefono" value="{{ telefono }}">
+    <input type="tel" name="telefono" value="{{ telefono }}"> (Área y número. Por ejemplo, +11 1234-5678)
 </p>
 
 <p>
