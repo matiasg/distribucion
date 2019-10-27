@@ -344,11 +344,12 @@ def administrar_cargas_docentes(request, anno, cuatrimestre):
     docentes_sin_cargas = sorted(set(docentes) - set(docentes_con_cargas),
                                  key=lambda d: d.na_apellido)
     # docentes con diferencias con la encuesta
-    docentes_y_cargas_encuesta = {cp.docente: cp.cargas for cp in CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all()}
+    docentes_y_cargas_encuesta = {cp.docente: cp.cargas
+                                  for cp in CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all()}
     # calculo diferencias contra encuesta
     diferencias_encuesta = {d: (len(docentes_y_cargas_nuestras[d]),
                                 docentes_y_cargas_encuesta[d],
-                                OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=d).first())
+                                OtrosDatos.objects.filter(anno=anno, cuatrimestre__contains=cuatrimestre, docente=d).first())
                             for d in sorted(set(docentes_y_cargas_nuestras) & set(docentes_y_cargas_encuesta),
                                             key=lambda d: strxfrm(d.apellido_nombre))
                             if len(docentes_y_cargas_nuestras[d]) != docentes_y_cargas_encuesta[d]
