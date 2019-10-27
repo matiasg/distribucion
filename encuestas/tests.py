@@ -356,6 +356,34 @@ class TestEncuesta(TestCase):
         response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), cs.name, tipo)))
         self.assertContains(response, 'disabled', count=5)
 
+    def test_otros_datos_comentario_con_periodo(self):
+        cs = GrupoCuatrimestral.VPS
+        now = timezone.now()
+        tipo = TipoDocentes.P.name
+        EncuestasHabilitadas.objects.create(anno=self.anno, cuatrimestres=cs.name, tipo_docente=tipo,
+                                            desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
+        opciones = {}
+        for cuatri in cs.name:
+            for opcion in range(1, 6):
+                turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=cuatri,
+                                             numero=1, tipo=TipoTurno.T.name,
+                                             necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+                opciones[f'opcion{cuatri}{opcion}'] = turno.id
+                opciones[f'peso{cuatri}{opcion}'] = 0
+
+        cargas = {f'cargas{cuatri}': 1 for cuatri in cs.name}
+        self.client.post(f'/encuestas/encuesta/{self.anno}/{cs.name}/{TipoDocentes.P.name}',
+                         {'docente': self.docente.id,
+                          'cargas_declaradas': 1,
+                          **opciones,
+                          'telefono': '+54911 1234-5678', 'email': 'juan@dm.uba.ar',
+                          **cargas,
+                          'comentario': 'pero qué corno'},
+                         follow=True)
+        self.assertEqual(OtrosDatos.objects.filter(docente=self.docente.id).count(), 1)
+        od = OtrosDatos.objects.get(docente=self.docente.id)
+        self.assertEqual(od.cuatrimestre, cs.name)
+
 
 class TestPaginas(TestCase):
 

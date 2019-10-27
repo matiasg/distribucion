@@ -10,7 +10,7 @@ from materias.models import (Cargos, Carga, Dedicaciones, CargoDedicacion, Docen
                              Materia, AliasDeMateria, Turno, TipoMateria, TipoTurno, Dias,
                              Cuatrimestres, Horario, Pabellon)
 from materias.misc import Mapeos
-from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
+from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas, GrupoCuatrimestral
 from usuarios.models import Usuario
 from django.contrib.auth.models import Permission
 from django.urls import reverse
@@ -387,6 +387,7 @@ class TestPaginas(TestCase):
         self.client.login(username='autorizado', password='1234')
         self._agrega_docentes()
         now = timezone.now()
+        cuatris = GrupoCuatrimestral.VPS
         Carga.objects.create(docente=self.n, cargo=CargoDedicacion.TitExc.name,
                              anno=self.anno, cuatrimestre=self.cuatrimestre.name)
         Carga.objects.create(docente=self.m, cargo=CargoDedicacion.TitExc.name,
@@ -396,7 +397,7 @@ class TestPaginas(TestCase):
         PreferenciasDocente.objects.create(docente=self.n, turno=self.turno11,
                                            cargo=Cargos.Tit.name, peso=2, fecha_encuesta=now)
         OtrosDatos.objects.create(docente=self.n, fecha_encuesta=now,
-                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                  anno=self.anno, cuatrimestre=cuatris.name,
                                   comentario='_esto deberia aparecer_')
         CargasPedidas.objects.create(docente=self.n, fecha_encuesta=now,
                                      anno=self.anno, cuatrimestre=self.cuatrimestre.name,
