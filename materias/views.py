@@ -405,9 +405,11 @@ def administrar_cargas_de_un_docente(request, anno, cuatrimestre, docente_id):
 
     else:
         try:
-            cargas_pedidas = CargasPedidas.objects.get(anno=anno, cuatrimestre=cuatrimestre, docente=docente).cargas
+            cargas_pedidas = CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=docente) \
+                                                  .order_by('fecha_encuesta').last() \
+                                                  .cargas
             completo_la_encuesta = True
-        except CargasPedidas.DoesNotExist:
+        except (CargasPedidas.DoesNotExist, AttributeError):
             cargas_pedidas = 0
             completo_la_encuesta = False
         cargas = docente.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre)
