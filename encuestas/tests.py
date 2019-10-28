@@ -401,7 +401,7 @@ class TestPaginas(TestCase):
         autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
         autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='dborrador', codename='add_asignacion'))
 
-    def test_ver_encuestas_multiples(self):
+    def test_ver_resultados_de_encuestas(self):
         self.client.login(username='autorizado', password='1234')
         now = timezone.now()
         now_mas_delta = now + datetime.timedelta(seconds=10)
@@ -417,7 +417,7 @@ class TestPaginas(TestCase):
         cargas2 = CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=self.cuatrimestre.name, cargas=1,
                                                fecha_encuesta=now_mas_delta)
 
-        response = self.client.get(reverse('encuestas:ver_encuestas_multiples', args=(self.anno, self.cuatrimestre.name)))
+        response = self.client.get(reverse('encuestas:ver_resultados_de_encuestas', args=(self.anno, self.cuatrimestre.name)))
         self.assertContains(response, self.n.apellido_nombre)
 
         response = self.client.get(reverse('encuestas:encuestas_de_un_docente', args=(self.n.id, self.anno, self.cuatrimestre.name)))
