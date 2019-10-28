@@ -45,23 +45,23 @@ class TestEncuesta(TestCase):
         datos[f'opcion{Cuatrimestres.P.name}1'] = str(self.turno.id)
         datos[f'peso{Cuatrimestres.P.name}1'] = 2
         with self.assertRaises(ValidationError):
-            checkear_y_salvar(datos, self.anno, f'{Cuatrimestres.P.name}')
+            checkear_y_salvar(datos, self.anno, f'{Cuatrimestres.P.name}', TipoDocentes.J.name)
 
     def test_sin_docente(self):
         datos = self.otros_datos
         with self.assertRaises(KeyError):
-            checkear_y_salvar(datos, self.anno, Cuatrimestres.P.name)
+            checkear_y_salvar(datos, self.anno, Cuatrimestres.P.name, TipoDocentes.J.name)
 
     def test_docente_no_existe(self):
         docente_inexistente_id = str(self.docente.id + 1)
         datos = {'docente': docente_inexistente_id, **self.otros_datos}
         with self.assertRaises(Docente.DoesNotExist):
-            checkear_y_salvar(datos, self.anno, Cuatrimestres.P.name)
+            checkear_y_salvar(datos, self.anno, Cuatrimestres.P.name, TipoDocentes.J.name)
 
     def test_docente_sin_opciones(self):
         datos = {'docente': self.docente.id}
         with self.assertRaises(KeyError):
-            checkear_y_salvar(datos, self.anno, Cuatrimestres.P.name)
+            checkear_y_salvar(datos, self.anno, Cuatrimestres.P.name, TipoDocentes.J.name)
 
     def test_turno_no_existe(self):
         datos = {'docente': self.docente.id, **self.otros_datos}
@@ -70,7 +70,7 @@ class TestEncuesta(TestCase):
             datos[f'opcion{c}{opcion}'] = str(self.turno.id + opcion)
             datos[f'peso{c}{opcion}'] = str(opcion)
         with self.assertRaises(Turno.DoesNotExist):
-            checkear_y_salvar(datos, self.anno, Cuatrimestres.P.name)
+            checkear_y_salvar(datos, self.anno, Cuatrimestres.P.name, TipoDocentes.J.name)
 
     def test_docente_y_opciones_vacias(self):
         datos = {'docente': self.docente.id, **self.otros_datos}
@@ -79,7 +79,7 @@ class TestEncuesta(TestCase):
             datos[f'opcion{c}{opcion}'] = '-1'
             datos[f'peso{c}{opcion}'] = str(opcion)
         with self.assertRaises(ValidationError):
-            checkear_y_salvar(datos, self.anno, Cuatrimestres.P.name)
+            checkear_y_salvar(datos, self.anno, Cuatrimestres.P.name, TipoDocentes.J.name)
         self.assertEqual(len(PreferenciasDocente.objects.all()), 0)
 
     def test_docente_y_opciones_con_sentido(self):
@@ -92,7 +92,7 @@ class TestEncuesta(TestCase):
             datos[f'opcion{c}{opcion}'] = turno.id
             datos[f'peso{c}{opcion}'] = str(opcion)
         datos[f'cargas{c}'] = 1
-        checkear_y_salvar(datos, self.anno, c)
+        checkear_y_salvar(datos, self.anno, c, TipoDocentes.J.name)
         self.assertEqual(len(PreferenciasDocente.objects.all()), 5)
 
     def test_algunas_opciones_vacias(self):
@@ -107,7 +107,7 @@ class TestEncuesta(TestCase):
             datos['opcion{}'.format(opcion)] = '-1'
             datos['peso{}'.format(opcion)] = str(opcion)
         with self.assertRaises(ValidationError):
-            checkear_y_salvar(datos, self.anno, Cuatrimestres.P.name)
+            checkear_y_salvar(datos, self.anno, Cuatrimestres.P.name, TipoDocentes.J.name)
 
     def test_titulo_correcto(self):
         response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.P.name, TipoDocentes.J.name)))
@@ -155,7 +155,7 @@ class TestEncuesta(TestCase):
         # repetimos la opcion 2
         datos[f'opcion{c}2'] = turnos[0].id
         with self.assertRaises(ValidationError):
-            checkear_y_salvar(datos, self.anno, c)
+            checkear_y_salvar(datos, self.anno, c, TipoDocentes.J.name)
 
     def test_encuesta_distingue_turnos_dificiles(self):
         '''Chequeamos que el turno dificil aparece 5 veces en la encuesta y el facil 3'''

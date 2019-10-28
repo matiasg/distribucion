@@ -99,7 +99,7 @@ def _nombre_cuat_error(cuatrimestre):
     }
     return nombres[cuatrimestre]
 
-def checkear_y_salvar(datos, anno, cuatrimestres):
+def checkear_y_salvar(datos, anno, cuatrimestres, tipo_docente):
     fecha_encuesta = timezone.now()
     docente = Docente.objects.get(pk=datos['docente'])
 
@@ -139,6 +139,7 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
         # CargasPedidas
         cargas = int(datos[f'cargas{cuatrimestre}'])
         cargas_pedidas = CargasPedidas.objects.create(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
+                                                      tipo_docente=tipo_docente,
                                                       fecha_encuesta=fecha_encuesta, cargas=cargas)
         cargas_pedidas.save()
 
@@ -248,7 +249,7 @@ def encuesta(request, anno, cuatrimestres, tipo_docente):
     except Docente.DoesNotExist:
         return _encuesta_con_mensaje_de_error(request, context, "No me dijiste quién sos")
     try:
-        opciones, otros_datos = checkear_y_salvar(request.POST, anno, cuatrimestres)
+        opciones, otros_datos = checkear_y_salvar(request.POST, anno, cuatrimestres, tipo_docente)
         return render(request,
                       'encuestas/final.html',
                       context={'opciones': opciones, 'docente': docente,

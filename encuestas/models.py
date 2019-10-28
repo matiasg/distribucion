@@ -42,6 +42,7 @@ class CargasPedidas(models.Model):
     anno = models.IntegerField()
     cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
     cargas = models.PositiveIntegerField(validators=[MaxValueValidator(3)])
+    tipo_docente = models.CharField(max_length=2, choices=choice_enum(TipoDocentes))
     fecha_encuesta = models.DateTimeField()
 
 
