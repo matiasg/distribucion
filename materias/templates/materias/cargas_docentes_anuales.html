@@ -40,9 +40,40 @@
             <tr>
                 <td>{{ doc_carga.0 }}</td>
                 <td>{{ doc_carga.1 }}</td>
-                <td> <input type="number" name="cargas_{{ doc_carga.0.id }}_{{ doc_carga.1}}_V" min=0 max=4 value={{ cantidades.0 }}> </td>
-                <td> <input type="number" name="cargas_{{ doc_carga.0.id }}_{{ doc_carga.1}}_P" min=0 max=4 value={{ cantidades.1 }}> </td>
-                <td> <input type="number" name="cargas_{{ doc_carga.0.id }}_{{ doc_carga.1}}_S" min=0 max=4 value={{ cantidades.2 }}> </td>
+                <td>
+                    <span id="cantidad">
+                        <input type="number" name="cargas_{{ doc_carga.0.id }}_{{ doc_carga.1}}_V" min=0 max=4
+                        value={{ cantidades.0.asignadas }}>
+                        {% if cantidades.0.pedidas.count %}
+                        <mark id="{% if cantidades.0.asignadas == cantidades.0.pedidas.last.cargas %}bien{% else %}mal{% endif %}">
+                        (pedidas: {{ cantidades.0.pedidas.last.cargas }})
+                        </mark>
+                        {% endif %}
+                    </span>
+                </td>
+                <td>
+                    <span id="cantidad">
+                        <input type="number" name="cargas_{{ doc_carga.0.id }}_{{ doc_carga.1}}_P" min=0 max=4
+                        value={{ cantidades.1.asignadas }}>
+                        {% if cantidades.1.pedidas.count %}
+                        <mark id="{% if cantidades.1.asignadas == cantidades.1.pedidas.last.cargas %}bien{% else %}mal{% endif %}">
+                        (pedidas: {{ cantidades.1.pedidas.last.cargas }})
+                        </mark>
+                        {% endif %}
+                    </span>
+                </td>
+                <td>
+                    <span id="cantidad">
+                        <input type="number" name="cargas_{{ doc_carga.0.id }}_{{ doc_carga.1}}_S" min=0 max=4
+                        value={{ cantidades.2.asignadas }}>
+                        {% if cantidades.2.pedidas.count %}
+                        <mark id="{% if cantidades.2.asignadas == cantidades.2.pedidas.last.cargas %}bien{% else %}mal{% endif %}">
+                        (pedidas: {{ cantidades.2.pedidas.last.cargas }})
+                        </mark>
+                        {% endif %}
+                    </span>
+
+                </td>
             </tr>
             {% endfor %}
         </table>

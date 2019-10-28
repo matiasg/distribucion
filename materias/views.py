@@ -265,6 +265,8 @@ def modificar_materia(request, materia_id):
     return render(request, 'materias/modificar_materia.html', context)
 
 
+AsignadasPedidas = namedtuple('AsignadasPedidas', ['asignadas', 'pedidas'])
+
 @login_required
 @permission_required('dborrador.add_asignacion')
 def cargas_docentes_anuales(request, anno):
@@ -285,12 +287,14 @@ def cargas_docentes_anuales(request, anno):
                         a_generar = cantidad - actuales.count()
 
                         if a_generar < 0:
-                            logger.warning('voy a borrar %d cargas de %s (%s) para el cuatrimestre %s', -a_generar, docente, cargo, cuatrimestre)
+                            logger.warning('voy a borrar %d cargas de %s (%s) para el cuatrimestre %s',
+                                           -a_generar, docente, cargo, cuatrimestre)
                             for c in range(-a_generar):
                                 actuales.last().delete()
 
                         elif a_generar > 0:
-                            logger.warning('voy a generar %d cargas de %s (%s) para el cuatrimestre %s', a_generar, docente, cargo, cuatrimestre)
+                            logger.warning('voy a generar %d cargas de %s (%s) para el cuatrimestre %s',
+                                           a_generar, docente, cargo, cuatrimestre)
                             for c in range(a_generar):
                                 Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre, docente=docente, cargo=cargo)
 
@@ -311,16 +315,26 @@ def cargas_docentes_anuales(request, anno):
                              for docente in Docente.objects.filter(cargos__len__gt=0).all()
                              for cargo in docente.cargos}
         docentes_y_cargos |= {(carga.docente, carga.cargo) for carga in cargas_anno}
-        por_tipo_cargo = {tipo: {(docente, cargo) for (docente, cargo) in docentes_y_cargos if Mapeos.tipos_de_cargo(cargo) == tipo}
+        por_tipo_cargo = {tipo: {(docente, cargo)
+                                 for (docente, cargo) in docentes_y_cargos if Mapeos.tipos_de_cargo(cargo) == tipo}
                           for tipo in TipoDocentes}
 
-        contados = {cuatrimestre: Counter((carga.docente, carga.cargo) for carga in cargas_anno.filter(cuatrimestre=cuatrimestre.name))
+        contados = {cuatrimestre: Counter((carga.docente, carga.cargo)
+                                          for carga in cargas_anno.filter(cuatrimestre=cuatrimestre.name))
                     for cuatrimestre in Cuatrimestres}
 
-        cargas = {tipo: {doc_cargo: [contados[cuat][doc_cargo]
+        docentes_cargos_ordenados = {tipo: sorted(por_tipo_cargo[tipo], key=lambda dc: strxfrm(dc[0].apellido_nombre))
+                                     for tipo in TipoDocentes}
+
+        cargas = {tipo: {doc_cargo: [AsignadasPedidas(contados[cuat][doc_cargo],
+                                                      CargasPedidas.objects.filter(docente=doc_cargo[0],
+                                                                                   tipo_docente=tipo.name,
+                                                                                   anno=anno,
+                                                                                   cuatrimestre=cuat.name) \
+                                                                            .order_by('fecha_encuesta')
+                                                      )
                                      for cuat in (Cuatrimestres.V, Cuatrimestres.P, Cuatrimestres.S)]
-                         for doc_cargo in sorted(por_tipo_cargo[tipo],
-                                                 key=lambda dc: strxfrm(dc[0].apellido_nombre))}
+                         for doc_cargo in docentes_cargos_ordenados[tipo]}
                   for tipo in TipoDocentes}
 
         context = {
