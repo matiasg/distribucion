@@ -289,9 +289,11 @@ def encuestas_de_un_docente(request, docente_id, anno, cuatrimestre):
                                                       fecha_encuesta=fecha).cargas
                             )
                     for fecha in sorted(fechas, reverse=True)}
+    otros_datos = OtrosDatos.objects.get(docente=docente, anno=anno, cuatrimestre__contains=cuatrimestre)
 
     return render(request, 'encuestas/encuestas_de_un_docente.html',
                   {'anno': anno, 'cuatrimestre': Cuatrimestres[cuatrimestre],
                    'docente': docente,
                    'preferencias': preferencias,
+                   'otros_datos': otros_datos,
                    })

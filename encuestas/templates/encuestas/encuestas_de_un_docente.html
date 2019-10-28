@@ -23,15 +23,31 @@
 
         {% for fecha_encuesta, turnos_y_cargas in preferencias.items %}
         <tr>
-            <td rowspan={{ turnos_y_cargas.0|length|add:"1" }}>{{ fecha_encuesta|date:"d/m/Y" }} {{ fecha_encuesta|time:"H:i:s" }}</td>
-            <td rowspan={{ turnos_y_cargas.0|length|add:"1" }}>{{ turnos_y_cargas.1 }}</td>
+            <td class="borde_alto" rowspan={{ turnos_y_cargas.0|length|add:"1" }}>
+                {{ fecha_encuesta|date:"d/m/Y" }} {{ fecha_encuesta|time:"H:i:s" }}
+            </td>
+            <td class="borde_alto" rowspan={{ turnos_y_cargas.0|length|add:"1" }}>
+                {{ turnos_y_cargas.1 }}
+            </td>
         </tr>
         {% for preferencia in turnos_y_cargas.0 %}
         <tr>
-            <td>{{ preferencia.turno }}</td>
-            <td>{{ preferencia.peso }}</td>
+            <td class="izquierda {% if forloop.first %}borde_alto{% endif %}">{{ preferencia.turno }}</td>
+            <td {% if forloop.first %}class="borde_alto"{% endif %}>{{ preferencia.peso }}</td>
         </tr>
         {% endfor %}
         {% endfor %}
     </table>
+
+    <hr>
+    <div id="subtitulo">Comentarios</div>
+    {{ otros_datos.comentario }}
+
+    <hr>
+    <div id="subtitulo">Teléfono</div>
+    {{ otros_datos.telefono }}
+
+    <hr>
+    <div id="subtitulo">email</div>
+    {{ otros_datos.email }}
 </body>
