@@ -263,7 +263,8 @@ def encuesta(request, anno, cuatrimestres, tipo_docente):
 @permission_required('dborrador.add_asignacion')
 def ver_resultados_de_encuestas(request, anno, cuatrimestre):
     cuenta_encuestas = Count('cargaspedidas', filter=Q(cargaspedidas__anno=anno,
-                                                       cargaspedidas__cuatrimestre=cuatrimestre))
+                                                       cargaspedidas__cuatrimestre=cuatrimestre,
+                                                       cargaspedidas__cargas__gt=-1))
     docentes_con_pedidos = Docente.objects.annotate(pedidos=cuenta_encuestas) \
                                   .filter(pedidos__gt=0) \
                                   .order_by('-pedidos', 'na_apellido', 'na_nombre')
@@ -277,9 +278,18 @@ def ver_resultados_de_encuestas(request, anno, cuatrimestre):
 @permission_required('dborrador.add_asignacion')
 def encuestas_de_un_docente(request, docente_id, anno, cuatrimestre):
     docente = Docente.objects.get(pk=docente_id)
-    preferencias = PreferenciasDocente.objects.filter(docente=docente,
-                                                      turno__anno=anno, turno__cuatrimestre=cuatrimestre) \
-                                      .order_by('-fecha_encuesta')
+
+    fechas = {cp.fecha_encuesta
+              for cp in CargasPedidas.objects.filter(docente=docente, anno=anno, cuatrimestre=cuatrimestre)}
+
+    preferencias = {fecha: (PreferenciasDocente.objects.filter(docente=docente,
+                                                               turno__anno=anno, turno__cuatrimestre=cuatrimestre,
+                                                               fecha_encuesta=fecha),
+                            CargasPedidas.objects.get(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
+                                                      fecha_encuesta=fecha).cargas
+                            )
+                    for fecha in sorted(fechas, reverse=True)}
+
     return render(request, 'encuestas/encuestas_de_un_docente.html',
                   {'anno': anno, 'cuatrimestre': Cuatrimestres[cuatrimestre],
                    'docente': docente,
