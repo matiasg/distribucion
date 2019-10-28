@@ -261,12 +261,14 @@ def encuesta(request, anno, cuatrimestres, tipo_docente):
 
 @login_required
 @permission_required('dborrador.add_asignacion')
-def ver_encuestas_multiples(request, anno, cuatrimestre):
-    cuenta_encuestas = Count('cargaspedidas', filter=Q(cargaspedidas__anno=anno, cargaspedidas__cuatrimestre=cuatrimestre))
+def ver_resultados_de_encuestas(request, anno, cuatrimestre):
+    cuenta_encuestas = Count('cargaspedidas', filter=Q(cargaspedidas__anno=anno,
+                                                       cargaspedidas__cuatrimestre=cuatrimestre,
+                                                       cargaspedidas__cargas__gt=-1))
     docentes_con_pedidos = Docente.objects.annotate(pedidos=cuenta_encuestas) \
                                   .filter(pedidos__gt=0) \
                                   .order_by('-pedidos', 'na_apellido', 'na_nombre')
-    return render(request, 'encuestas/encuestas_multiples.html',
+    return render(request, 'encuestas/resultados_de_encuestas.html',
                   {'anno': anno, 'cuatrimestre': Cuatrimestres[cuatrimestre],
                    'docentes': docentes_con_pedidos,
                    })
@@ -276,10 +278,22 @@ def ver_encuestas_multiples(request, anno, cuatrimestre):
 @permission_required('dborrador.add_asignacion')
 def encuestas_de_un_docente(request, docente_id, anno, cuatrimestre):
     docente = Docente.objects.get(pk=docente_id)
-    preferencias = PreferenciasDocente.objects.filter(docente=docente, turno__anno=anno, turno__cuatrimestre=cuatrimestre) \
-                                      .order_by('-fecha_encuesta')
+
+    fechas = {cp.fecha_encuesta
+              for cp in CargasPedidas.objects.filter(docente=docente, anno=anno, cuatrimestre=cuatrimestre)}
+
+    preferencias = {fecha: (PreferenciasDocente.objects.filter(docente=docente,
+                                                               turno__anno=anno, turno__cuatrimestre=cuatrimestre,
+                                                               fecha_encuesta=fecha),
+                            CargasPedidas.objects.get(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
+                                                      fecha_encuesta=fecha).cargas
+                            )
+                    for fecha in sorted(fechas, reverse=True)}
+    otros_datos = OtrosDatos.objects.get(docente=docente, anno=anno, cuatrimestre__contains=cuatrimestre)
+
     return render(request, 'encuestas/encuestas_de_un_docente.html',
                   {'anno': anno, 'cuatrimestre': Cuatrimestres[cuatrimestre],
                    'docente': docente,
                    'preferencias': preferencias,
+                   'otros_datos': otros_datos,
                    })
