@@ -75,3 +75,35 @@ a.muchos:link:hover, a.muchos:visited:hover
   background: #bbb;
   color: blue;
 }
+
+table#cargas tr td.borde_izquierda,
+table#cargas tr th.borde_izquierda {
+    border-left: 2px solid black;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 32em;
+  background-color: #ddf;
+  color: #000;
+  text-align: left;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 1;
+  top: 10%;
+  left: 20px;
+  padding: 6px;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}

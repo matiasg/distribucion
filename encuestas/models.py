@@ -30,7 +30,7 @@ class OtrosDatos(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
     fecha_encuesta = models.DateTimeField()
     anno = models.IntegerField()
-    cuatrimestre = models.CharField(max_length=3, choices=choice_enum(GrupoCuatrimestral))
+    cuatrimestre = models.CharField(max_length=3, choices=choice_enum(GrupoCuatrimestral))  # TODO: deberia ser cuatrimestres
     comentario = models.TextField()
     email = models.EmailField()
     telefono = models.CharField(validators=[telefono_validator], max_length=17, blank=True)
@@ -42,6 +42,7 @@ class CargasPedidas(models.Model):
     anno = models.IntegerField()
     cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
     cargas = models.PositiveIntegerField(validators=[MaxValueValidator(3)])
+    tipo_docente = models.CharField(max_length=2, choices=choice_enum(TipoDocentes))
     fecha_encuesta = models.DateTimeField()
 
 

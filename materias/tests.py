@@ -783,6 +783,22 @@ class TestPaginas(TestCase):
             carga.refresh_from_db()
             self.assertEqual(carga.turno, turno)
 
+    def test_cargas_docentes_anuales(self):
+        self.client.login(username='autorizado', password='1234')
+        self._agrega_docentes()
+
+        now = timezone.now()
+        CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+                                     cargas=331, tipo_docente=TipoDocentes.P.name, fecha_encuesta=now)
+        comentario = '_este comentario debe aparecer_'
+        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+                                  comentario=comentario, cargas_declaradas=571, fecha_encuesta=now,)
+
+        response = self.client.get(reverse('materias:cargas_docentes_anuales', args=(self.anno,)))
+        self.assertRegex(response.content.decode(), r'<mark id="mal">\s*331\s*</mark>')
+        self.assertContains(response, comentario)
+        self.assertContains(response, 571)
+
 
 class TestCasosBorde(TestCase):
 
