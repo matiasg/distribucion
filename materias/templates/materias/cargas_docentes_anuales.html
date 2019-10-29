@@ -9,7 +9,6 @@
 </head>
 
 <body>
-
     <div id="actuar">
         <a href="{% url 'materias:administrar' %}#docentes">Cancelar</a>
     </div>
@@ -34,6 +33,7 @@
                     <th class="borde_izquierda" colspan=2>Verano</th>
                     <th class="borde_izquierda" colspan=2>Primero</th>
                     <th class="borde_izquierda" colspan=2>Segundo</th>
+                    <th></th>
                 </tr>
                 <tr>
                     <th>Docente</th>
@@ -44,6 +44,7 @@
                     <th>Pidió</th>
                     <th class="borde_izquierda">Tiene</th>
                     <th>Pidió</th>
+                    <th>Comentario</th>
                 </tr>
             </thead>
             {% for doc_cargo, cantidades in tipo_cargas.items %}
@@ -91,6 +92,16 @@
                         </mark>
                         {% endif %}
                     </span>
+                </td>
+                <td>
+                    {% if cantidades.3|length %}
+                        <div class="tooltip">
+                            {{ cantidades.3|truncatewords:9 }}
+                            <span class="tooltiptext">
+                                {{ cantidades.3 }}
+                            </span>
+                        </div>
+                    {% endif %}
                 </td>
 
             </tr>
