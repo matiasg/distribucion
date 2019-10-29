@@ -75,3 +75,8 @@ a.muchos:link:hover, a.muchos:visited:hover
   background: #bbb;
   color: blue;
 }
+
+table#cargas tr td.borde_izquierda,
+table#cargas tr th.borde_izquierda {
+    border-left: 2px solid black;
+}
