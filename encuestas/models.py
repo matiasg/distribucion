@@ -30,7 +30,7 @@ class OtrosDatos(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
     fecha_encuesta = models.DateTimeField()
     anno = models.IntegerField()
-    cuatrimestre = models.CharField(max_length=3, choices=choice_enum(GrupoCuatrimestral))
+    cuatrimestre = models.CharField(max_length=3, choices=choice_enum(GrupoCuatrimestral))  # TODO: deberia ser cuatrimestres
     comentario = models.TextField()
     email = models.EmailField()
     telefono = models.CharField(validators=[telefono_validator], max_length=17, blank=True)
