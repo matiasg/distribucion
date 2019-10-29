@@ -326,13 +326,12 @@ def cargas_docentes_anuales(request, anno):
         docentes_cargos_ordenados = {tipo: sorted(por_tipo_cargo[tipo], key=lambda dc: strxfrm(dc[0].apellido_nombre))
                                      for tipo in TipoDocentes}
 
+        def pedidas(docente, cuat, tipo):
+            return CargasPedidas.objects.filter(docente=docente, tipo_docente=tipo.name,
+                                                anno=anno, cuatrimestre=cuat.name) \
+                                        .order_by('fecha_encuesta')
         cargas = {tipo: {doc_cargo: [AsignadasPedidas(contados[cuat][doc_cargo],
-                                                      CargasPedidas.objects.filter(docente=doc_cargo[0],
-                                                                                   tipo_docente=tipo.name,
-                                                                                   anno=anno,
-                                                                                   cuatrimestre=cuat.name) \
-                                                                            .order_by('fecha_encuesta')
-                                                      )
+                                                      pedidas(doc_cargo[0], cuat, tipo))
                                      for cuat in (Cuatrimestres.V, Cuatrimestres.P, Cuatrimestres.S)]
                          for doc_cargo in docentes_cargos_ordenados[tipo]}
                   for tipo in TipoDocentes}
