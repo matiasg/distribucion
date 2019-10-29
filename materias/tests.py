@@ -795,7 +795,6 @@ class TestPaginas(TestCase):
                                   comentario=comentario, cargas_declaradas=571, fecha_encuesta=now,)
 
         response = self.client.get(reverse('materias:cargas_docentes_anuales', args=(self.anno,)))
-        print(response.content.decode())
         self.assertRegex(response.content.decode(), r'<mark id="mal">\s*331\s*</mark>')
         self.assertContains(response, comentario)
         self.assertContains(response, 571)
