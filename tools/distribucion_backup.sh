@@ -1,8 +1,10 @@
 #!/bin/bash
 
-echo "generating backup"
 DIR=$(dirname $0)
-docker run --rm -v distribucion_pgdata:/source:ro busybox tar -czC /source . > ${DIR}/data_backup_$(date "+%F_%T").tar.gz
+cd ${DIR}
 
-echo "keeping only last 30 files"
-ls ${DIR} | sort | head -n-30 | xargs rm
+echo "genero backup"
+docker run --rm -v distribucion_pgdata:/source:ro busybox tar -czC /source . > data_backup_$(date "+%F_%T").tar.gz
+
+echo "dejo solo los últimos 30 backups"
+ls data_backup*.tar.gz | sort | head -n-30 | xargs rm
