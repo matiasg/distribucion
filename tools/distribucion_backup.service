@@ -1,5 +1,5 @@
 [Unit]
-Description=Software de distribución de docentes
+Description=Software de distribución de docentes, backup
 DefaultDependencies=no
 Conflicts=shutdown.target
 After=docker.service
@@ -8,4 +8,4 @@ After=docker.service
 WantedBy=multi-user.target
 
 [Service]
-ExecStart=/usr/bin/docker run --rm -v distribucion_pgdata:/source:ro busybox tar -czC /source . > /srv/backups_distribucion/data_backup_$(date +%F_%T).tar.gz
+ExecStart=/srv/backups_distribucion/distribucion_backup.sh
