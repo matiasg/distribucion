@@ -325,6 +325,30 @@ class TestDistribuir(TestCase):
         turnos_asignados = {a.turno for a in Asignacion.objects.all()}
         self.assertEqual(turnos_asignados, {self.turno2, turno_otro_cuat})
 
+    def test_cambiar_manualmente_no_borra_otros_cuatrimestres(self):
+        otro_cuat = Cuatrimestres.S
+        turno_otro_cuat = Turno.objects.create(materia=self.materia, anno=self.ac.anno, cuatrimestre=otro_cuat.name,
+                                               numero=1, tipo=TipoTurno.A.name,
+                                               necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        carga_otro_cuat = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitSim.name,
+                                               anno=self.ac.anno, cuatrimestre=otro_cuat.name)
+        now = timezone.now()
+        pref_ahora = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1, fecha_encuesta=now)
+        Preferencia.objects.create(preferencia=pref_ahora, peso_normalizado=1)
+        pref_otro_cuat = PreferenciasDocente.objects.create(docente=self.docente1, turno=turno_otro_cuat, peso=1, fecha_encuesta=now)
+        Preferencia.objects.create(preferencia=pref_otro_cuat, peso_normalizado=1)
+
+        hacer_distribucion(self.ac, TipoDocentes.P, 1)
+        self.assertEqual(Asignacion.objects.count(), 1)
+
+        response = self.client.post(reverse('dborrador:cambiar_docente',
+                                            args=(self.ac.anno, otro_cuat.name, 0, 0, self.docente1.id)),
+                                    {'cambiar': True, 'cambio_a': turno_otro_cuat.id, 'cargo_que_ocupa': TipoDocentes.P.name},
+                                    follow=True)
+        self.assertEqual(Asignacion.objects.count(), 2)
+        turnos_asignados = {a.turno for a in Asignacion.objects.all()}
+        self.assertEqual(turnos_asignados, {self.turno2, turno_otro_cuat})
+
 
 class TestModel(TestCase):
 
