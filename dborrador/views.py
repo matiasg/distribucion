@@ -471,7 +471,9 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
     else:
         carga = Carga.objects.get(pk=carga_id)
         asignaciones = Asignacion.validas_en(anno, cuatrimestre, intento).filter(carga=carga)
-        preferencias = Preferencia.objects.filter(preferencia__docente=carga.docente).order_by('peso_normalizado')
+        preferencias = Preferencia.objects.filter(preferencia__docente=carga.docente,
+                                                  preferencia__turno__anno=anno, preferencia__turno__cuatrimestre=cuatrimestre) \
+                                          .order_by('peso_normalizado')
 
         turnos_preferidos = {p.preferencia.turno: p.peso_normalizado for p in preferencias}
 
