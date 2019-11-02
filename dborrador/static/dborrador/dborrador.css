@@ -23,6 +23,7 @@ ul.sin_puntos li {
 
 div#selector_intento_manual.ui-slider {
   text-align: right;
+  width: 80%;
 }
 
 .comentarios
