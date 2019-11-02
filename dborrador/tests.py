@@ -342,7 +342,7 @@ class TestDistribuir(TestCase):
         self.assertEqual(Asignacion.objects.count(), 1)
 
         response = self.client.post(reverse('dborrador:cambiar_docente',
-                                            args=(self.ac.anno, otro_cuat.name, 0, 0, self.docente1.id)),
+                                            args=(self.ac.anno, otro_cuat.name, 0, 0, carga_otro_cuat.id)),
                                     {'cambiar': True, 'cambio_a': turno_otro_cuat.id, 'cargo_que_ocupa': TipoDocentes.P.name},
                                     follow=True)
         self.assertEqual(Asignacion.objects.count(), 2)
