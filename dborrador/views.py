@@ -423,11 +423,13 @@ def _cambiar_docente(anno, cuatrimestre, intento, carga_id, nuevo_turno_id, carg
     asignaciones = Asignacion.validas_en(anno, cuatrimestre, intento).filter(carga=carga)
     nuevo_intento = _siguiente_intento_manual(intento)
 
+    import ipdb; ipdb.set_trace()
     with transaction.atomic():
         # borro instancias de IntentoRegistrado y Asignacion
         IntentoRegistrado.objects.filter(intento__gt=intento.valor, anno=anno, cuatrimestre=cuatrimestre).delete()
-        Asignacion.objects.filter(carga__anno=anno, carga__cuatrimestre=cuatrimestre,
-                                  intentos__startswith__gt=intento.valor).delete()
+        borradas, _ = Asignacion.objects.filter(carga__anno=anno, carga__cuatrimestre=cuatrimestre,
+                                                intentos__startswith__gt=intento.valor).delete()
+        logger.info('Asignaciones borradas: %s', borradas)
         # cambio las asignaciones que empezaron antes y terminan después
         for asignacion in Asignacion.validas_en(anno, cuatrimestre, intento).all():
             if Intento.es_de_algoritmo(asignacion.intentos.lower):
