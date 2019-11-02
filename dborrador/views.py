@@ -423,7 +423,6 @@ def _cambiar_docente(anno, cuatrimestre, intento, carga_id, nuevo_turno_id, carg
     asignaciones = Asignacion.validas_en(anno, cuatrimestre, intento).filter(carga=carga)
     nuevo_intento = _siguiente_intento_manual(intento)
 
-    import ipdb; ipdb.set_trace()
     with transaction.atomic():
         # borro instancias de IntentoRegistrado y Asignacion
         IntentoRegistrado.objects.filter(intento__gt=intento.valor, anno=anno, cuatrimestre=cuatrimestre).delete()
