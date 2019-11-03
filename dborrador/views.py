@@ -84,8 +84,9 @@ def preparar(request, anno, cuatrimestre):
     logger.info('copiando preferencias para %s, cuatrimestre %s', anno, Cuatrimestres[cuatrimestre].value)
     copiadas, borradas = copiar_anno_y_cuatrimestre(anno, cuatrimestre)
     logger.info('copiadas: %d, borradas: %d', copiadas, borradas)
-    intento = Intento.de_algoritmo(0)
-    distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento.algoritmo, intento.manual))
+    max_intento = IntentoRegistrado.maximo_intento(anno, cuatrimestre)
+    distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre,
+                                                               max_intento.algoritmo, max_intento.manual))
     return HttpResponseRedirect(distribucion_url)
 
 
