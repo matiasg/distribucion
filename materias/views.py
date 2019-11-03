@@ -290,7 +290,7 @@ def cargas_docentes_anuales(request, anno):
                             logger.warning('voy a borrar %d cargas de %s (%s) para el cuatrimestre %s',
                                            -a_generar, docente, cargo, cuatrimestre)
                             for c in range(-a_generar):
-                                actuales.last().delete()
+                                actuales.annotate(asignaciones=Count('asignacion')).order_by('asignaciones').first().delete()
 
                         elif a_generar > 0:
                             logger.warning('voy a generar %d cargas de %s (%s) para el cuatrimestre %s',
