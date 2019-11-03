@@ -111,6 +111,8 @@ class TestPreparar(TestCase):
                                       necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
         now_mas_delta = timezone.now() + datetime.timedelta(seconds=15)
         pref_doc = PreferenciasDocente.objects.create(docente=self.docente, turno=turno3, peso=1, fecha_encuesta=now_mas_delta)
+        Carga.objects.create(docente=self.docente, cargo=CargoDedicacion.TitExc.name,
+                             anno=self.anno, cuatrimestre=Cuatrimestres.P.name)
 
         response = self.client.get(f'/dborrador/preparar/{self.anno}/P', follow=True)
         copiadas = Preferencia.objects.filter(preferencia__turno__anno=self.anno,
