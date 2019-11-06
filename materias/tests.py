@@ -11,6 +11,7 @@ from materias.models import (Cargos, Carga, Dedicaciones, CargoDedicacion, Docen
                              Cuatrimestres, Horario, Pabellon)
 from materias.misc import Mapeos
 from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas, GrupoCuatrimestral
+from dborrador.models import Asignacion
 from usuarios.models import Usuario
 from django.contrib.auth.models import Permission
 from django.urls import reverse
@@ -798,6 +799,38 @@ class TestPaginas(TestCase):
         self.assertRegex(response.content.decode(), r'<mark id="mal">\s*331\s*</mark>')
         self.assertContains(response, comentario)
         self.assertContains(response, 571)
+
+    def test_cambio_cargas_docentes_anuales(self):
+        self.client.login(username='autorizado', password='1234')
+        self._agrega_docentes()
+
+        turnos = {cuat: Turno.objects.create(materia=self.materia1, anno=self.anno, cuatrimestre=cuat.name,
+                                             numero=1, tipo=TipoTurno.T.name, **self.dict_nec)
+                  for cuat in Cuatrimestres}
+
+        # una carga para n, dos para m por cuatrimestre
+        for cuat in Cuatrimestres:
+            Carga.objects.create(docente=self.n, anno=self.anno, cuatrimestre=cuat.name, cargo=self.n.cargos[0])
+            Carga.objects.create(docente=self.m, anno=self.anno, cuatrimestre=cuat.name, cargo=self.m.cargos[0])
+            asignada = Carga.objects.create(docente=self.m, anno=self.anno, cuatrimestre=cuat.name, cargo=self.m.cargos[0])
+            # le pongo una asignación a una de las de self.m
+            Asignacion.objects.create(intentos=(0, 1), carga=asignada, turno=turnos[cuat], cargo_que_ocupa=TipoDocentes.P.name)
+
+        response = self.client.get(reverse('materias:cargas_docentes_anuales', args=(self.anno,)))
+        for cuat in Cuatrimestres:
+            self.assertContains(response, f'<input type="number" name="cargas_1_TitExc_{cuat.name}"')
+
+        cambios = {
+            **{f'cargas_{self.n.id}_{self.n.cargos[0]}_{cuat.name}': i  for i, cuat in enumerate(Cuatrimestres)},
+            **{f'cargas_{self.m.id}_{self.m.cargos[0]}_{cuat.name}': 1  for i, cuat in enumerate(Cuatrimestres)},
+            'salvar': True,
+        }
+        self.client.post(reverse('materias:cargas_docentes_anuales', args=(self.anno,)), cambios)
+        for i, cuat in enumerate(Cuatrimestres):
+            self.assertEqual(Carga.objects.filter(docente=self.n, anno=self.anno, cuatrimestre=cuat.name).count(), i)
+            self.assertEqual(Carga.objects.filter(docente=self.m, anno=self.anno, cuatrimestre=cuat.name).count(), 1)
+            # chequeo que la que quedó sin borrar es la que tiene asignación
+            self.assertEqual(Asignacion.objects.filter(carga__docente=self.m,  turno=turnos[cuat]).count(), 1)
 
 
 class TestCasosBorde(TestCase):
