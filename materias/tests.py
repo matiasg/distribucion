@@ -824,7 +824,8 @@ class TestPaginas(TestCase):
 
         response = self.client.get(reverse('materias:cargas_docentes_anuales', args=(self.anno,)))
         for cuat in Cuatrimestres:
-            self.assertContains(response, f'<input type="number" name="cargas_1_TitExc_{cuat.name}"')
+            self.assertContains(response, f'<input type="number" name="cargas_{self.n.id}_{self.n.cargos[0]}_{cuat.name}"')
+            self.assertContains(response, f'<input type="number" name="cargas_{self.m.id}_{self.m.cargos[0]}_{cuat.name}"')
 
         cambios = {
             **{f'cargas_{self.n.id}_{self.n.cargos[0]}_{cuat.name}': i  for i, cuat in enumerate(Cuatrimestres)},
