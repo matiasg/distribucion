@@ -43,11 +43,14 @@ class Dedicaciones(Enum) :
 
 
 class CargoDedicacion(Enum):
-    _ignore_ = 'cargo dedicacion CargoDedicacion'
+    _ignore_ = 'cargo dedicacion excluir carded CargoDedicacion'
+    excluir = {f'{Cargos.Ay2.name}{Dedicaciones.Exc.name}', f'{Cargos.Ay2.name}{Dedicaciones.Smx.name}'}
     CargoDedicacion = vars()
     for cargo in Cargos:
         for dedicacion in Dedicaciones:
-            CargoDedicacion[f'{cargo.name}{dedicacion.name}'] = f'{cargo.value} {dedicacion.value}'
+            carded = f'{cargo.name}{dedicacion.name}'
+            if carded not in excluir:
+                CargoDedicacion[f'{cargo.name}{dedicacion.name}'] = f'{cargo.value} {dedicacion.value}'
 
     @classmethod
     def con_cargo(cls, cargo):
