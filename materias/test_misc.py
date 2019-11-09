@@ -44,6 +44,20 @@ class TestMapeos(TestCase):
         some_expected = { 'TitPar', 'AsoSmx', 'AdjExc', 'VisPar', 'HonExc' }
         self.assertTrue(set(cardeds).issuperset(some_expected))
 
+    def test_cargas_de_tipos(self):
+        self.assertEqual(set(Mapeos.cargas_de_tipo(Carga.objects.all(), TipoDocentes.P)),
+                         {self.carga1, self.carga3})
+        self.assertEqual(set(Mapeos.cargas_de_tipo(Carga.objects.all(), TipoDocentes.J)),
+                         set())
+        self.assertEqual(set(Mapeos.cargas_de_tipo(Carga.objects.all(), TipoDocentes.A1)),
+                         {self.carga2})
+        self.assertEqual(set(Mapeos.cargas_de_tipo(Carga.objects.all(), TipoDocentes.A2)),
+                         set())
+
+    def test_cargas(self):
+        self.assertEqual(set(Mapeos.cargas(TipoDocentes.P, self.ac)), {self.carga1, self.carga3})
+        self.assertEqual(set(Mapeos.cargas(TipoDocentes.P, AnnoCuatrimestre(42, Cuatrimestres.P.name))), set())
+
     def test_docentes_de_tipo(self):
         docs = Mapeos.docentes_de_tipo(TipoDocentes.P, 2100)
         self.assertEqual(set(docs), {self.n, self.m})
