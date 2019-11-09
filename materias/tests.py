@@ -389,6 +389,30 @@ class TestPaginas(TestCase):
         self.assertEqual(nhorario112.aula, 'xyz')
         self.assertEqual(nhorario112.pabellon, '0')
 
+    def test_administrar_converte_vacio_a_0_en_int(self):
+        self.client.login(username='autorizado', password='1234')
+
+        model_to_ktf = {Turno: {'alumnos': ('alumnos', int)},
+                        Horario: {'aula': ('aula', str),
+                                  'pabellon': ('pabellon', int)}}
+        post = dict()
+        for model, key_to_field in model_to_ktf.items():
+            for k_field, (t_attr, _) in key_to_field.items():
+                for o in model.objects.all():
+                    post[f'{k_field}_{o.id}'] = getattr(o, t_attr)
+        # primero pasamos valor vacío, tiene que quedar en 0
+        post[f'alumnos_{self.turno12.id}'] = ''
+        post['cambiar'] = True
+        url = f'/materias/administrar_alumnos/{self.anno}/{self.cuatrimestre.name}'
+        self.client.post(url, post)
+        self.assertEqual(self.turno12.alumnos, 0)
+        # ahora pasamos valor no parseable, tiene que tirar excepción
+        # Eso resulta en un 500 Internal Server Error. No está bueno pero sería raro que llegue algo
+        # que no es número ni es vacío hasta ahí.
+        post[f'alumnos_{self.turno12.id}'] = 'x'
+        with self.assertRaises(ValueError):
+            self.client.post(url, post)
+
     def test_administrar_cargas_docentes(self):
         self.client.login(username='autorizado', password='1234')
         self._agrega_docentes()
