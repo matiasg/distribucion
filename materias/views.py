@@ -164,7 +164,7 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url, seccion=
                     objetos = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
                 elif  modelo == Horario:
                     objetos = Horario.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre)
-                logger.info('modifico %d objetos tipo %s', objetos.count(), modelo)
+                logger.info('modifico %d objetos tipo %s', objetos.count(), modelo.__class__.__name__)
 
                 for objeto in objetos:
                     for page_field, (field, _type) in modelo_key_to_field.items():
@@ -173,7 +173,16 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url, seccion=
                             # checkbox aparece solo si está marcado
                             v = page_field_objeto in request.POST
                         else:
-                            v = _type(request.POST[page_field_objeto])
+                            v_post = request.POST[page_field_objeto]
+                            try:
+                                v = _type(v_post)
+                            except ValueError:
+                                if _type is int and v_post == '':
+                                    v = 0
+                                else:
+                                    logger.exception('no pude convertir "%s" a tipo %s para el input %s',
+                                                     v_post, _type.__name__, page_field_objeto)
+                                    raise
                         setattr(objeto, field, v)
                         logger.debug('cambiando %s a obj. %s por %s', page_field, objeto, v)
                     objeto.save()
