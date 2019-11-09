@@ -87,9 +87,9 @@ tipo_turnos = {'Teórica': TipoTurno.T.name,
                'Práctica': TipoTurno.P.name,
                'Teórico-Práctica': TipoTurno.A.name}
 cargo_tipoturno = {'Teórica': [CargoDedicacion.AsoExc],
-                   'Práctica': [CargoDedicacion.JTPSim, CargoDedicacion.Ay1Sim, CargoDedicacion.Ay2Sim],
+                   'Práctica': [CargoDedicacion.JTPPar, CargoDedicacion.Ay1Par, CargoDedicacion.Ay2Par],
                    'Teórico-Práctica': [CargoDedicacion.AsoExc,
-                                        CargoDedicacion.JTPSim, CargoDedicacion.Ay1Sim, CargoDedicacion.Ay2Sim]}
+                                        CargoDedicacion.JTPPar, CargoDedicacion.Ay1Par, CargoDedicacion.Ay2Par]}
 
 docentes_separador = re.compile('(?: +-+ *| *—  *| *-+ +)')
 docente_con_dias_al_final = re.compile('(.*[^\s])(\s*\((?i:lu|ma|mi|ju|vi|-)+\))')
@@ -192,8 +192,8 @@ def salva_datos(html, anno, cuatrimestre, no_agregar_docentes=False):
                 # docentes y cargas
                 if not no_agregar_docentes:
                     cargos = cargo_tipoturno[tipoynumero[0]]
-                    cargos_inferidos = [CargoDedicacion.AsoExc] * necesidad_prof + [CargoDedicacion.JTPSim] * necesidad_jtp \
-                                       + [CargoDedicacion.Ay1Sim] * necesidad_ay1 + [CargoDedicacion.Ay2Sim] * necesidad_ay2
+                    cargos_inferidos = [CargoDedicacion.AsoExc] * necesidad_prof + [CargoDedicacion.JTPPar] * necesidad_jtp \
+                                       + [CargoDedicacion.Ay1Par] * necesidad_ay1 + [CargoDedicacion.Ay2Par] * necesidad_ay2
                     cargos_inferidos += [cargos_inferidos[-1]] * (len(turno_docentes) - len(cargos_inferidos))
                     for i, docente in enumerate(turno_docentes):
                         m = docente_con_dias_al_final.search(docente)

@@ -17,7 +17,7 @@ class TestMapeos(TestCase):
                                    email='nemo@nautilus.org',
                                    cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
         self.m = Docente.objects.create(na_nombre='mario', telefono='11 1111', email='mario@nautilus.org',
-                                   cargos=[CargoDedicacion.AsoSim.name])
+                                   cargos=[CargoDedicacion.AsoPar.name])
         self.materia = Materia.objects.create(nombre='navegacion', obligatoriedad=TipoMateria.B.name)
         self.turno1 = Turno.objects.create(materia=self.materia, anno=anno, cuatrimestre=cuatrimestre,
                                            numero=1, tipo=TipoTurno.T.name,
@@ -32,7 +32,7 @@ class TestMapeos(TestCase):
                                            anno=anno, cuatrimestre=cuatrimestre)
         self.carga2 = Carga.objects.create(docente=self.n, cargo=CargoDedicacion.Ay1Smx.name,
                                            anno=anno, cuatrimestre=cuatrimestre)
-        self.carga3 = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.AsoSim.name,
+        self.carga3 = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.AsoPar.name,
                                            anno=anno, cuatrimestre=cuatrimestre)
         self.asignacion1 = Asignacion.objects.create(intentos=(1, 3), carga=self.carga1, turno=self.turno1)
         self.asignacion2 = Asignacion.objects.create(intentos=(1, 3), carga=self.carga2, turno=self.turno3)
@@ -41,7 +41,7 @@ class TestMapeos(TestCase):
     def test_cargos_de_tipos(self):
         cardeds = Mapeos.cargos_de_tipos(TipoDocentes.P)
         self.assertEqual(len(cardeds), 8 * 3)
-        some_expected = { 'TitSim', 'AsoSmx', 'AdjExc', 'VisSim', 'HonExc' }
+        some_expected = { 'TitPar', 'AsoSmx', 'AdjExc', 'VisPar', 'HonExc' }
         self.assertTrue(set(cardeds).issuperset(some_expected))
 
     def test_docentes_de_tipo(self):

@@ -49,9 +49,9 @@ class TestModels(TestCase):
                                    email='nemo@nautilus.org',
                                    cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
         m = Docente.objects.create(na_nombre='mario', telefono='', email='',
-                                   cargos=[CargoDedicacion.Ay2Sim.name, CargoDedicacion.Ay2Sim.name])
+                                   cargos=[CargoDedicacion.Ay2Par.name, CargoDedicacion.Ay2Par.name])
         o = Docente.objects.create(na_nombre='ovidio',
-                                   cargos=[CargoDedicacion.Ay2Sim.name])
+                                   cargos=[CargoDedicacion.Ay2Par.name])
         ayds1 = Docente.todos_los(Cargos.Ay1)
         self.assertEquals(len(ayds1), 1)
         self.assertEquals(ayds1.first(), n)
@@ -570,7 +570,7 @@ class TestPaginas(TestCase):
         self._agrega_docentes()
         cn = Carga.objects.create(docente=self.n, cargo=CargoDedicacion.TitExc.name,
                                   anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-        cm = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.JTPSim.name,
+        cm = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.JTPPar.name,
                                   anno=self.anno, cuatrimestre=self.cuatrimestre.name, turno=self.turno11)
         self.client.login(username='autorizado', password='1234')
         url = reverse('materias:administrar_cargas_publicadas', args=(self.anno, self.cuatrimestre.name))
@@ -708,12 +708,12 @@ class TestPaginas(TestCase):
         self.assertContains(response, f'<input type="hidden" name="juntar_{self.m.id}">')
         # confirmo cambiar
         post = {f'juntar_{self.n.id}': True, f'juntar_{self.m.id}': True,
-                'cargo': f'cargo_{CargoDedicacion.Ay2Sim.name}', 'confirma_cambiar': True}
+                'cargo': f'cargo_{CargoDedicacion.Ay2Par.name}', 'confirma_cambiar': True}
         response = self.client.post(reverse('materias:administrar_docentes'), post)
         self.m.refresh_from_db()
         self.n.refresh_from_db()
-        self.assertEquals(self.m.cargos, [CargoDedicacion.Ay2Sim.name])
-        self.assertEquals(self.n.cargos, [CargoDedicacion.Ay2Sim.name])
+        self.assertEquals(self.m.cargos, [CargoDedicacion.Ay2Par.name])
+        self.assertEquals(self.n.cargos, [CargoDedicacion.Ay2Par.name])
 
     def test_administrar_un_docente(self):
         self.client.login(username='autorizado', password='1234')
