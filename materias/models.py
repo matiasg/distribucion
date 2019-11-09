@@ -39,7 +39,7 @@ class Cargos(Enum):
 class Dedicaciones(Enum) :
     Exc = 'Exclusiva'
     Smx = 'Semiexclusiva'
-    Sim = 'Simple'
+    Par = 'Parcial'
 
 
 class CargoDedicacion(Enum):

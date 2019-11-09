@@ -68,7 +68,7 @@ class LectorDeCsv:
     _a_dedicacion = {
         '1': Dedicaciones.Exc,
         '2': Dedicaciones.Smx,
-        '3': Dedicaciones.Sim,
+        '3': Dedicaciones.Par,
     }
 
     @classmethod

@@ -27,7 +27,7 @@ class TestPreparar(TestCase):
     def _agrega_preferencias(self):
         self.docente = Docente.objects.create(na_nombre='juan', email='mail@nada.org',
                                               telefono='1234',
-                                              cargos=[CargoDedicacion.TitSim.name])
+                                              cargos=[CargoDedicacion.TitPar.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
         self.turno1 = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
                                            numero=1, tipo=TipoTurno.A.name,
@@ -142,9 +142,9 @@ class TestVerDistribucion(TestCase):
         self.cuatrimestre = Cuatrimestres.P
 
         self.docente1 = Docente.objects.create(na_nombre='juan', email='mail@nada.org',
-                                               telefono='1234', cargos=[CargoDedicacion.TitSim.name])
+                                               telefono='1234', cargos=[CargoDedicacion.TitPar.name])
         self.docente2 = Docente.objects.create(na_nombre='jose', email='mail@nade.org',
-                                               telefono='1235', cargos=[CargoDedicacion.TitSim.name])
+                                               telefono='1235', cargos=[CargoDedicacion.TitPar.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
         self.turno1 = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                            numero=1, tipo=TipoTurno.A.name,
@@ -152,9 +152,9 @@ class TestVerDistribucion(TestCase):
         self.turno2 = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                            numero=2, tipo=TipoTurno.A.name,
                                            necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        self.carga1 = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitSim.name,
+        self.carga1 = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitPar.name,
                                            anno=self.anno, cuatrimestre=self.cuatrimestre.name, turno=self.turno1)
-        self.carga2 = Carga.objects.create(docente=self.docente2, cargo=CargoDedicacion.TitSim.name,
+        self.carga2 = Carga.objects.create(docente=self.docente2, cargo=CargoDedicacion.TitPar.name,
                                            anno=self.anno, cuatrimestre=self.cuatrimestre.name)
         self.autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
         permiso = Permission.objects.get(codename='add_asignacion')
@@ -236,9 +236,9 @@ class TestDistribuir(TestCase):
     def setUp(self):
         self.ac = AnnoCuatrimestre(2100, Cuatrimestres.P.name)
         self.docente1 = Docente.objects.create(na_nombre='d1', email='d1@nada.org',
-                                               telefono='1234', cargos=[CargoDedicacion.TitSim.name])
+                                               telefono='1234', cargos=[CargoDedicacion.TitPar.name])
         self.docente2 = Docente.objects.create(na_nombre='d2', email='d2@nade.org',
-                                               telefono='1235', cargos=[CargoDedicacion.TitSim.name])
+                                               telefono='1235', cargos=[CargoDedicacion.TitPar.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
         self.turno1 = Turno.objects.create(materia=self.materia, anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre,
                                            numero=1, tipo=TipoTurno.A.name,
@@ -246,9 +246,9 @@ class TestDistribuir(TestCase):
         self.turno2 = Turno.objects.create(materia=self.materia, anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre,
                                            numero=2, tipo=TipoTurno.A.name,
                                            necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        self.carga1 = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitSim.name,
+        self.carga1 = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitPar.name,
                                            anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre)
-        self.carga2 = Carga.objects.create(docente=self.docente2, cargo=CargoDedicacion.TitSim.name,
+        self.carga2 = Carga.objects.create(docente=self.docente2, cargo=CargoDedicacion.TitPar.name,
                                            anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre)
 
         self.autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
@@ -322,7 +322,7 @@ class TestDistribuir(TestCase):
         turno_otro_cuat = Turno.objects.create(materia=self.materia, anno=self.ac.anno, cuatrimestre=otro_cuat.name,
                                                numero=1, tipo=TipoTurno.A.name,
                                                necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        carga_otro_cuat = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitSim.name,
+        carga_otro_cuat = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitPar.name,
                                                anno=self.ac.anno, cuatrimestre=otro_cuat.name)
         now = timezone.now()
         pref_ahora = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1, fecha_encuesta=now)
@@ -343,7 +343,7 @@ class TestDistribuir(TestCase):
         turno_otro_cuat = Turno.objects.create(materia=self.materia, anno=self.ac.anno, cuatrimestre=otro_cuat.name,
                                                numero=1, tipo=TipoTurno.A.name,
                                                necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        carga_otro_cuat = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitSim.name,
+        carga_otro_cuat = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitPar.name,
                                                anno=self.ac.anno, cuatrimestre=otro_cuat.name)
         now = timezone.now()
         pref_ahora = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1, fecha_encuesta=now)
@@ -367,12 +367,12 @@ class TestModel(TestCase):
 
     def setUp(self):
         self.docente = Docente.objects.create(na_nombre='d1', email='d1@nada.org',
-                                              telefono='1234', cargos=[CargoDedicacion.TitSim.name])
+                                              telefono='1234', cargos=[CargoDedicacion.TitPar.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
         self.turno = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
                                           numero=1, tipo=TipoTurno.A.name,
                                           necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        self.carga = Carga.objects.create(docente=self.docente, cargo=CargoDedicacion.TitSim.name,
+        self.carga = Carga.objects.create(docente=self.docente, cargo=CargoDedicacion.TitPar.name,
                                           anno=2100, cuatrimestre=Cuatrimestres.P.name)
 
     def test_intentos(self):
@@ -403,7 +403,7 @@ class TestModel(TestCase):
         otro_turno = Turno.objects.create(materia=self.materia, anno=2102, cuatrimestre=Cuatrimestres.S.name,
                                           numero=1, tipo=TipoTurno.T.name,
                                           necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        otra_carga = Carga.objects.create(docente=self.docente, cargo=CargoDedicacion.TitSim.name,
+        otra_carga = Carga.objects.create(docente=self.docente, cargo=CargoDedicacion.TitPar.name,
                                           anno=2102, cuatrimestre=Cuatrimestres.S.name)
         a2 = Asignacion.objects.create(intentos=(comienzo.valor, final.valor),
                                        carga=otra_carga, turno=otro_turno)
