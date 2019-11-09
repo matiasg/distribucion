@@ -165,6 +165,26 @@ class TestModels(TestCase):
                                aula='', pabellon='0')
         self.assertEquals(self.turno.horarios_info().diayhora, 'Lu: 7 a 9')
 
+    def test_ordenar_cargas_por_tipo_docente(self):
+        a = 2100
+        c = Cuatrimestres.P.name
+        n = Docente.objects.create(na_nombre='nemo', telefono='00 0000', email='nemo@nautilus.org', cargos=[])
+        m = Docente.objects.create(na_nombre='momo', telefono='00 0000', email='momo@nautilus.org', cargos=[])
+        carga_pn = Carga.objects.create(docente=n, anno=a, cuatrimestre=c, cargo=CargoDedicacion.TitExc.name)
+        carga_jn = Carga.objects.create(docente=n, anno=a, cuatrimestre=c, cargo=CargoDedicacion.JTPPar.name)
+        carga_an = Carga.objects.create(docente=n, anno=a, cuatrimestre=c, cargo=CargoDedicacion.Ay1Par.name)
+        carga_bn = Carga.objects.create(docente=n, anno=a, cuatrimestre=c, cargo=CargoDedicacion.Ay2Par.name)
+        carga_pm = Carga.objects.create(docente=m, anno=a, cuatrimestre=c, cargo=CargoDedicacion.TitExc.name)
+        carga_jm = Carga.objects.create(docente=m, anno=a, cuatrimestre=c, cargo=CargoDedicacion.JTPPar.name)
+        carga_am = Carga.objects.create(docente=m, anno=a, cuatrimestre=c, cargo=CargoDedicacion.Ay1Par.name)
+        carga_bm = Carga.objects.create(docente=m, anno=a, cuatrimestre=c, cargo=CargoDedicacion.Ay2Par.name)
+
+        cargas = Carga.objects.all()
+        self.assertEquals(list(Carga.objects.all()),
+                          [carga_pm, carga_pn,
+                           carga_jm, carga_jn,
+                           carga_am, carga_an,
+                           carga_bm, carga_bn])
 
 
 class TestPaginas(TestCase):
