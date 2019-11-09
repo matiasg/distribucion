@@ -863,6 +863,18 @@ class TestPaginas(TestCase):
             # chequeo que la que quedó sin borrar es la que tiene asignación
             self.assertEqual(Asignacion.objects.filter(carga__docente=self.m,  turno=turnos[cuat]).count(), 1)
 
+    def test_generar_cargas_docentes_anuales(self):
+        self.client.login(username='autorizado', password='1234')
+        self._agrega_docentes()
+        context = {'generar': True}
+        response = self.client.post(reverse('materias:cargas_docentes_anuales', args=(self.anno + 1,)), context)
+        for docente in (self.n, self.m):
+            for cuatrimestre in Cuatrimestres:
+                for cargo in docente.cargos:
+                    cargas = Carga.objects.filter(docente=docente, anno=self.anno+1, cuatrimestre=cuatrimestre.name, cargo=cargo)
+                    self.assertEquals(cargas.count(), 0 if cuatrimestre is Cuatrimestres.V else 1)
+
+
 
 class TestCasosBorde(TestCase):
 
