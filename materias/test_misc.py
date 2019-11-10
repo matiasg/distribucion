@@ -114,20 +114,20 @@ class TestMapeos(TestCase):
         self.assertEqual(turno_cargas, {self.turno1: [self.carga1]})
 
     def test_orden_tipodocente(self):
-        self.assertGreaterEqual(TipoDocentes.P, TipoDocentes.P)
-        self.assertGreaterEqual(TipoDocentes.P, TipoDocentes.J)
-        self.assertGreaterEqual(TipoDocentes.P, TipoDocentes.A1)
-        self.assertGreaterEqual(TipoDocentes.P, TipoDocentes.A2)
-        self.assertGreaterEqual(TipoDocentes.J, TipoDocentes.A2)
-        self.assertGreaterEqual(TipoDocentes.A1, TipoDocentes.A2)
-        self.assertGreaterEqual(TipoDocentes.A2, TipoDocentes.A2)
+        self.assertLessEqual(TipoDocentes.P, TipoDocentes.P)
+        self.assertLessEqual(TipoDocentes.P, TipoDocentes.J)
+        self.assertLessEqual(TipoDocentes.P, TipoDocentes.A1)
+        self.assertLessEqual(TipoDocentes.P, TipoDocentes.A2)
+        self.assertLessEqual(TipoDocentes.J, TipoDocentes.A2)
+        self.assertLessEqual(TipoDocentes.A1, TipoDocentes.A2)
+        self.assertLessEqual(TipoDocentes.A2, TipoDocentes.A2)
 
     def test_filtra_tipo_ge(self):
         cargas = [self.carga1, self.carga2, self.carga3]
-        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_ge(TipoDocentes.P, cargas), [self.carga1, self.carga3])
-        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_ge(TipoDocentes.J, cargas), [self.carga1, self.carga3])
-        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_ge(TipoDocentes.A1, cargas), [self.carga1, self.carga2, self.carga3])
-        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_ge(TipoDocentes.A2, cargas), [self.carga1, self.carga2, self.carga3])
+        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_le(TipoDocentes.P, cargas), [self.carga1, self.carga3])
+        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_le(TipoDocentes.J, cargas), [self.carga1, self.carga3])
+        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_le(TipoDocentes.A1, cargas), [self.carga1, self.carga2, self.carga3])
+        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_le(TipoDocentes.A2, cargas), [self.carga1, self.carga2, self.carga3])
 
     def test_docentes_con_cargos_de_tipo(self):
         self.assertEqual(set(Mapeos.docentes_con_cargo_de_tipo(TipoDocentes.P)), {self.n, self.m})

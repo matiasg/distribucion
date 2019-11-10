@@ -1,7 +1,8 @@
 from django import template
 from django.template.defaultfilters import stringfilter
 
-from materias.models import CargoDedicacion
+from materias.models import CargoDedicacion, Turno
+from materias.misc import Mapeos
 
 register = template.Library()
 
@@ -26,3 +27,8 @@ def bien_o_mal(a, b):
 @register.filter
 def ordenados(lista):
     return sorted(lista)
+
+@register.filter
+def cargas_ordenadas(turno):
+    cargas = sorted(turno.carga_set.all(), key=Mapeos.key_orden_por_tipo_docente)
+    return ' - '.join([f'{carga.docente.nombre}' for carga in cargas])

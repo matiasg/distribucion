@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 
 {% load static %}
+{% load materias_tags %}
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 
 {% for tipo, lista in materias %}
@@ -17,7 +18,7 @@
             <tr>
                 <td class="fondo{{ turno.tipo }}">{{ turno.horarios_info.tipoynumero }}{% if turno.subnumero %} {{ turno.subnumero }}{% endif %}</td>
                 <td class="diayhora">{{ turno.horarios_info.diayhora }}</td>
-                <td class="datosdoc">{{ turno.docentes }}</td>
+                <td class="datosdoc">{{ turno|cargas_ordenadas }}</td>
                 <td class="aula">Aula: {{ turno.horarios_info.aula }}</td>
             </tr>
         {% endfor %}

@@ -68,7 +68,7 @@ class TipoDocentes(Enum):
 
     def __ge__(self, otro):
         ordenados = [TipoDocentes.A2, TipoDocentes.A1, TipoDocentes.J, TipoDocentes.P]
-        return ordenados.index(self) >= ordenados.index(otro)
+        return ordenados.index(self) <= ordenados.index(otro)
 
 
 class TipoTurno(Enum):

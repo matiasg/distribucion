@@ -165,6 +165,25 @@ class TestModels(TestCase):
                                aula='', pabellon='0')
         self.assertEquals(self.turno.horarios_info().diayhora, 'Lu: 7 a 9')
 
+    def test_ordenar_cargas_por_tipo_docente(self):
+        a = 2100
+        c = Cuatrimestres.P.name
+        n = Docente.objects.create(na_nombre='nemo', telefono='00 0000', email='nemo@nautilus.org', cargos=[])
+        m = Docente.objects.create(na_nombre='momo', telefono='00 0000', email='momo@nautilus.org', cargos=[])
+        carga_pn = Carga.objects.create(docente=n, anno=a, cuatrimestre=c, cargo=CargoDedicacion.TitExc.name)
+        carga_jn = Carga.objects.create(docente=n, anno=a, cuatrimestre=c, cargo=CargoDedicacion.JTPPar.name)
+        carga_an = Carga.objects.create(docente=n, anno=a, cuatrimestre=c, cargo=CargoDedicacion.Ay1Par.name)
+        carga_bn = Carga.objects.create(docente=n, anno=a, cuatrimestre=c, cargo=CargoDedicacion.Ay2Par.name)
+        carga_pm = Carga.objects.create(docente=m, anno=a, cuatrimestre=c, cargo=CargoDedicacion.TitExc.name)
+        carga_jm = Carga.objects.create(docente=m, anno=a, cuatrimestre=c, cargo=CargoDedicacion.JTPPar.name)
+        carga_am = Carga.objects.create(docente=m, anno=a, cuatrimestre=c, cargo=CargoDedicacion.Ay1Par.name)
+        carga_bm = Carga.objects.create(docente=m, anno=a, cuatrimestre=c, cargo=CargoDedicacion.Ay2Par.name)
+
+        ordenadas = sorted(Carga.objects.all(), key=Mapeos.key_orden_por_tipo_docente)
+        self.assertEquals(ordenadas, [carga_pm, carga_pn,
+                                      carga_jm, carga_jn,
+                                      carga_am, carga_an,
+                                      carga_bm, carga_bn])
 
 
 class TestPaginas(TestCase):
@@ -267,6 +286,20 @@ class TestPaginas(TestCase):
         with patch.object(timezone, 'now', return_value=datetime.datetime(self.anno, 10, 1)):
             response = self.client.get('/materias/')
             self.assertNotContains(response, 'Teórica')
+
+    def test_pagina_principal_ordena_cargas_por_tipo_docente(self):
+        cargos = (CargoDedicacion.AdjPar, CargoDedicacion.JTPPar, CargoDedicacion.Ay1Par, CargoDedicacion.Ay2Par)
+        prenombres = ('y', 'x', 'z')
+        for prenombre in prenombres:
+            for cargo in cargos:
+                docente = Docente.objects.create(na_nombre=f'{prenombre}_{cargo.name}', telefono='', email='', cargos=[])
+                carga = Carga.objects.create(docente=docente, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                             turno=self.turno11, cargo=cargo.name)
+
+        response = self.client.get(reverse('materias:por_anno_y_cuatrimestre', args=(f'{self.anno}{self.cuatrimestre.value}',)),
+                                   follow=True)
+        todos = r'\s*-\s*'.join(f'{prenombre}_{cargo.name}' for cargo in cargos for prenombre in sorted(prenombres))
+        self.assertRegex(response.content.decode(), todos)
 
     def test_administrar_permisos(self):
         response = self.client.get('/materias/administrar', follow=True)
