@@ -287,6 +287,20 @@ class TestPaginas(TestCase):
             response = self.client.get('/materias/')
             self.assertNotContains(response, 'Teórica')
 
+    def test_pagina_principal_ordena_cargas_por_tipo_docente(self):
+        cargos = (CargoDedicacion.AdjPar, CargoDedicacion.JTPPar, CargoDedicacion.Ay1Par, CargoDedicacion.Ay2Par)
+        prenombres = ('y', 'x', 'z')
+        for prenombre in prenombres:
+            for cargo in cargos:
+                docente = Docente.objects.create(na_nombre=f'{prenombre}_{cargo.name}', telefono='', email='', cargos=[])
+                carga = Carga.objects.create(docente=docente, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                             turno=self.turno11, cargo=cargo.name)
+
+        response = self.client.get(reverse('materias:por_anno_y_cuatrimestre', args=(f'{self.anno}{self.cuatrimestre.value}',)),
+                                   follow=True)
+        todos = r'\s*-\s*'.join(f'{prenombre}_{cargo.name}' for cargo in cargos for prenombre in sorted(prenombres))
+        self.assertRegex(response.content.decode(), todos)
+
     def test_administrar_permisos(self):
         response = self.client.get('/materias/administrar', follow=True)
         self.assertEqual(response.redirect_chain[0], ('/admin/login?next=/materias/administrar', 302))
