@@ -179,12 +179,11 @@ class TestModels(TestCase):
         carga_am = Carga.objects.create(docente=m, anno=a, cuatrimestre=c, cargo=CargoDedicacion.Ay1Par.name)
         carga_bm = Carga.objects.create(docente=m, anno=a, cuatrimestre=c, cargo=CargoDedicacion.Ay2Par.name)
 
-        cargas = Carga.objects.all()
-        self.assertEquals(list(Carga.objects.all()),
-                          [carga_pm, carga_pn,
-                           carga_jm, carga_jn,
-                           carga_am, carga_an,
-                           carga_bm, carga_bn])
+        ordenadas = sorted(Carga.objects.all(), key=Mapeos.key_orden_por_tipo_docente)
+        self.assertEquals(ordenadas, [carga_pm, carga_pn,
+                                      carga_jm, carga_jn,
+                                      carga_am, carga_an,
+                                      carga_bm, carga_bn])
 
 
 class TestPaginas(TestCase):
