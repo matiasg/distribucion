@@ -211,7 +211,7 @@ class TestEncuesta(TestCase):
             m = Materia.objects.create(nombre=f'materia{materia}', obligatoriedad=TipoMateria.B.name)
             for turno in desorden:
                 Turno.objects.create(materia=m, anno=anno, cuatrimestre=Cuatrimestres.P.name,
-                                     numero=turno, tipo=TipoTurno.T.name,
+                                     numero=turno, tipo=TipoTurno.T.name, dificil_de_cubrir=True,
                                      necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
 
         now = timezone.now()
@@ -240,7 +240,7 @@ class TestEncuesta(TestCase):
         for materia in desorden:
             m = Materia.objects.create(nombre=f'materia{materia}', obligatoriedad=TipoMateria.B.name)
             Turno.objects.create(materia=m, anno=anno, cuatrimestre=Cuatrimestres.P.name,
-                                 numero=1, tipo=TipoTurno.T.name,
+                                 numero=1, tipo=TipoTurno.T.name, dificil_de_cubrir=True,
                                  necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
 
         now = timezone.now()
@@ -348,13 +348,15 @@ class TestEncuesta(TestCase):
                                             desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
         response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), cs.name, tipo)))
 
-        self.assertContains(response, 'disabled', count=2)
+        self.assertContains(response, 'disabled', count=0)
 
         Carga.objects.create(turno=self.turno, anno=self.turno.anno, cuatrimestre=self.turno.cuatrimestre,
                              docente=self.docente, cargo=CargoDedicacion.TitExc.name)
 
         response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), cs.name, tipo)))
-        self.assertContains(response, 'disabled', count=5)
+        # como no es dificil de cubrir, no aparece en las primeras dos opciones
+        # y aparece como disabled en las otras tres porque está cubierto
+        self.assertContains(response, 'disabled', count=3)
 
     def test_otros_datos_comentario_con_periodo(self):
         cs = GrupoCuatrimestral.VPS
