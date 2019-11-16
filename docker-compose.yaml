@@ -1,4 +1,4 @@
-version: '3'
+version: '3.4'
 
 services:
   db:
@@ -7,6 +7,7 @@ services:
       - distribucion_pgdata:/var/lib/postgresql/data
     networks:
       - db_network
+
   web:
     image: distribucion
     volumes:
@@ -19,13 +20,40 @@ services:
     networks:
       - nginx_network
       - db_network
+
+  webtest:
+    image: distribucion
+    ports:
+      - 8000:8000
+      - 8443:8443
+    volumes:
+      - static_volume:/codigo_test/distribucion/static
+      - ${PWD}:/codigo_test/distribucion
+    working_dir: /codigo_test/distribucion
+    command: python manage.py runserver 0.0.0.0:8000
+    depends_on:
+      - db
+    networks:
+      - db_network
+
   bash:
     image: distribucion
     volumes:
-      - distribucion_pgdata:/var/lib/postgresql/data
+      - ${PWD}:/codigo_test/distribucion
+    working_dir: /codigo_test/distribucion
     command: /bin/bash
-    depends_on:
-      - db
+    networks:
+      - db_network
+
+  test:
+    image: distribucion
+    volumes:
+      - ${PWD}:/codigo_test/distribucion
+    working_dir: /codigo_test/distribucion
+    entrypoint: python manage.py test
+    networks:
+      - db_network
+
 
   nginx:
     image: nginx:1.17.2-alpine
