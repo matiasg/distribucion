@@ -199,7 +199,7 @@ class TestEncuesta(TestCase):
             Carga.objects.create(docente=d, cargo=CargoDedicacion.JTPSmx.name, anno=self.anno, cuatrimestre=Cuatrimestres.P.name)
         response = self.client.get(f'/encuestas/encuesta/{self.anno}/{Cuatrimestres.P.name}/{TipoDocentes.J.name}')
 
-        docentes_en_desplegable = re.findall('>(doc[0-9]) X<', response.content.decode())
+        docentes_en_desplegable = re.findall('>X, (doc[0-9])<', response.content.decode())
         self.assertEqual(docentes_en_desplegable, [f'doc{d}' for d in range(10)])
 
     def test_orden_materias_y_turnos(self):
@@ -427,19 +427,3 @@ class TestPaginas(TestCase):
                                            args=(self.n.id, self.anno, self.cuatrimestre.name)))
         self.assertContains(response, self.n.nombre)
         self.assertContains(response, str(self.turno), count=2)
-
-    def test_orden_desplegable(self):
-        now = timezone.now()
-        cuatrimestres=f'{Cuatrimestres.V.name}{Cuatrimestres.P.name}{Cuatrimestres.S.name}'
-        EncuestasHabilitadas.objects.create(anno=self.anno, cuatrimestres=cuatrimestres,
-                                            tipo_docente=TipoDocentes.A1.name,
-                                            desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
-        for nombre in range(10):
-            apellido = str(20 - nombre)
-            docente = Docente.objects.create(na_nombre=str(nombre), na_apellido=apellido, cargos=[CargoDedicacion.Ay1Par.name])
-            Carga.objects.create(docente=docente, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
-                                 cargo=CargoDedicacion.Ay1Par.name)
-        response = self.client.get(reverse('encuestas:encuesta',
-                                           args=(self.anno, cuatrimestres, TipoDocentes.A1.name)))
-        esperado = re.compile(''.join([fr'{20 - nombre}, {nombre}(.*\n)*.*' for nombre in reversed(range(10))]), re.MULTILINE)
-        self.assertTrue(esperado.search(response.content.decode()))
