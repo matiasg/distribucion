@@ -409,10 +409,11 @@ class TestPaginas(TestCase):
         now_mas_delta = now + datetime.timedelta(seconds=10)
         pref1 = PreferenciasDocente.objects.create(docente=self.n, turno=self.turno, cargo=Cargos.Tit.name,
                                                    peso=1, fecha_encuesta=now)
-        cargas1 = CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=self.cuatrimestre.name, cargas=1,
-                                               fecha_encuesta=now)
+        cargas1 = CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                               cargas=1, fecha_encuesta=now)
         datos = OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
-                                          fecha_encuesta=now_mas_delta, comentario='importante comentario', cargas_declaradas=1)
+                                          fecha_encuesta=now_mas_delta, comentario='importante comentario',
+                                          cargas_declaradas=1)
 
         pref2 = PreferenciasDocente.objects.create(docente=self.n, turno=self.turno, cargo=Cargos.Tit.name,
                                                    peso=2, fecha_encuesta=now_mas_delta)
@@ -422,6 +423,23 @@ class TestPaginas(TestCase):
         response = self.client.get(reverse('encuestas:ver_resultados_de_encuestas', args=(self.anno, self.cuatrimestre.name)))
         self.assertContains(response, self.n.apellido_nombre)
 
-        response = self.client.get(reverse('encuestas:encuestas_de_un_docente', args=(self.n.id, self.anno, self.cuatrimestre.name)))
+        response = self.client.get(reverse('encuestas:encuestas_de_un_docente',
+                                           args=(self.n.id, self.anno, self.cuatrimestre.name)))
         self.assertContains(response, self.n.nombre)
         self.assertContains(response, str(self.turno), count=2)
+
+    def test_orden_desplegable(self):
+        now = timezone.now()
+        cuatrimestres=f'{Cuatrimestres.V.name}{Cuatrimestres.P.name}{Cuatrimestres.S.name}'
+        EncuestasHabilitadas.objects.create(anno=self.anno, cuatrimestres=cuatrimestres,
+                                            tipo_docente=TipoDocentes.A1.name,
+                                            desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
+        for nombre in range(10):
+            apellido = str(20 - nombre)
+            docente = Docente.objects.create(na_nombre=str(nombre), na_apellido=apellido, cargos=[CargoDedicacion.Ay1Par.name])
+            Carga.objects.create(docente=docente, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                 cargo=CargoDedicacion.Ay1Par.name)
+        response = self.client.get(reverse('encuestas:encuesta',
+                                           args=(self.anno, cuatrimestres, TipoDocentes.A1.name)))
+        esperado = re.compile(''.join([fr'{20 - nombre}, {nombre}(.*\n)*.*' for nombre in reversed(range(10))]), re.MULTILINE)
+        self.assertTrue(esperado.search(response.content.decode()))
