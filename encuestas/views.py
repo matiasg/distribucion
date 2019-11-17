@@ -170,9 +170,9 @@ OpcionesPorCuatrimestre = namedtuple('OpcionesPorCuatrimestre', ['opciones', 'tu
 def _generar_docentes(anno, tipo_docente):
     tipo = TipoDocentes[tipo_docente]
     docentes = [DocenteParaEncuesta(-1, '')]
-    docentes += [DocenteParaEncuesta(docente.id, docente.nombre)
+    docentes += [DocenteParaEncuesta(docente.id, docente.apellido_nombre)
                  for docente in sorted(Mapeos.docentes_de_tipo(tipo, anno),
-                                       key=lambda d: d.nombre)]
+                                       key=lambda d: d.apellido_nombre)]
     return docentes
 
 

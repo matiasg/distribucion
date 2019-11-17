@@ -199,7 +199,7 @@ class TestEncuesta(TestCase):
             Carga.objects.create(docente=d, cargo=CargoDedicacion.JTPSmx.name, anno=self.anno, cuatrimestre=Cuatrimestres.P.name)
         response = self.client.get(f'/encuestas/encuesta/{self.anno}/{Cuatrimestres.P.name}/{TipoDocentes.J.name}')
 
-        docentes_en_desplegable = re.findall('>(doc[0-9]) X<', response.content.decode())
+        docentes_en_desplegable = re.findall('>X, (doc[0-9])<', response.content.decode())
         self.assertEqual(docentes_en_desplegable, [f'doc{d}' for d in range(10)])
 
     def test_orden_materias_y_turnos(self):
@@ -409,10 +409,11 @@ class TestPaginas(TestCase):
         now_mas_delta = now + datetime.timedelta(seconds=10)
         pref1 = PreferenciasDocente.objects.create(docente=self.n, turno=self.turno, cargo=Cargos.Tit.name,
                                                    peso=1, fecha_encuesta=now)
-        cargas1 = CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=self.cuatrimestre.name, cargas=1,
-                                               fecha_encuesta=now)
+        cargas1 = CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                               cargas=1, fecha_encuesta=now)
         datos = OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
-                                          fecha_encuesta=now_mas_delta, comentario='importante comentario', cargas_declaradas=1)
+                                          fecha_encuesta=now_mas_delta, comentario='importante comentario',
+                                          cargas_declaradas=1)
 
         pref2 = PreferenciasDocente.objects.create(docente=self.n, turno=self.turno, cargo=Cargos.Tit.name,
                                                    peso=2, fecha_encuesta=now_mas_delta)
@@ -422,6 +423,7 @@ class TestPaginas(TestCase):
         response = self.client.get(reverse('encuestas:ver_resultados_de_encuestas', args=(self.anno, self.cuatrimestre.name)))
         self.assertContains(response, self.n.apellido_nombre)
 
-        response = self.client.get(reverse('encuestas:encuestas_de_un_docente', args=(self.n.id, self.anno, self.cuatrimestre.name)))
+        response = self.client.get(reverse('encuestas:encuestas_de_un_docente',
+                                           args=(self.n.id, self.anno, self.cuatrimestre.name)))
         self.assertContains(response, self.n.nombre)
         self.assertContains(response, str(self.turno), count=2)
