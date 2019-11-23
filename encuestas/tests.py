@@ -396,18 +396,21 @@ class TestPaginas(TestCase):
         self.dict_nec = {'necesidad_prof': 0, 'necesidad_jtp': 0, 'necesidad_ay1': 0, 'necesidad_ay2': 0}
         self.turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                           numero=1, tipo=TipoTurno.T.name, **self.dict_nec)
-        self.n = Docente.objects.create(na_nombre='nemo', na_apellido='X', telefono='00 0000', email='nemo@nautilus.org',
+        self.n = Docente.objects.create(na_nombre='nemo', na_apellido='X', telefono='00 0000',
+                                        email='nemo@nautilus.org',
                                         cargos=[CargoDedicacion.TitExc.name])
 
         Usuario.objects.create_user(username='desautorizado', password='123')
         autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
-        autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='dborrador', codename='add_asignacion'))
+        autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='dborrador',
+                                                               codename='add_asignacion'))
 
     def test_ver_resultados_de_encuestas(self):
         self.client.login(username='autorizado', password='1234')
         now = timezone.now()
         now_mas_delta = now + datetime.timedelta(seconds=10)
-        pref1 = PreferenciasDocente.objects.create(docente=self.n, turno=self.turno, cargo=Cargos.Tit.name,
+        pref1 = PreferenciasDocente.objects.create(docente=self.n, turno=self.turno,
+                                                   tipo_docente=TipoDocentes.P.name,
                                                    peso=1, fecha_encuesta=now)
         cargas1 = CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                                cargas=1, fecha_encuesta=now)
@@ -415,15 +418,36 @@ class TestPaginas(TestCase):
                                           fecha_encuesta=now_mas_delta, comentario='importante comentario',
                                           cargas_declaradas=1)
 
-        pref2 = PreferenciasDocente.objects.create(docente=self.n, turno=self.turno, cargo=Cargos.Tit.name,
+        pref2 = PreferenciasDocente.objects.create(docente=self.n, turno=self.turno, tipo_docente=TipoDocentes.P.name,
                                                    peso=2, fecha_encuesta=now_mas_delta)
-        cargas2 = CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=self.cuatrimestre.name, cargas=1,
+        cargas2 = CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                               cargas=1,
                                                fecha_encuesta=now_mas_delta)
 
-        response = self.client.get(reverse('encuestas:ver_resultados_de_encuestas', args=(self.anno, self.cuatrimestre.name)))
+        response = self.client.get(reverse('encuestas:ver_resultados_de_encuestas',
+                                           args=(self.anno, self.cuatrimestre.name)))
         self.assertContains(response, self.n.apellido_nombre)
 
         response = self.client.get(reverse('encuestas:encuestas_de_un_docente',
                                            args=(self.n.id, self.anno, self.cuatrimestre.name)))
         self.assertContains(response, self.n.nombre)
         self.assertContains(response, str(self.turno), count=2)
+
+    def test_agregar_habilitacion(self):
+        self.client.login(username='autorizado', password='1234')
+        now = datetime.datetime(2101, 2, 3, 4, 5, 0, tzinfo=datetime.timezone.utc)
+        cuatrimestres = f'{Cuatrimestres.P.name}'
+        tipo_docente = f'{TipoDocentes.P.name}'
+        post = {'anno': self.anno, 'cuatrimestres': cuatrimestres,
+                'tipo_docente': tipo_docente,
+                'desde': f'{now:%d/%m/%Y %H:%M}',
+                'hasta': f'{now:%d/%m/%Y %H:%M}'
+                }
+        response = self.client.post(reverse('encuestas:agregar_habilitacion'), post, follow=True)
+        self.assertEqual(EncuestasHabilitadas.objects.count(), 1)
+        encuesta = EncuestasHabilitadas.objects.first()
+        self.assertEqual(encuesta.anno, self.anno)
+        self.assertEqual(encuesta.cuatrimestres, cuatrimestres)
+        self.assertEqual(encuesta.tipo_docente, tipo_docente)
+        self.assertAlmostEqual(encuesta.desde, now, delta=datetime.timedelta(days=1))
+        self.assertAlmostEqual(encuesta.hasta, now, delta=datetime.timedelta(days=1))

@@ -153,6 +153,7 @@ def checkear_y_salvar(datos, anno, cuatrimestres, tipo_docente):
                              docente, turno, peso, fecha_encuesta)
 
                 pref = PreferenciasDocente.objects.create(docente=docente, turno=turno,
+                                                          tipo_docente=tipo_docente,
                                                           peso=peso, fecha_encuesta=fecha_encuesta)
                 logger.info('Agrego preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
                             docente, turno, peso, fecha_encuesta)

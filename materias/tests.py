@@ -458,7 +458,8 @@ class TestPaginas(TestCase):
         Carga.objects.create(docente=self.m, cargo=CargoDedicacion.Ay1Smx.name,
                              anno=self.anno, cuatrimestre=self.cuatrimestre.name)
         PreferenciasDocente.objects.create(docente=self.n, turno=self.turno11,
-                                           cargo=Cargos.Tit.name, peso=2, fecha_encuesta=now)
+                                           tipo_docente=TipoDocentes.P.name,
+                                           peso=2, fecha_encuesta=now)
         OtrosDatos.objects.create(docente=self.n, fecha_encuesta=now,
                                   anno=self.anno, cuatrimestre=cuatris.name,
                                   comentario='_esto deberia aparecer_')
@@ -713,7 +714,7 @@ class TestPaginas(TestCase):
         carga = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.TitExc.name,
                                      anno=self.anno, cuatrimestre=self.cuatrimestre.name)
         pref = PreferenciasDocente.objects.create(docente=self.m, turno=self.turno11,
-                                                  cargo=Cargos.Tit.name, peso=2, fecha_encuesta=now)
+                                                  tipo_docente=TipoDocentes.P.name, peso=2, fecha_encuesta=now)
         otrosdatos = OtrosDatos.objects.create(docente=self.m, fecha_encuesta=now,
                                                anno=self.anno, cuatrimestre=self.cuatrimestre.name, comentario='')
         pedidas = CargasPedidas.objects.create(docente=self.m, fecha_encuesta=now,
