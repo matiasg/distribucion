@@ -4,7 +4,7 @@
 {% load dborrador_tags %}
 
 {% block subtitulo %}
-Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
+Distribución del cuat {{ cuatrimestre.value }}, {{ anno }}. Intento {{ intento_algoritmo }} : {{ intento_manual }}
 {% endblock subtitulo %}
 
 
@@ -26,14 +26,14 @@ Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
                                 <span class="titulo">Encuesta de {{ carga.docente }}:</span>
                                 <ul>
                                     {% for preferencia in preferencias %}
-                                    <li>{{ preferencia.preferencia.turno }} ({{preferencia.peso_normalizado|floatformat:4}})</li>
+                                    <li>{{ preferencia.preferencia.turno.str_corto }}
+                                        ({{preferencia.peso_normalizado|floatformat:4}})
+                                    </li>
                                     {% endfor %}
                                 </ul>
                                 <hr>
                                 <span class="titulo">Comentarios:</span>
                                 {{ carga.docente.otrosdatos_set.last.comentario }}
-                                
-
                             </span>
                         </div>
                     </li>
