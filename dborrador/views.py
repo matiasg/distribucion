@@ -221,6 +221,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
                                                 'preferencia__docente__na_apellido')
     preferencias_por_turno = {turno: preferencias.filter(preferencia__turno=turno).all()
                               for turno in turnos_ac.all()}
+    context['todas_las_preferencias'] = preferencias
 
     materias = []
     for obligatoriedad, obligatoriedad_largo in obligatoriedades.items():
