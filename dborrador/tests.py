@@ -37,8 +37,10 @@ class TestPreparar(TestCase):
                                            necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
         now = timezone.now()
         self.pref1 = PreferenciasDocente.objects.create(docente=self.docente, turno=self.turno1, peso=1,
+                                                        tipo_docente=TipoDocentes.P.name,
                                                         fecha_encuesta=now)
         self.pref2 = PreferenciasDocente.objects.create(docente=self.docente, turno=self.turno2, peso=3,
+                                                        tipo_docente=TipoDocentes.P.name,
                                                         fecha_encuesta=now)
         OtrosDatos.objects.create(docente=self.docente, fecha_encuesta=now, comentario='',
                                   email='', telefono='', anno=self.anno, cuatrimestre=Cuatrimestres.P.name)
@@ -72,12 +74,14 @@ class TestPreparar(TestCase):
 
         pref_doc_otro_anno = PreferenciasDocente.objects.create(docente=self.docente,
                                                                 turno=turno_otro_anno, peso=3,
+                                                                tipo_docente=TipoDocentes.P.name,
                                                                 fecha_encuesta=now)
         pref_otro_anno = Preferencia.objects.create(preferencia=pref_doc_otro_anno,
                                                     peso_normalizado=1)
 
         pref_doc_otro_cuatri = PreferenciasDocente.objects.create(docente=self.docente,
                                                                   turno=turno_otro_cuatri, peso=3,
+                                                                  tipo_docente=TipoDocentes.P.name,
                                                                   fecha_encuesta=now)
         pref_otro_cuatri = Preferencia.objects.create(preferencia=pref_doc_otro_cuatri,
                                                       peso_normalizado=1)
@@ -113,6 +117,7 @@ class TestPreparar(TestCase):
                                       necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
         now_mas_delta = timezone.now() + datetime.timedelta(seconds=15)
         pref_doc = PreferenciasDocente.objects.create(docente=self.docente, turno=turno3, peso=1,
+                                                      tipo_docente=TipoDocentes.P.name,
                                                       fecha_encuesta=now_mas_delta)
         Carga.objects.create(docente=self.docente, cargo=CargoDedicacion.TitExc.name,
                              anno=self.anno, cuatrimestre=Cuatrimestres.P.name)
@@ -186,8 +191,12 @@ class TestVerDistribucion(TestCase):
                                   cargo_que_ocupa=TipoDocentes.P.name)
         IntentoRegistrado.objects.create(intento=Intento(1, 0).valor, anno=self.anno, cuatrimestre=self.cuatrimestre.name)
         now = timezone.now()
-        pd1 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1, fecha_encuesta=now)
-        pd2 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno2, peso=1, fecha_encuesta=now)
+        pd1 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1,
+                                                 tipo_docente=TipoDocentes.P.name,
+                                                 fecha_encuesta=now)
+        pd2 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno2, peso=1,
+                                                 tipo_docente=TipoDocentes.P.name,
+                                                 fecha_encuesta=now)
         Preferencia.objects.create(preferencia=pd1, peso_normalizado=0.5)
         Preferencia.objects.create(preferencia=pd2, peso_normalizado=0.5)
 
@@ -203,8 +212,9 @@ class TestVerDistribucion(TestCase):
 
     def test_figuran_interesados_en_turnos_sin_docentes(self):
         now = timezone.now()
-        pd = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1, fecha_encuesta=now,
-                                                tipo_docente=TipoDocentes.P.name)
+        pd = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1,
+                                                tipo_docente=TipoDocentes.P.name,
+                                                fecha_encuesta=now)
         Preferencia.objects.create(preferencia=pd, peso_normalizado=1)
         response = self.client.get(reverse('dborrador:distribucion', args=(self.anno, self.cuatrimestre.name, 1, 0)),
                                    follow=True)
@@ -212,15 +222,15 @@ class TestVerDistribucion(TestCase):
         content = response.content.decode()
         self.assertTrue(re.search(('<div class="tooltip">Teórico-Práctica 1'
                                    '(Docentes que lo pidieron:|<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*'
-                                   'TitPar:\s*jose'),
+                                   'Profesor:\s*jose'),
                                   content, flags=re.DOTALL),
                         'No figuran los docentes que prefieren un turno sin docentes')
 
     def test_espiar_distribucion(self):
         now = timezone.now()
         pd = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1,
-                                                fecha_encuesta=now,
-                                                tipo_docente=TipoDocentes.P.name)
+                                                tipo_docente=TipoDocentes.P.name,
+                                                fecha_encuesta=now)
         Preferencia.objects.create(preferencia=pd, peso_normalizado=1)
         Asignacion.objects.create(intentos=(Intento(1, 0).valor, Intento(2, 0).valor),
                                   carga=self.carga1, turno=self.turno1,
@@ -262,8 +272,12 @@ class TestDistribuir(TestCase):
 
     def test_distribuye(self):
         now = timezone.now()
-        p1 = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1, fecha_encuesta=now)
-        p2 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=3, fecha_encuesta=now)
+        p1 = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1,
+                                                tipo_docente=TipoDocentes.P.name,
+                                                fecha_encuesta=now)
+        p2 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=3,
+                                                tipo_docente=TipoDocentes.P.name,
+                                                fecha_encuesta=now)
         Preferencia.objects.create(preferencia=p1, peso_normalizado=1)
         Preferencia.objects.create(preferencia=p2, peso_normalizado=1)
 
@@ -330,9 +344,11 @@ class TestDistribuir(TestCase):
                                                anno=self.ac.anno, cuatrimestre=otro_cuat.name)
         now = timezone.now()
         pref_ahora = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1,
+                                                        tipo_docente=TipoDocentes.P.name,
                                                         fecha_encuesta=now)
         Preferencia.objects.create(preferencia=pref_ahora, peso_normalizado=1)
         pref_otro_cuat = PreferenciasDocente.objects.create(docente=self.docente1, turno=turno_otro_cuat, peso=1,
+                                                            tipo_docente=TipoDocentes.P.name,
                                                             fecha_encuesta=now)
         Preferencia.objects.create(preferencia=pref_otro_cuat, peso_normalizado=1)
 
@@ -353,9 +369,11 @@ class TestDistribuir(TestCase):
                                                anno=self.ac.anno, cuatrimestre=otro_cuat.name)
         now = timezone.now()
         pref_ahora = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1,
+                                                        tipo_docente=TipoDocentes.P.name,
                                                         fecha_encuesta=now)
         Preferencia.objects.create(preferencia=pref_ahora, peso_normalizado=1)
         pref_otro_cuat = PreferenciasDocente.objects.create(docente=self.docente1, turno=turno_otro_cuat, peso=1,
+                                                            tipo_docente=TipoDocentes.P.name,
                                                             fecha_encuesta=now)
         Preferencia.objects.create(preferencia=pref_otro_cuat, peso_normalizado=1)
 
@@ -364,7 +382,8 @@ class TestDistribuir(TestCase):
 
         response = self.client.post(reverse('dborrador:cambiar_docente',
                                             args=(self.ac.anno, otro_cuat.name, 0, 0, carga_otro_cuat.id)),
-                                    {'cambiar': True, 'cambio_a': turno_otro_cuat.id, 'cargo_que_ocupa': TipoDocentes.P.name},
+                                    {'cambiar': True, 'cambio_a': turno_otro_cuat.id,
+                                     'cargo_que_ocupa': TipoDocentes.P.name},
                                     follow=True)
         self.assertEqual(Asignacion.objects.count(), 2)
         turnos_asignados = {a.turno for a in Asignacion.objects.all()}
