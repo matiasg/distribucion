@@ -18,13 +18,14 @@ class GrupoCuatrimestral(Enum):
 class PreferenciasDocente(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
-    cargo = models.CharField(max_length=3, choices=choice_enum(Cargos))
+    tipo_docente = models.CharField(max_length=2, choices=choice_enum(TipoDocentes))
     peso = models.FloatField(null=True)
     fecha_encuesta = models.DateTimeField()
     history = HistoricalRecords()
 
     def __str__(self):
         return f'{self.docente} -- {self.peso} -> {self.turno}'
+
 
 class OtrosDatos(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
