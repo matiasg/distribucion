@@ -29,6 +29,11 @@ Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
                                     <li>{{ preferencia.preferencia.turno }} ({{preferencia.peso_normalizado|floatformat:4}})</li>
                                     {% endfor %}
                                 </ul>
+                                <hr>
+                                <span class="titulo">Comentarios:</span>
+                                {{ carga.docente.otrosdatos_set.last.comentario }}
+                                
+
                             </span>
                         </div>
                     </li>
