@@ -58,7 +58,7 @@ div#selector_intento_manual.ui-slider {
 
 .tooltip .tooltiptext {
   visibility: hidden;
-  width: max-content;
+  width: 32em;
   background-color: #444;
   color: #fff;
   text-align: left;
