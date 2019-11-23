@@ -215,8 +215,9 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     asignaciones_fijas = Distribucion.ya_distribuidas_por_cargo(anno_cuat)
     necesidades_por_turno = Mapeos.necesidades_por_turno_y_tipo(anno_cuat)
 
-    preferencias = Preferencia.objects.filter(preferencia__turno__anno=anno, preferencia__turno__cuatrimestre=cuatrimestre) \
-                                      .order_by('preferencia__cargo',
+    preferencias = Preferencia.objects.filter(preferencia__turno__anno=anno,
+                                              preferencia__turno__cuatrimestre=cuatrimestre) \
+                                      .order_by('preferencia__tipo_docente',
                                                 'peso_normalizado',
                                                 'preferencia__docente__na_apellido')
     preferencias_por_turno = {turno: preferencias.filter(preferencia__turno=turno).all()
