@@ -83,7 +83,8 @@ Distribución del cuat {{ cuatrimestre.value }}, {{ anno }}. Intento {{ intento_
           <span class="tooltiptext">
             <span class="titulo">Docentes que lo pidieron:</span>
             <ul>{% for preferencia in turno.preferencias %}
-              <li>{{ preferencia.preferencia.cargo }}: {{ preferencia.preferencia.docente }} ({{preferencia.peso_normalizado|floatformat:4}})</li>
+              <li>{{ preferencia.preferencia.docente.cargos|join:"+" }}:
+                  {{ preferencia.preferencia.docente }} ({{preferencia.peso_normalizado|floatformat:4}})</li>
               {% endfor %}
             </ul>
           </span>
