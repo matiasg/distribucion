@@ -14,7 +14,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required, login_required
 
 
-from .models import Preferencia, Asignacion, Comentario, Intento, IntentoRegistrado
+from .models import Preferencia, Asignacion, Intento, IntentoRegistrado
 from .misc import Distribucion
 from materias.models import (Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria, TipoTurno,
                              choice_enum, AnnoCuatrimestre, TipoDocentes,)

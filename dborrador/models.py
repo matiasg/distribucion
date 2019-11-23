@@ -77,9 +77,3 @@ class IntentoRegistrado(models.Model):
             valor = intentos.aggregate(models.Max('intento'))['intento__max']
 
         return Intento.de_valor(valor)
-
-
-class Comentario(models.Model):
-    texto = models.TextField()
-    intento = models.IntegerField()
-    turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
