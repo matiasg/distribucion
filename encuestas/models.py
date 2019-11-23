@@ -36,6 +36,9 @@ class OtrosDatos(models.Model):
     telefono = models.CharField(validators=[telefono_validator], max_length=17, blank=True)
     cargas_declaradas = models.PositiveIntegerField(validators=[MaxValueValidator(6)], default=0)
 
+    class Meta:
+        ordering = ['fecha_encuesta']
+
 
 class CargasPedidas(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)

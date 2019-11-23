@@ -209,7 +209,7 @@ class TestVerDistribucion(TestCase):
         content = response.content.decode()
         self.assertTrue(re.search(('<div class="tooltip">Teórico-Práctica 1'
                                    '(Docentes que lo pidieron:|<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*'
-                                   'Tit: jose'),
+                                   'TitPar:\s*jose'),
                                   content, flags=re.DOTALL),
                         'No figuran los docentes que prefieren un turno sin docentes')
 

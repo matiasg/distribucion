@@ -14,7 +14,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required, login_required
 
 
-from .models import Preferencia, Asignacion, Comentario, Intento, IntentoRegistrado
+from .models import Preferencia, Asignacion, Intento, IntentoRegistrado
 from .misc import Distribucion
 from materias.models import (Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria, TipoTurno,
                              choice_enum, AnnoCuatrimestre, TipoDocentes,)
@@ -221,6 +221,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
                                                 'preferencia__docente__na_apellido')
     preferencias_por_turno = {turno: preferencias.filter(preferencia__turno=turno).all()
                               for turno in turnos_ac.all()}
+    context['todas_las_preferencias'] = preferencias
 
     materias = []
     for obligatoriedad, obligatoriedad_largo in obligatoriedades.items():
