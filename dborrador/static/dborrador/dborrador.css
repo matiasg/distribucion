@@ -88,11 +88,16 @@ td.datosdoc .cargas_fijas {
 td.datosdoc .cargas_en_distribucion #automatica {
   background: #f89;
   margin-left: 0.5em; 
+  text-align: left;
 }
 
 td.datosdoc .cargas_en_distribucion #manual {
   background: #bf9;
   margin-left: 0.5em; 
+}
+
+td.datosdoc .cargas_en_distribucion.a_la_izquierda {
+  text-align: left;
 }
 
 table .encabezado {
