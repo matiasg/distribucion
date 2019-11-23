@@ -432,3 +432,22 @@ class TestPaginas(TestCase):
                                            args=(self.n.id, self.anno, self.cuatrimestre.name)))
         self.assertContains(response, self.n.nombre)
         self.assertContains(response, str(self.turno), count=2)
+
+    def test_agregar_habilitacion(self):
+        self.client.login(username='autorizado', password='1234')
+        now = datetime.datetime(2101, 2, 3, 4, 5, 0, tzinfo=datetime.timezone.utc)
+        cuatrimestres = f'{Cuatrimestres.P.name}'
+        tipo_docente = f'{TipoDocentes.P.name}'
+        post = {'anno': self.anno, 'cuatrimestres': cuatrimestres,
+                'tipo_docente': tipo_docente,
+                'desde': f'{now:%d/%m/%Y %H:%M}',
+                'hasta': f'{now:%d/%m/%Y %H:%M}'
+                }
+        response = self.client.post(reverse('encuestas:agregar_habilitacion'), post, follow=True)
+        self.assertEqual(EncuestasHabilitadas.objects.count(), 1)
+        encuesta = EncuestasHabilitadas.objects.first()
+        self.assertEqual(encuesta.anno, self.anno)
+        self.assertEqual(encuesta.cuatrimestres, cuatrimestres)
+        self.assertEqual(encuesta.tipo_docente, tipo_docente)
+        self.assertAlmostEqual(encuesta.desde, now, delta=datetime.timedelta(days=1))
+        self.assertAlmostEqual(encuesta.hasta, now, delta=datetime.timedelta(days=1))
