@@ -72,11 +72,13 @@
         <div id="seleccion">
             <select name="opcion{{ cuatrimestre.name }}{{ i }}">
                 {% for turno in infocuat.turnos %}
+                {% if not lista_corta or turno.dificil_de_cubrir %}
                 <option value="{{ turno.id }}"
-                        {% if lista_corta and not turno.dificil_de_cubrir or turno.no_elegible %}disabled{% endif %}
+                        {% if turno.no_elegible %}disabled{% endif %}
                         {% if turno.id == elegido %}selected{% endif %}>
                 {{ turno.texto }}
                 </option>
+                {% endif %}
                 {% endfor %}
             </select>
             Peso: <input id=peso type="number" name="peso{{ cuatrimestre.name }}{{ i }}" min=0 max={{ maximo_peso }} value={{ peso }}>

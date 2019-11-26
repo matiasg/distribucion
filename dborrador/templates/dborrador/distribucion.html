@@ -4,7 +4,7 @@
 {% load dborrador_tags %}
 
 {% block subtitulo %}
-Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
+Distribución del cuat {{ cuatrimestre.value }}, {{ anno }}. Intento {{ intento_algoritmo }} : {{ intento_manual }}
 {% endblock subtitulo %}
 
 
@@ -26,9 +26,14 @@ Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
                                 <span class="titulo">Encuesta de {{ carga.docente }}:</span>
                                 <ul>
                                     {% for preferencia in preferencias %}
-                                    <li>{{ preferencia.preferencia.turno }} ({{preferencia.peso_normalizado|floatformat:4}})</li>
+                                    <li>{{ preferencia.preferencia.turno.str_corto }}
+                                        ({{preferencia.peso_normalizado|floatformat:4}})
+                                    </li>
                                     {% endfor %}
                                 </ul>
+                                <hr>
+                                <span class="titulo">Comentarios:</span>
+                                {{ carga.docente.otrosdatos_set.last.comentario }}
                             </span>
                         </div>
                     </li>
@@ -78,7 +83,8 @@ Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
           <span class="tooltiptext">
             <span class="titulo">Docentes que lo pidieron:</span>
             <ul>{% for preferencia in turno.preferencias %}
-              <li>{{ preferencia.preferencia.cargo }}: {{ preferencia.preferencia.docente }} ({{preferencia.peso_normalizado|floatformat:4}})</li>
+              <li>{{ preferencia.preferencia.tipo_docente|tipo_docente_largo }}:
+                  {{ preferencia.preferencia.docente }} ({{preferencia.peso_normalizado|floatformat:4}})</li>
               {% endfor %}
             </ul>
           </span>
@@ -97,7 +103,7 @@ Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
             {% endfor %}
           </ul>
         </div>
-        <div class="cargas_en_distribucion">
+        <div class="cargas_en_distribucion a_la_izquierda">
           <ul>
             {% for tipo, asignaciones_turno in turno.asignaciones %}
             {% if asignaciones_turno %}
@@ -105,7 +111,24 @@ Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
               {{ tipo.value }}:
               {% for asignacion in asignaciones_turno %}
               <span id="{% if asignacion.es_manual %}manual{% else %}automatica{% endif %}">
-              <a href="{{ cambiar_docente_url }}{{ asignacion.carga.id }}">{{ asignacion.carga.docente }}</a>
+                  <div class="tooltip">
+                      <a href="{{ cambiar_docente_url }}{{ asignacion.carga.id }}">
+                          {{ asignacion.carga.docente }}
+                          <span class="tooltiptext">
+                              <span class="titulo">Encuesta de {{ asignacion.carga.docente }}:</span>
+                              <ul>
+                                  {% for preferencia in asignacion.carga.docente|sus_preferencias_en:todas_las_preferencias %}
+                                  <li>{{ preferencia.preferencia.turno.str_corto }}
+                                      ({{preferencia.peso_normalizado|floatformat:4}})
+                                  </li>
+                                  {% endfor %}
+                              </ul>
+                              <hr>
+                              <span class="titulo">Comentarios:</span>
+                              {{ asignacion.carga.docente.otrosdatos_set.last.comentario }}
+                          </span>
+                      </a>
+                  </div>
               </span>
               {% endfor %}
             </li>
@@ -120,7 +143,6 @@ Distribución intento {{ intento_algoritmo }} : {{ intento_manual }}
         </mark>
         {% endfor %}
       </td>
-      <td class="comentarios"><textarea name="comentarios_{{ turno.id }}">{{ turno.datos.comentarios }}</textarea></td>
     </tr>
 
     {% endfor %}

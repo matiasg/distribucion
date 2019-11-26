@@ -3,6 +3,7 @@ locale.setlocale(locale.LC_COLLATE, 'es_AR.UTF-8')
 
 import os
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
@@ -14,21 +15,17 @@ SECRET_KEY = '@fb7dxhx7p^+(9b$em=38s$=$$-$9frcrj3wxi2%el&l#_d)j2'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 SESSION_COOKIE_SECURE = False
-DATA_UPLOAD_MAX_NUMBER_FIELDS = 12000
-
 SESSION_ENGINE = 'django.contrib.sessions.backends.file'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SECURE_SSL_REDIRECT = False
 CSRF_COOKIE_SECURE = False
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 12000
 
-EMAIL_HOST = 'localhost'
-EMAIL_PORT = 1025
-
 LOGIN_URL = '/admin/login'
 ALLOWED_HOSTS = ['localhost']
 
 
+# Application definition
 AUTH_USER_MODEL = 'usuarios.Usuario'
 
 INSTALLED_APPS = [
@@ -76,15 +73,23 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'distribucion.wsgi.application'
+
+
+# Database
+# https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'postgres',
         'USER': 'postgres',
-        'HOST': 'db',
+        'HOST': 'localhost',
         'PORT': 5432,
     }
 }
+
+# Password validation
+# https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -100,11 +105,24 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
+# Internationalization
+# https://docs.djangoproject.com/en/2.1/topics/i18n/
+
 LANGUAGE_CODE = 'es-ar'
+
 TIME_ZONE = 'America/Argentina/Buenos_Aires'
+
 USE_I18N = True
+
 USE_L10N = True
+
 USE_TZ = True
+
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/2.1/howto/static-files/
+
 STATIC_URL = '/static/'
 
 LOGGING = {

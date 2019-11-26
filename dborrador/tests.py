@@ -22,35 +22,40 @@ class TestPreparar(TestCase):
         permiso = Permission.objects.get(codename='add_asignacion')
         self.autorizado.user_permissions.add(permiso)
         self.client.login(username='autorizado', password='1234')
+        self.anno = 2100
 
     def _agrega_preferencias(self):
         self.docente = Docente.objects.create(na_nombre='juan', email='mail@nada.org',
                                               telefono='1234',
-                                              cargos=[CargoDedicacion.TitSim.name])
+                                              cargos=[CargoDedicacion.TitPar.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
-        self.turno1 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+        self.turno1 = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
                                            numero=1, tipo=TipoTurno.A.name,
                                            necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        self.turno2 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+        self.turno2 = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
                                            numero=2, tipo=TipoTurno.A.name,
                                            necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
         now = timezone.now()
-        self.pref1 = PreferenciasDocente.objects.create(docente=self.docente, turno=self.turno1, peso=1, fecha_encuesta=now)
-        self.pref2 = PreferenciasDocente.objects.create(docente=self.docente, turno=self.turno2, peso=3, fecha_encuesta=now)
+        self.pref1 = PreferenciasDocente.objects.create(docente=self.docente, turno=self.turno1, peso=1,
+                                                        tipo_docente=TipoDocentes.P.name,
+                                                        fecha_encuesta=now)
+        self.pref2 = PreferenciasDocente.objects.create(docente=self.docente, turno=self.turno2, peso=3,
+                                                        tipo_docente=TipoDocentes.P.name,
+                                                        fecha_encuesta=now)
         OtrosDatos.objects.create(docente=self.docente, fecha_encuesta=now, comentario='',
-                                  email='', telefono='', anno=2100, cuatrimestre=Cuatrimestres.P.name)
+                                  email='', telefono='', anno=self.anno, cuatrimestre=Cuatrimestres.P.name)
 
     def test_no_falla_si_no_hay_preferencias(self):
-        response = self.client.get('/dborrador/preparar/2100/P', follow=True)
+        response = self.client.get(f'/dborrador/preparar/{self.anno}/P', follow=True)
         self.assertEqual(response.status_code, 200)
 
-        response = self.client.post('/dborrador/preparar/2100/P', follow=True)
+        response = self.client.post(f'/dborrador/preparar/{self.anno}/P', follow=True)
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
 
     def test_copia_preferencias_redirige_a_distribucion(self):
         self._agrega_preferencias()
-        response = self.client.post('/dborrador/preparar/2100/P', follow=True)
+        response = self.client.post(f'/dborrador/preparar/{self.anno}/P', follow=True)
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Docentes no distribuidos')
@@ -60,7 +65,7 @@ class TestPreparar(TestCase):
         turno_otro_anno = Turno.objects.create(materia=self.materia, anno=2345, cuatrimestre=Cuatrimestres.P.name,
                                                numero=1, tipo=TipoTurno.A.name,
                                                necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        turno_otro_cuatri = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.S.name,
+        turno_otro_cuatri = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.S.name,
                                                  numero=1, tipo=TipoTurno.A.name,
                                                  necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
         now = timezone.now()
@@ -69,22 +74,34 @@ class TestPreparar(TestCase):
 
         pref_doc_otro_anno = PreferenciasDocente.objects.create(docente=self.docente,
                                                                 turno=turno_otro_anno, peso=3,
+                                                                tipo_docente=TipoDocentes.P.name,
                                                                 fecha_encuesta=now)
         pref_otro_anno = Preferencia.objects.create(preferencia=pref_doc_otro_anno,
                                                     peso_normalizado=1)
 
         pref_doc_otro_cuatri = PreferenciasDocente.objects.create(docente=self.docente,
                                                                   turno=turno_otro_cuatri, peso=3,
+                                                                  tipo_docente=TipoDocentes.P.name,
                                                                   fecha_encuesta=now)
         pref_otro_cuatri = Preferencia.objects.create(preferencia=pref_doc_otro_cuatri,
                                                       peso_normalizado=1)
 
-        response = self.client.get('/dborrador/preparar/2100/P', follow=True)
+        # primero lo pruebo para un docente sin cargas. No se deben copiar las preferencias
+        response = self.client.get(f'/dborrador/preparar/{self.anno}/P', follow=True)
         self.assertEqual(response.status_code, 200)
+        copiadas = Preferencia.objects.filter(preferencia__turno__anno=self.anno,
+                                              preferencia__turno__cuatrimestre=Cuatrimestres.P.name)
+        self.assertEqual(copiadas.count(), 0)
 
-        copiadas = Preferencia.objects.filter(preferencia__turno__anno=2100,
+        # ahora le agrego una carga. Se deben copiar
+        Carga.objects.create(docente=self.docente, cargo=CargoDedicacion.TitExc.name,
+                             anno=self.anno, cuatrimestre=Cuatrimestres.P.name)
+        response = self.client.get(f'/dborrador/preparar/{self.anno}/P', follow=True)
+        self.assertEqual(response.status_code, 200)
+        copiadas = Preferencia.objects.filter(preferencia__turno__anno=self.anno,
                                               preferencia__turno__cuatrimestre=Cuatrimestres.P.name)
         self.assertEqual(copiadas.count(), 2)
+
         self.assertTrue(pref not in copiadas)
 
         todas = Preferencia.objects.all()
@@ -95,14 +112,18 @@ class TestPreparar(TestCase):
 
     def test_copio_ultimas_preferencias(self):
         self._agrega_preferencias()
-        turno3 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+        turno3 = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
                                       numero=3, tipo=TipoTurno.A.name,
                                       necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
         now_mas_delta = timezone.now() + datetime.timedelta(seconds=15)
-        pref_doc = PreferenciasDocente.objects.create(docente=self.docente, turno=turno3, peso=1, fecha_encuesta=now_mas_delta)
+        pref_doc = PreferenciasDocente.objects.create(docente=self.docente, turno=turno3, peso=1,
+                                                      tipo_docente=TipoDocentes.P.name,
+                                                      fecha_encuesta=now_mas_delta)
+        Carga.objects.create(docente=self.docente, cargo=CargoDedicacion.TitExc.name,
+                             anno=self.anno, cuatrimestre=Cuatrimestres.P.name)
 
-        response = self.client.get('/dborrador/preparar/2100/P', follow=True)
-        copiadas = Preferencia.objects.filter(preferencia__turno__anno=2100,
+        response = self.client.get(f'/dborrador/preparar/{self.anno}/P', follow=True)
+        copiadas = Preferencia.objects.filter(preferencia__turno__anno=self.anno,
                                               preferencia__turno__cuatrimestre=Cuatrimestres.P.name)
         self.assertEqual(copiadas.count(), 1)
         self.assertEqual(copiadas.first().preferencia.turno, turno3)
@@ -129,9 +150,9 @@ class TestVerDistribucion(TestCase):
         self.cuatrimestre = Cuatrimestres.P
 
         self.docente1 = Docente.objects.create(na_nombre='juan', email='mail@nada.org',
-                                               telefono='1234', cargos=[CargoDedicacion.TitSim.name])
+                                               telefono='1234', cargos=[CargoDedicacion.TitPar.name])
         self.docente2 = Docente.objects.create(na_nombre='jose', email='mail@nade.org',
-                                               telefono='1235', cargos=[CargoDedicacion.TitSim.name])
+                                               telefono='1235', cargos=[CargoDedicacion.TitPar.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
         self.turno1 = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                            numero=1, tipo=TipoTurno.A.name,
@@ -139,9 +160,9 @@ class TestVerDistribucion(TestCase):
         self.turno2 = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                            numero=2, tipo=TipoTurno.A.name,
                                            necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        self.carga1 = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitSim.name,
+        self.carga1 = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitPar.name,
                                            anno=self.anno, cuatrimestre=self.cuatrimestre.name, turno=self.turno1)
-        self.carga2 = Carga.objects.create(docente=self.docente2, cargo=CargoDedicacion.TitSim.name,
+        self.carga2 = Carga.objects.create(docente=self.docente2, cargo=CargoDedicacion.TitPar.name,
                                            anno=self.anno, cuatrimestre=self.cuatrimestre.name)
         self.autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
         permiso = Permission.objects.get(codename='add_asignacion')
@@ -170,8 +191,12 @@ class TestVerDistribucion(TestCase):
                                   cargo_que_ocupa=TipoDocentes.P.name)
         IntentoRegistrado.objects.create(intento=Intento(1, 0).valor, anno=self.anno, cuatrimestre=self.cuatrimestre.name)
         now = timezone.now()
-        pd1 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1, fecha_encuesta=now)
-        pd2 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno2, peso=1, fecha_encuesta=now)
+        pd1 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1,
+                                                 tipo_docente=TipoDocentes.P.name,
+                                                 fecha_encuesta=now)
+        pd2 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno2, peso=1,
+                                                 tipo_docente=TipoDocentes.P.name,
+                                                 fecha_encuesta=now)
         Preferencia.objects.create(preferencia=pd1, peso_normalizado=0.5)
         Preferencia.objects.create(preferencia=pd2, peso_normalizado=0.5)
 
@@ -187,8 +212,9 @@ class TestVerDistribucion(TestCase):
 
     def test_figuran_interesados_en_turnos_sin_docentes(self):
         now = timezone.now()
-        pd = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1, fecha_encuesta=now,
-                                                cargo=Cargos.Tit.name)
+        pd = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1,
+                                                tipo_docente=TipoDocentes.P.name,
+                                                fecha_encuesta=now)
         Preferencia.objects.create(preferencia=pd, peso_normalizado=1)
         response = self.client.get(reverse('dborrador:distribucion', args=(self.anno, self.cuatrimestre.name, 1, 0)),
                                    follow=True)
@@ -196,14 +222,15 @@ class TestVerDistribucion(TestCase):
         content = response.content.decode()
         self.assertTrue(re.search(('<div class="tooltip">Teórico-Práctica 1'
                                    '(Docentes que lo pidieron:|<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*'
-                                   'Tit: jose'),
+                                   'Profesor:\s*jose'),
                                   content, flags=re.DOTALL),
                         'No figuran los docentes que prefieren un turno sin docentes')
 
     def test_espiar_distribucion(self):
         now = timezone.now()
-        pd = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1, fecha_encuesta=now,
-                                                cargo=Cargos.Tit.name)
+        pd = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1,
+                                                tipo_docente=TipoDocentes.P.name,
+                                                fecha_encuesta=now)
         Preferencia.objects.create(preferencia=pd, peso_normalizado=1)
         Asignacion.objects.create(intentos=(Intento(1, 0).valor, Intento(2, 0).valor),
                                   carga=self.carga1, turno=self.turno1,
@@ -223,9 +250,9 @@ class TestDistribuir(TestCase):
     def setUp(self):
         self.ac = AnnoCuatrimestre(2100, Cuatrimestres.P.name)
         self.docente1 = Docente.objects.create(na_nombre='d1', email='d1@nada.org',
-                                               telefono='1234', cargos=[CargoDedicacion.TitSim.name])
+                                               telefono='1234', cargos=[CargoDedicacion.TitPar.name])
         self.docente2 = Docente.objects.create(na_nombre='d2', email='d2@nade.org',
-                                               telefono='1235', cargos=[CargoDedicacion.TitSim.name])
+                                               telefono='1235', cargos=[CargoDedicacion.TitPar.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
         self.turno1 = Turno.objects.create(materia=self.materia, anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre,
                                            numero=1, tipo=TipoTurno.A.name,
@@ -233,9 +260,9 @@ class TestDistribuir(TestCase):
         self.turno2 = Turno.objects.create(materia=self.materia, anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre,
                                            numero=2, tipo=TipoTurno.A.name,
                                            necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        self.carga1 = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitSim.name,
+        self.carga1 = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitPar.name,
                                            anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre)
-        self.carga2 = Carga.objects.create(docente=self.docente2, cargo=CargoDedicacion.TitSim.name,
+        self.carga2 = Carga.objects.create(docente=self.docente2, cargo=CargoDedicacion.TitPar.name,
                                            anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre)
 
         self.autorizado = Usuario.objects.create_user(username='autorizado', password='1234')
@@ -245,8 +272,12 @@ class TestDistribuir(TestCase):
 
     def test_distribuye(self):
         now = timezone.now()
-        p1 = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1, fecha_encuesta=now)
-        p2 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=3, fecha_encuesta=now)
+        p1 = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1,
+                                                tipo_docente=TipoDocentes.P.name,
+                                                fecha_encuesta=now)
+        p2 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=3,
+                                                tipo_docente=TipoDocentes.P.name,
+                                                fecha_encuesta=now)
         Preferencia.objects.create(preferencia=p1, peso_normalizado=1)
         Preferencia.objects.create(preferencia=p2, peso_normalizado=1)
 
@@ -264,7 +295,7 @@ class TestDistribuir(TestCase):
         # el formulario apunta a la misma página y hay turnos en el select
         response = self.client.get(cambiar_url, follow=True)
         self.assertContains(response, cambiar_url)
-        link = f'<option value="{self.turno1.id}"\s*>\s*{self.turno1}\s*</option>'
+        link = f'<option value="{self.turno1.id}"\s*>\s*{self.turno1.str_corto()}[,\s]*</option>'
         self.assertTrue(re.search(link, response.content.decode()))
         # con post se agrega la asignación
         self.client.post(cambiar_url,
@@ -304,17 +335,71 @@ class TestDistribuir(TestCase):
         self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 3)).count(), 0)
         self.assertEqual(Asignacion.validas_en(self.ac.anno, self.ac.cuatrimestre, Intento(0, 1)).count(), 1)
 
+    def test_distribuir_no_borra_otros_cuatrimestres(self):
+        otro_cuat = Cuatrimestres.S
+        turno_otro_cuat = Turno.objects.create(materia=self.materia, anno=self.ac.anno, cuatrimestre=otro_cuat.name,
+                                               numero=1, tipo=TipoTurno.A.name,
+                                               necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        carga_otro_cuat = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitPar.name,
+                                               anno=self.ac.anno, cuatrimestre=otro_cuat.name)
+        now = timezone.now()
+        pref_ahora = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1,
+                                                        tipo_docente=TipoDocentes.P.name,
+                                                        fecha_encuesta=now)
+        Preferencia.objects.create(preferencia=pref_ahora, peso_normalizado=1)
+        pref_otro_cuat = PreferenciasDocente.objects.create(docente=self.docente1, turno=turno_otro_cuat, peso=1,
+                                                            tipo_docente=TipoDocentes.P.name,
+                                                            fecha_encuesta=now)
+        Preferencia.objects.create(preferencia=pref_otro_cuat, peso_normalizado=1)
+
+        hacer_distribucion(self.ac, TipoDocentes.P, 1)
+        self.assertEqual(Asignacion.objects.count(), 1)
+
+        hacer_distribucion(AnnoCuatrimestre(2100, otro_cuat.name), TipoDocentes.P, 0)
+        self.assertEqual(Asignacion.objects.count(), 2)
+        turnos_asignados = {a.turno for a in Asignacion.objects.all()}
+        self.assertEqual(turnos_asignados, {self.turno2, turno_otro_cuat})
+
+    def test_cambiar_manualmente_no_borra_otros_cuatrimestres(self):
+        otro_cuat = Cuatrimestres.S
+        turno_otro_cuat = Turno.objects.create(materia=self.materia, anno=self.ac.anno, cuatrimestre=otro_cuat.name,
+                                               numero=1, tipo=TipoTurno.A.name,
+                                               necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        carga_otro_cuat = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.TitPar.name,
+                                               anno=self.ac.anno, cuatrimestre=otro_cuat.name)
+        now = timezone.now()
+        pref_ahora = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1,
+                                                        tipo_docente=TipoDocentes.P.name,
+                                                        fecha_encuesta=now)
+        Preferencia.objects.create(preferencia=pref_ahora, peso_normalizado=1)
+        pref_otro_cuat = PreferenciasDocente.objects.create(docente=self.docente1, turno=turno_otro_cuat, peso=1,
+                                                            tipo_docente=TipoDocentes.P.name,
+                                                            fecha_encuesta=now)
+        Preferencia.objects.create(preferencia=pref_otro_cuat, peso_normalizado=1)
+
+        hacer_distribucion(self.ac, TipoDocentes.P, 1)
+        self.assertEqual(Asignacion.objects.count(), 1)
+
+        response = self.client.post(reverse('dborrador:cambiar_docente',
+                                            args=(self.ac.anno, otro_cuat.name, 0, 0, carga_otro_cuat.id)),
+                                    {'cambiar': True, 'cambio_a': turno_otro_cuat.id,
+                                     'cargo_que_ocupa': TipoDocentes.P.name},
+                                    follow=True)
+        self.assertEqual(Asignacion.objects.count(), 2)
+        turnos_asignados = {a.turno for a in Asignacion.objects.all()}
+        self.assertEqual(turnos_asignados, {self.turno2, turno_otro_cuat})
+
 
 class TestModel(TestCase):
 
     def setUp(self):
         self.docente = Docente.objects.create(na_nombre='d1', email='d1@nada.org',
-                                              telefono='1234', cargos=[CargoDedicacion.TitSim.name])
+                                              telefono='1234', cargos=[CargoDedicacion.TitPar.name])
         self.materia = Materia.objects.create(nombre='epistemologia', obligatoriedad=TipoMateria.B.name)
         self.turno = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
                                           numero=1, tipo=TipoTurno.A.name,
                                           necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        self.carga = Carga.objects.create(docente=self.docente, cargo=CargoDedicacion.TitSim.name,
+        self.carga = Carga.objects.create(docente=self.docente, cargo=CargoDedicacion.TitPar.name,
                                           anno=2100, cuatrimestre=Cuatrimestres.P.name)
 
     def test_intentos(self):
@@ -345,7 +430,7 @@ class TestModel(TestCase):
         otro_turno = Turno.objects.create(materia=self.materia, anno=2102, cuatrimestre=Cuatrimestres.S.name,
                                           numero=1, tipo=TipoTurno.T.name,
                                           necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
-        otra_carga = Carga.objects.create(docente=self.docente, cargo=CargoDedicacion.TitSim.name,
+        otra_carga = Carga.objects.create(docente=self.docente, cargo=CargoDedicacion.TitPar.name,
                                           anno=2102, cuatrimestre=Cuatrimestres.S.name)
         a2 = Asignacion.objects.create(intentos=(comienzo.valor, final.valor),
                                        carga=otra_carga, turno=otro_turno)

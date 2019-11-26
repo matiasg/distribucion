@@ -17,7 +17,7 @@ class TestMapeos(TestCase):
                                    email='nemo@nautilus.org',
                                    cargos=[CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name])
         self.m = Docente.objects.create(na_nombre='mario', telefono='11 1111', email='mario@nautilus.org',
-                                   cargos=[CargoDedicacion.AsoSim.name])
+                                   cargos=[CargoDedicacion.AsoPar.name])
         self.materia = Materia.objects.create(nombre='navegacion', obligatoriedad=TipoMateria.B.name)
         self.turno1 = Turno.objects.create(materia=self.materia, anno=anno, cuatrimestre=cuatrimestre,
                                            numero=1, tipo=TipoTurno.T.name,
@@ -32,7 +32,7 @@ class TestMapeos(TestCase):
                                            anno=anno, cuatrimestre=cuatrimestre)
         self.carga2 = Carga.objects.create(docente=self.n, cargo=CargoDedicacion.Ay1Smx.name,
                                            anno=anno, cuatrimestre=cuatrimestre)
-        self.carga3 = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.AsoSim.name,
+        self.carga3 = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.AsoPar.name,
                                            anno=anno, cuatrimestre=cuatrimestre)
         self.asignacion1 = Asignacion.objects.create(intentos=(1, 3), carga=self.carga1, turno=self.turno1)
         self.asignacion2 = Asignacion.objects.create(intentos=(1, 3), carga=self.carga2, turno=self.turno3)
@@ -41,8 +41,22 @@ class TestMapeos(TestCase):
     def test_cargos_de_tipos(self):
         cardeds = Mapeos.cargos_de_tipos(TipoDocentes.P)
         self.assertEqual(len(cardeds), 8 * 3)
-        some_expected = { 'TitSim', 'AsoSmx', 'AdjExc', 'VisSim', 'HonExc' }
+        some_expected = { 'TitPar', 'AsoSmx', 'AdjExc', 'VisPar', 'HonExc' }
         self.assertTrue(set(cardeds).issuperset(some_expected))
+
+    def test_cargas_de_tipos(self):
+        self.assertEqual(set(Mapeos.cargas_de_tipo(Carga.objects.all(), TipoDocentes.P)),
+                         {self.carga1, self.carga3})
+        self.assertEqual(set(Mapeos.cargas_de_tipo(Carga.objects.all(), TipoDocentes.J)),
+                         set())
+        self.assertEqual(set(Mapeos.cargas_de_tipo(Carga.objects.all(), TipoDocentes.A1)),
+                         {self.carga2})
+        self.assertEqual(set(Mapeos.cargas_de_tipo(Carga.objects.all(), TipoDocentes.A2)),
+                         set())
+
+    def test_cargas(self):
+        self.assertEqual(set(Mapeos.cargas(TipoDocentes.P, self.ac)), {self.carga1, self.carga3})
+        self.assertEqual(set(Mapeos.cargas(TipoDocentes.P, AnnoCuatrimestre(42, Cuatrimestres.P.name))), set())
 
     def test_docentes_de_tipo(self):
         docs = Mapeos.docentes_de_tipo(TipoDocentes.P, 2100)
@@ -100,20 +114,20 @@ class TestMapeos(TestCase):
         self.assertEqual(turno_cargas, {self.turno1: [self.carga1]})
 
     def test_orden_tipodocente(self):
-        self.assertGreaterEqual(TipoDocentes.P, TipoDocentes.P)
-        self.assertGreaterEqual(TipoDocentes.P, TipoDocentes.J)
-        self.assertGreaterEqual(TipoDocentes.P, TipoDocentes.A1)
-        self.assertGreaterEqual(TipoDocentes.P, TipoDocentes.A2)
-        self.assertGreaterEqual(TipoDocentes.J, TipoDocentes.A2)
-        self.assertGreaterEqual(TipoDocentes.A1, TipoDocentes.A2)
-        self.assertGreaterEqual(TipoDocentes.A2, TipoDocentes.A2)
+        self.assertLessEqual(TipoDocentes.P, TipoDocentes.P)
+        self.assertLessEqual(TipoDocentes.P, TipoDocentes.J)
+        self.assertLessEqual(TipoDocentes.P, TipoDocentes.A1)
+        self.assertLessEqual(TipoDocentes.P, TipoDocentes.A2)
+        self.assertLessEqual(TipoDocentes.J, TipoDocentes.A2)
+        self.assertLessEqual(TipoDocentes.A1, TipoDocentes.A2)
+        self.assertLessEqual(TipoDocentes.A2, TipoDocentes.A2)
 
     def test_filtra_tipo_ge(self):
         cargas = [self.carga1, self.carga2, self.carga3]
-        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_ge(TipoDocentes.P, cargas), [self.carga1, self.carga3])
-        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_ge(TipoDocentes.J, cargas), [self.carga1, self.carga3])
-        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_ge(TipoDocentes.A1, cargas), [self.carga1, self.carga2, self.carga3])
-        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_ge(TipoDocentes.A2, cargas), [self.carga1, self.carga2, self.carga3])
+        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_le(TipoDocentes.P, cargas), [self.carga1, self.carga3])
+        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_le(TipoDocentes.J, cargas), [self.carga1, self.carga3])
+        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_le(TipoDocentes.A1, cargas), [self.carga1, self.carga2, self.carga3])
+        self.assertEqual(Mapeos.filtrar_cargas_de_tipo_le(TipoDocentes.A2, cargas), [self.carga1, self.carga2, self.carga3])
 
     def test_docentes_con_cargos_de_tipo(self):
         self.assertEqual(set(Mapeos.docentes_con_cargo_de_tipo(TipoDocentes.P)), {self.n, self.m})

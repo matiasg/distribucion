@@ -23,6 +23,7 @@ ul.sin_puntos li {
 
 div#selector_intento_manual.ui-slider {
   text-align: right;
+  width: 80%;
 }
 
 .comentarios
@@ -57,7 +58,7 @@ div#selector_intento_manual.ui-slider {
 
 .tooltip .tooltiptext {
   visibility: hidden;
-  width: max-content;
+  width: 32em;
   background-color: #444;
   color: #fff;
   text-align: left;
@@ -65,7 +66,7 @@ div#selector_intento_manual.ui-slider {
   position: absolute;
   z-index: 1;
   top: 100%;
-  left: 120px;
+  left: 20px;
   padding: 6px;
   opacity: 0;
   transition: opacity 0.3s;
@@ -87,11 +88,16 @@ td.datosdoc .cargas_fijas {
 td.datosdoc .cargas_en_distribucion #automatica {
   background: #f89;
   margin-left: 0.5em; 
+  text-align: left;
 }
 
 td.datosdoc .cargas_en_distribucion #manual {
   background: #bf9;
   margin-left: 0.5em; 
+}
+
+td.datosdoc .cargas_en_distribucion.a_la_izquierda {
+  text-align: left;
 }
 
 table .encabezado {

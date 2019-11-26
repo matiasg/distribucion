@@ -25,15 +25,18 @@ Cambiar a {{ carga.docente }} de turno
 
             <optgroup label="Pedidos en la encuesta">
                 {% for turno, peso in turnos_preferidos.items %}
-                <option value="{{ turno.id }}" {% if turno.id == asignado.id %}selected{% endif %}>{{ turno }}
-                {% if peso <= 1 %}({{ peso|floatformat:4 }}){% endif %}
+                <option value="{{ turno.id }}" {% if turno.id == asignado.id %}selected{% endif %}>
+                {% if peso <= 1 %}({{ peso|floatformat:4 }}){% endif %}: 
+                {{ turno.str_corto }}, {{ turno.horarios_info.diayhora }}
                 </option>
                 {% endfor %}
             </optgroup>
 
             <optgroup label="No pedidos">
                 {% for turno in turnos_no_preferidos %}
-                <option value="{{ turno.id }}" {% if turno.id == asignado.id %}selected{% endif %}>{{ turno }}</option>
+                <option value="{{ turno.id }}" {% if turno.id == asignado.id %}selected{% endif %}>
+                {{ turno.str_corto }}, {{ turno.horarios_info.diayhora }}
+                </option>
                 {% endfor %}
             </optgroup>
         </select>

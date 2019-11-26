@@ -1,0 +1,12 @@
+[Unit]
+Description=Software de distribución de docentes
+DefaultDependencies=no
+Conflicts=shutdown.target
+After=docker.service
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+ExecStartPre=for t in cert chain fullchain privkey ; do cp -L /etc/letsencrypt/live/web24.dm.uba.ar/${t}.pem /home/matiasg/distribucion/nginx_conf_de_repo/ssl ; done
+ExecStart=/usr/local/bin/docker-compose -f /home/matiasg/distribucion/docker-compose.yaml up nginx

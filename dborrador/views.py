@@ -14,11 +14,12 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required, login_required
 
 
-from .models import Preferencia, Asignacion, Comentario, Intento, IntentoRegistrado
+from .models import Preferencia, Asignacion, Intento, IntentoRegistrado
 from .misc import Distribucion
 from materias.models import (Turno, Docente, Carga, Materia, Cuatrimestres, TipoMateria, TipoTurno,
                              choice_enum, AnnoCuatrimestre, TipoDocentes,)
 from materias.misc import Mapeos, NoTurno
+from materias.views import anno_y_cuatrimestre_de_request
 from encuestas.models import PreferenciasDocente, OtrosDatos
 
 from allocation import allocating
@@ -34,12 +35,22 @@ def copiar_anno_y_cuatrimestre(anno, cuatrimestre):
                                              preferencia__turno__cuatrimestre=cuatrimestre).delete()
 
     docentes_con_encuesta = {od.docente for od in OtrosDatos.objects.all()}
-    for docente in docentes_con_encuesta:
+    docentes_con_cargas = {c.docente for c in Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre)}
+    for docente in docentes_con_encuesta & docentes_con_cargas:
         prefs = PreferenciasDocente.objects.filter(turno__anno=anno,
                                                    turno__cuatrimestre=cuatrimestre,
                                                    docente=docente)
         fecha_ultima_encuesta = prefs.aggregate(Max('fecha_encuesta'))['fecha_encuesta__max']
         prefs_ultimas = prefs.filter(fecha_encuesta=fecha_ultima_encuesta)
+        # chequeo que no haya repetidos
+        # En la encuesta ya se chequea pero lo repito por si cambio algo
+        # XXX: no quiero tirar una excepción acá pero no copiar no es la solución.
+        #      Quizás haya que agregar una página de chequeos antes de distribuir?
+        cantidad_turnos = len({pref.turno for pref in prefs_ultimas})
+        if cantidad_turnos < prefs_ultimas.count():
+            logger.error('El docente %s tiene preferencias con turnos repetidos: %s. No copio sus preferencias.',
+                         docente, prefs_ultimas)
+            continue
 
         peso_total = sum(pref.peso for pref in prefs_ultimas)
         logger.debug('considerando %d prefs para %s. Peso total: %s',
@@ -73,8 +84,9 @@ def preparar(request, anno, cuatrimestre):
     logger.info('copiando preferencias para %s, cuatrimestre %s', anno, Cuatrimestres[cuatrimestre].value)
     copiadas, borradas = copiar_anno_y_cuatrimestre(anno, cuatrimestre)
     logger.info('copiadas: %d, borradas: %d', copiadas, borradas)
-    intento = Intento.de_algoritmo(0)
-    distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, intento.algoritmo, intento.manual))
+    max_intento = IntentoRegistrado.maximo_intento(anno, cuatrimestre)
+    distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre,
+                                                               max_intento.algoritmo, max_intento.manual))
     return HttpResponseRedirect(distribucion_url)
 
 
@@ -203,11 +215,14 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     asignaciones_fijas = Distribucion.ya_distribuidas_por_cargo(anno_cuat)
     necesidades_por_turno = Mapeos.necesidades_por_turno_y_tipo(anno_cuat)
 
-    preferencias = Preferencia.objects.order_by('preferencia__cargo',
+    preferencias = Preferencia.objects.filter(preferencia__turno__anno=anno,
+                                              preferencia__turno__cuatrimestre=cuatrimestre) \
+                                      .order_by('preferencia__tipo_docente',
                                                 'peso_normalizado',
                                                 'preferencia__docente__na_apellido')
     preferencias_por_turno = {turno: preferencias.filter(preferencia__turno=turno).all()
                               for turno in turnos_ac.all()}
+    context['todas_las_preferencias'] = preferencias
 
     materias = []
     for obligatoriedad, obligatoriedad_largo in obligatoriedades.items():
@@ -261,9 +276,10 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
 @login_required
 @permission_required('dborrador.add_asignacion')
 def empezar_a_distribuir(request):
-    anno = int(request.POST['anno'])
-    cuatrimestre = request.POST['cuatrimestre']
-    distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0))
+    anno, cuatrimestre = anno_y_cuatrimestre_de_request(request)
+    max_intento = IntentoRegistrado.maximo_intento(anno, cuatrimestre)
+    distribucion_url = reverse('dborrador:distribucion',
+                               args=(anno, cuatrimestre, max_intento.algoritmo, max_intento.manual))
     return HttpResponseRedirect(distribucion_url)
 
 
@@ -361,7 +377,8 @@ def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_man
 
         IntentoRegistrado.objects.filter(intento__gt=intento.valor, anno=anno, cuatrimestre=cuatrimestre).delete()
 
-        para_borrar = Asignacion.objects.filter(intentos__startswith__gt=intento.valor)
+        para_borrar = Asignacion.objects.filter(intentos__startswith__gt=intento.valor,
+                                                carga__turno__anno=anno, carga__turno__cuatrimestre=cuatrimestre)
         logger.warning('Borro %d asignaciones', para_borrar.count())
         para_borrar.delete()
 
@@ -413,7 +430,9 @@ def _cambiar_docente(anno, cuatrimestre, intento, carga_id, nuevo_turno_id, carg
     with transaction.atomic():
         # borro instancias de IntentoRegistrado y Asignacion
         IntentoRegistrado.objects.filter(intento__gt=intento.valor, anno=anno, cuatrimestre=cuatrimestre).delete()
-        Asignacion.objects.filter(intentos__startswith__gt=intento.valor).delete()
+        borradas, _ = Asignacion.objects.filter(carga__anno=anno, carga__cuatrimestre=cuatrimestre,
+                                                intentos__startswith__gt=intento.valor).delete()
+        logger.info('Asignaciones borradas: %s', borradas)
         # cambio las asignaciones que empezaron antes y terminan después
         for asignacion in Asignacion.validas_en(anno, cuatrimestre, intento).all():
             if Intento.es_de_algoritmo(asignacion.intentos.lower):
@@ -456,7 +475,9 @@ def cambiar_docente(request, anno, cuatrimestre, intento_algoritmo, intento_manu
     else:
         carga = Carga.objects.get(pk=carga_id)
         asignaciones = Asignacion.validas_en(anno, cuatrimestre, intento).filter(carga=carga)
-        preferencias = Preferencia.objects.filter(preferencia__docente=carga.docente).order_by('peso_normalizado')
+        preferencias = Preferencia.objects.filter(preferencia__docente=carga.docente,
+                                                  preferencia__turno__anno=anno, preferencia__turno__cuatrimestre=cuatrimestre) \
+                                          .order_by('peso_normalizado')
 
         turnos_preferidos = {p.preferencia.turno: p.peso_normalizado for p in preferencias}
 

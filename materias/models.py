@@ -39,15 +39,18 @@ class Cargos(Enum):
 class Dedicaciones(Enum) :
     Exc = 'Exclusiva'
     Smx = 'Semiexclusiva'
-    Sim = 'Simple'
+    Par = 'Parcial'
 
 
 class CargoDedicacion(Enum):
-    _ignore_ = 'cargo dedicacion CargoDedicacion'
+    _ignore_ = 'cargo dedicacion excluir carded CargoDedicacion'
+    excluir = {f'{Cargos.Ay2.name}{Dedicaciones.Exc.name}', f'{Cargos.Ay2.name}{Dedicaciones.Smx.name}'}
     CargoDedicacion = vars()
     for cargo in Cargos:
         for dedicacion in Dedicaciones:
-            CargoDedicacion[f'{cargo.name}{dedicacion.name}'] = f'{cargo.value} {dedicacion.value}'
+            carded = f'{cargo.name}{dedicacion.name}'
+            if carded not in excluir:
+                CargoDedicacion[f'{cargo.name}{dedicacion.name}'] = f'{cargo.value} {dedicacion.value}'
 
     @classmethod
     def con_cargo(cls, cargo):
@@ -65,7 +68,7 @@ class TipoDocentes(Enum):
 
     def __ge__(self, otro):
         ordenados = [TipoDocentes.A2, TipoDocentes.A1, TipoDocentes.J, TipoDocentes.P]
-        return ordenados.index(self) >= ordenados.index(otro)
+        return ordenados.index(self) <= ordenados.index(otro)
 
 
 class TipoTurno(Enum):

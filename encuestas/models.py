@@ -7,10 +7,18 @@ from enum import Enum
 from materias.models import Turno, Docente, Cuatrimestres, Cargos, TipoDocentes, choice_enum, telefono_validator
 
 
+class GrupoCuatrimestral(Enum):
+    V = 'Verano'
+    P = '1'
+    S = '2'
+    VP = 'V. y 1'
+    VPS = 'todos'
+
+
 class PreferenciasDocente(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE)
-    cargo = models.CharField(max_length=3, choices=choice_enum(Cargos))
+    tipo_docente = models.CharField(max_length=2, choices=choice_enum(TipoDocentes))
     peso = models.FloatField(null=True)
     fecha_encuesta = models.DateTimeField()
     history = HistoricalRecords()
@@ -18,15 +26,19 @@ class PreferenciasDocente(models.Model):
     def __str__(self):
         return f'{self.docente} -- {self.peso} -> {self.turno}'
 
+
 class OtrosDatos(models.Model):
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
     fecha_encuesta = models.DateTimeField()
     anno = models.IntegerField()
-    cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
+    cuatrimestre = models.CharField(max_length=3, choices=choice_enum(GrupoCuatrimestral))  # TODO: deberia ser cuatrimestres
     comentario = models.TextField()
     email = models.EmailField()
     telefono = models.CharField(validators=[telefono_validator], max_length=17, blank=True)
     cargas_declaradas = models.PositiveIntegerField(validators=[MaxValueValidator(6)], default=0)
+
+    class Meta:
+        ordering = ['fecha_encuesta']
 
 
 class CargasPedidas(models.Model):
@@ -34,15 +46,8 @@ class CargasPedidas(models.Model):
     anno = models.IntegerField()
     cuatrimestre = models.CharField(max_length=1, choices=choice_enum(Cuatrimestres))
     cargas = models.PositiveIntegerField(validators=[MaxValueValidator(3)])
+    tipo_docente = models.CharField(max_length=2, choices=choice_enum(TipoDocentes))
     fecha_encuesta = models.DateTimeField()
-
-
-class GrupoCuatrimestral(Enum):
-    V = 'Verano'
-    P = '1'
-    S = '2'
-    VP = 'V. y 1'
-    VPS = 'todos'
 
 
 class EncuestasHabilitadas(models.Model):

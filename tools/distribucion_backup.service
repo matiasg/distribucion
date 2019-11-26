@@ -1,0 +1,11 @@
+[Unit]
+Description=Software de distribución de docentes, backup
+DefaultDependencies=no
+Conflicts=shutdown.target
+After=docker.service
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+ExecStart=/srv/backups_distribucion/distribucion_backup.sh

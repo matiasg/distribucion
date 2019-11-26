@@ -100,7 +100,7 @@ def _nombre_cuat_error(cuatrimestre):
     }
     return nombres[cuatrimestre]
 
-def checkear_y_salvar(datos, anno, cuatrimestres):
+def checkear_y_salvar(datos, anno, cuatrimestres, tipo_docente):
     fecha_encuesta = timezone.now()
     docente = Docente.objects.get(pk=datos['docente'])
 
@@ -125,7 +125,7 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
     telefono_validator(telefono)
 
     # OtrosDatos
-    otros_datos, _ = OtrosDatos.objects.get_or_create(docente=docente, anno=anno, cuatrimestre=cuatrimestres[0],
+    otros_datos, _ = OtrosDatos.objects.get_or_create(docente=docente, anno=anno, cuatrimestre=cuatrimestres,
                                                       defaults={'fecha_encuesta': fecha_encuesta, 'comentario': ''})
     otros_datos.fecha_encuesta = fecha_encuesta
     otros_datos.email = email
@@ -140,6 +140,7 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
         # CargasPedidas
         cargas = int(datos[f'cargas{cuatrimestre}'])
         cargas_pedidas = CargasPedidas.objects.create(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
+                                                      tipo_docente=tipo_docente,
                                                       fecha_encuesta=fecha_encuesta, cargas=cargas)
         cargas_pedidas.save()
 
@@ -153,6 +154,7 @@ def checkear_y_salvar(datos, anno, cuatrimestres):
                              docente, turno, peso, fecha_encuesta)
 
                 pref = PreferenciasDocente.objects.create(docente=docente, turno=turno,
+                                                          tipo_docente=tipo_docente,
                                                           peso=peso, fecha_encuesta=fecha_encuesta)
                 logger.info('Agrego preferencia de docente: %s, turno: %s, peso: %s, fecha: %s',
                             docente, turno, peso, fecha_encuesta)
@@ -170,9 +172,9 @@ OpcionesPorCuatrimestre = namedtuple('OpcionesPorCuatrimestre', ['opciones', 'tu
 def _generar_docentes(anno, tipo_docente):
     tipo = TipoDocentes[tipo_docente]
     docentes = [DocenteParaEncuesta(-1, '')]
-    docentes += [DocenteParaEncuesta(docente.id, docente.nombre)
+    docentes += [DocenteParaEncuesta(docente.id, docente.apellido_nombre)
                  for docente in sorted(Mapeos.docentes_de_tipo(tipo, anno),
-                                       key=lambda d: d.nombre)]
+                                       key=lambda d: d.apellido_nombre)]
     return docentes
 
 
@@ -264,7 +266,7 @@ def encuesta(request, anno, cuatrimestres, tipo_docente):
     except Docente.DoesNotExist:
         return _encuesta_con_mensaje_de_error(request, context, "No me dijiste quién sos")
     try:
-        opciones, otros_datos = checkear_y_salvar(request.POST, anno, cuatrimestres)
+        opciones, otros_datos = checkear_y_salvar(request.POST, anno, cuatrimestres, tipo_docente)
         mandar_mail(opciones, otros_datos, anno, cuatrimestres, tipo_docente)
         return render(request,
                       'encuestas/final.html',
@@ -278,12 +280,14 @@ def encuesta(request, anno, cuatrimestres, tipo_docente):
 
 @login_required
 @permission_required('dborrador.add_asignacion')
-def ver_encuestas_multiples(request, anno, cuatrimestre):
-    cuenta_encuestas = Count('cargaspedidas', filter=Q(cargaspedidas__anno=anno, cargaspedidas__cuatrimestre=cuatrimestre))
+def ver_resultados_de_encuestas(request, anno, cuatrimestre):
+    cuenta_encuestas = Count('cargaspedidas', filter=Q(cargaspedidas__anno=anno,
+                                                       cargaspedidas__cuatrimestre=cuatrimestre,
+                                                       cargaspedidas__cargas__gt=-1))
     docentes_con_pedidos = Docente.objects.annotate(pedidos=cuenta_encuestas) \
                                   .filter(pedidos__gt=0) \
                                   .order_by('-pedidos', 'na_apellido', 'na_nombre')
-    return render(request, 'encuestas/encuestas_multiples.html',
+    return render(request, 'encuestas/resultados_de_encuestas.html',
                   {'anno': anno, 'cuatrimestre': Cuatrimestres[cuatrimestre],
                    'docentes': docentes_con_pedidos,
                    })
@@ -293,10 +297,22 @@ def ver_encuestas_multiples(request, anno, cuatrimestre):
 @permission_required('dborrador.add_asignacion')
 def encuestas_de_un_docente(request, docente_id, anno, cuatrimestre):
     docente = Docente.objects.get(pk=docente_id)
-    preferencias = PreferenciasDocente.objects.filter(docente=docente, turno__anno=anno, turno__cuatrimestre=cuatrimestre) \
-                                      .order_by('-fecha_encuesta')
+
+    fechas = {cp.fecha_encuesta
+              for cp in CargasPedidas.objects.filter(docente=docente, anno=anno, cuatrimestre=cuatrimestre)}
+
+    preferencias = {fecha: (PreferenciasDocente.objects.filter(docente=docente,
+                                                               turno__anno=anno, turno__cuatrimestre=cuatrimestre,
+                                                               fecha_encuesta=fecha),
+                            CargasPedidas.objects.get(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
+                                                      fecha_encuesta=fecha).cargas
+                            )
+                    for fecha in sorted(fechas, reverse=True)}
+    otros_datos = OtrosDatos.objects.get(docente=docente, anno=anno, cuatrimestre__contains=cuatrimestre)
+
     return render(request, 'encuestas/encuestas_de_un_docente.html',
                   {'anno': anno, 'cuatrimestre': Cuatrimestres[cuatrimestre],
                    'docente': docente,
                    'preferencias': preferencias,
+                   'otros_datos': otros_datos,
                    })

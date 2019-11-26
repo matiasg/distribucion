@@ -39,6 +39,10 @@ $ make populate
 Luego, editar nginx_conf_de_repo/nginx.conf y cambiar 'mi_host...' por tu dominio.
 Y luego, si querés usarlo con HTTPS, entrar a nginx_conf_de_repo/ssl y leer el LEEME.
 
+Si querés usar systemd, instalar los archivos de tools/distribucion.service y tools/distribucion_backup.*
+en /lib/systemd/system.
+Conviene editarlos y cambiar los paths en los .service
+
 Y finalmente, para arrancar los servicios,
 $ make empezar
 EOE

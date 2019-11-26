@@ -10,26 +10,44 @@
 </head>
 
 <body>
-    <a id=actuar href="{% url 'encuestas:ver_encuestas_multiples' anno cuatrimestre.name %}">Volver a ver encuestas múltiples</a>
+    <a id=actuar href="{% url 'encuestas:ver_resultados_de_encuestas' anno cuatrimestre.name %}">Volver a ver resultados</a>
     <table>
         <thead>
             <tr>
                 <th>fecha</th>
+                <th>cargas pedidas</th>
                 <th>turno</th>
                 <th>peso</th>
             </tr>
         </thead>
-        {% regroup preferencias by fecha_encuesta as encuestas %}
-        {% for encuesta in encuestas %}
+
+        {% for fecha_encuesta, turnos_y_cargas in preferencias.items %}
         <tr>
-            <td rowspan={{ encuesta.list|length|add:"1" }}>{{ encuesta.grouper|date:"d/m/Y" }} {{ encuesta.grouper|time:"H:i:s" }}</td>
+            <td class="borde_alto" rowspan={{ turnos_y_cargas.0|length|add:"1" }}>
+                {{ fecha_encuesta|date:"d/m/Y" }} {{ fecha_encuesta|time:"H:i:s" }}
+            </td>
+            <td class="borde_alto" rowspan={{ turnos_y_cargas.0|length|add:"1" }}>
+                {{ turnos_y_cargas.1 }}
+            </td>
         </tr>
-        {% for preferencia in encuesta.list %}
+        {% for preferencia in turnos_y_cargas.0 %}
         <tr>
-            <td>{{ preferencia.turno }}</td>
-            <td>{{ preferencia.peso }}</td>
+            <td class="izquierda {% if forloop.first %}borde_alto{% endif %}">{{ preferencia.turno }}</td>
+            <td {% if forloop.first %}class="borde_alto"{% endif %}>{{ preferencia.peso }}</td>
         </tr>
         {% endfor %}
         {% endfor %}
     </table>
+
+    <hr>
+    <div id="subtitulo">Comentarios</div>
+    {{ otros_datos.comentario }}
+
+    <hr>
+    <div id="subtitulo">Teléfono</div>
+    {{ otros_datos.telefono }}
+
+    <hr>
+    <div id="subtitulo">email</div>
+    {{ otros_datos.email }}
 </body>

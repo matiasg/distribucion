@@ -22,6 +22,7 @@ build:
 	docker-compose up --no-start
 	@echo -e "\nsugerencia 1: correr \n\ndocker-compose run --rm web sh tools/create_db"
 	@echo -e "\nsugerencia 2: correr \n\ndocker-compose run --rm bash python tools/dump_to_db.py"
+	@echo -e "\nsugerencia 3: correr \n\ndocker-compose run -v ${PWD}:/tools --rm bash cp -R /codigo/distribucion/tools/ /tools"
 
 rebuild:
 	@echo "Voy a hacer un rebuild en la branch ${BRANCH}"

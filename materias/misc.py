@@ -55,6 +55,11 @@ class Mapeos:
         return Mapeos.cargos_a_tipo[Cargos[carga.cargo[:3]]]
 
     @staticmethod
+    def key_orden_por_tipo_docente(carga):
+        return (Mapeos.tipo_de_carga(carga), carga.docente.na_apellido, carga.docente.na_nombre)
+
+
+    @staticmethod
     def tipos_de_cargo(cargodedicacion):
         '''CargoDedicacion -> TipoDocentes'''
         el_mapa = {Cargos.Tit.name: TipoDocentes.P,
@@ -165,9 +170,9 @@ class Mapeos:
         return Mapeos.necesidades(turno, tipo_docente) - cubiertas
 
     @staticmethod
-    def filtrar_cargas_de_tipo_ge(tipo_docente, cargas):
+    def filtrar_cargas_de_tipo_le(tipo_docente, cargas):
         '''TipoDocentes -> [Carga] -> [Carga]'''
         return [carga
                 for carga in cargas
-                if Mapeos.tipos_de_cargo(carga.cargo) >= tipo_docente
+                if Mapeos.tipos_de_cargo(carga.cargo) <= tipo_docente
                 ]

@@ -5,7 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_time
 from django.contrib.auth.decorators import permission_required, login_required
-from django.db.models import Max, Min
+from django.db.models import Max, Min, Count
 
 from locale import strxfrm
 from collections import Counter, namedtuple, defaultdict
@@ -149,7 +149,7 @@ def administrar(request):
         elif 'administrar_encuestas' in request.POST:
             return HttpResponseRedirect(reverse('encuestas:administrar_habilitadas'))
         elif 'dborrador' in request.POST:
-            return HttpResponseRedirect(reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0)))
+            return HttpResponseRedirect(reverse('dborrador:empezar'))
 
     return pagina_de_administrar_con_ac(request, anno, cuatrimestre)
 
@@ -164,7 +164,7 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url, seccion=
                     objetos = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
                 elif  modelo == Horario:
                     objetos = Horario.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre)
-                logger.info('modifico %d objetos tipo %s', objetos.count(), modelo)
+                logger.info('modifico %d objetos tipo %s', objetos.count(), modelo.__class__.__name__)
 
                 for objeto in objetos:
                     for page_field, (field, _type) in modelo_key_to_field.items():
@@ -173,7 +173,16 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url, seccion=
                             # checkbox aparece solo si está marcado
                             v = page_field_objeto in request.POST
                         else:
-                            v = _type(request.POST[page_field_objeto])
+                            v_post = request.POST[page_field_objeto]
+                            try:
+                                v = _type(v_post)
+                            except ValueError:
+                                if _type is int and v_post == '':
+                                    v = 0
+                                else:
+                                    logger.exception('no pude convertir "%s" a tipo %s para el input %s',
+                                                     v_post, _type.__name__, page_field_objeto)
+                                    raise
                         setattr(objeto, field, v)
                         logger.debug('cambiando %s a obj. %s por %s', page_field, objeto, v)
                     objeto.save()
@@ -265,6 +274,8 @@ def modificar_materia(request, materia_id):
     return render(request, 'materias/modificar_materia.html', context)
 
 
+AsignadasPedidas = namedtuple('AsignadasPedidas', ['asignadas', 'pedidas'])
+
 @login_required
 @permission_required('dborrador.add_asignacion')
 def cargas_docentes_anuales(request, anno):
@@ -285,12 +296,14 @@ def cargas_docentes_anuales(request, anno):
                         a_generar = cantidad - actuales.count()
 
                         if a_generar < 0:
-                            logger.warning('voy a borrar %d cargas de %s (%s) para el cuatrimestre %s', -a_generar, docente, cargo, cuatrimestre)
+                            logger.warning('voy a borrar %d cargas de %s (%s) para el cuatrimestre %s',
+                                           -a_generar, docente, cargo, cuatrimestre)
                             for c in range(-a_generar):
-                                actuales.last().delete()
+                                actuales.annotate(asignaciones=Count('asignacion')).order_by('asignaciones').first().delete()
 
                         elif a_generar > 0:
-                            logger.warning('voy a generar %d cargas de %s (%s) para el cuatrimestre %s', a_generar, docente, cargo, cuatrimestre)
+                            logger.warning('voy a generar %d cargas de %s (%s) para el cuatrimestre %s',
+                                           a_generar, docente, cargo, cuatrimestre)
                             for c in range(a_generar):
                                 Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre, docente=docente, cargo=cargo)
 
@@ -311,16 +324,40 @@ def cargas_docentes_anuales(request, anno):
                              for docente in Docente.objects.filter(cargos__len__gt=0).all()
                              for cargo in docente.cargos}
         docentes_y_cargos |= {(carga.docente, carga.cargo) for carga in cargas_anno}
-        por_tipo_cargo = {tipo: {(docente, cargo) for (docente, cargo) in docentes_y_cargos if Mapeos.tipos_de_cargo(cargo) == tipo}
+        por_tipo_cargo = {tipo: {(docente, cargo)
+                                 for (docente, cargo) in docentes_y_cargos if Mapeos.tipos_de_cargo(cargo) == tipo}
                           for tipo in TipoDocentes}
 
-        contados = {cuatrimestre: Counter((carga.docente, carga.cargo) for carga in cargas_anno.filter(cuatrimestre=cuatrimestre.name))
+        contados = {cuatrimestre: Counter((carga.docente, carga.cargo)
+                                          for carga in cargas_anno.filter(cuatrimestre=cuatrimestre.name))
                     for cuatrimestre in Cuatrimestres}
 
-        cargas = {tipo: {doc_cargo: [contados[cuat][doc_cargo]
-                                     for cuat in (Cuatrimestres.V, Cuatrimestres.P, Cuatrimestres.S)]
-                         for doc_cargo in sorted(por_tipo_cargo[tipo],
-                                                 key=lambda dc: strxfrm(dc[0].apellido_nombre))}
+        docentes_cargos_ordenados = {tipo: sorted(por_tipo_cargo[tipo], key=lambda dc: strxfrm(dc[0].apellido_nombre))
+                                     for tipo in TipoDocentes}
+
+        def comentario_y_cargas_declaradas(doc_cargo):
+            otros_datos = OtrosDatos.objects.filter(anno=anno, docente=doc_cargo[0]).order_by('fecha_encuesta')
+            if otros_datos:
+                ultimos_datos = otros_datos.last()
+                asignadas_al_periodo = sum(contados[Cuatrimestres[cuat]][doc_cargo]
+                                           for cuat in ultimos_datos.cuatrimestre)
+                return [ultimos_datos.comentario, ultimos_datos.cargas_declaradas,
+                        asignadas_al_periodo, ultimos_datos.cuatrimestre]
+            else:
+                return ['', None, None, None]
+
+        def pedidas(docente, cuat, tipo):
+            return CargasPedidas.objects.filter(docente=docente, tipo_docente=tipo.name,
+                                                anno=anno, cuatrimestre=cuat.name) \
+                                        .order_by('fecha_encuesta')
+
+        def asignadas_pedidas_declaradas_comentario(doc_cargo, tipo):
+            asignadas_pedidas = [AsignadasPedidas(contados[cuat][doc_cargo], pedidas(doc_cargo[0], cuat, tipo))
+                                 for cuat in (Cuatrimestres.V, Cuatrimestres.P, Cuatrimestres.S)]
+            return asignadas_pedidas + comentario_y_cargas_declaradas(doc_cargo)
+
+        cargas = {tipo: {doc_cargo: asignadas_pedidas_declaradas_comentario(doc_cargo, tipo)
+                         for doc_cargo in docentes_cargos_ordenados[tipo]}
                   for tipo in TipoDocentes}
 
         context = {
@@ -344,11 +381,12 @@ def administrar_cargas_docentes(request, anno, cuatrimestre):
     docentes_sin_cargas = sorted(set(docentes) - set(docentes_con_cargas),
                                  key=lambda d: d.na_apellido)
     # docentes con diferencias con la encuesta
-    docentes_y_cargas_encuesta = {cp.docente: cp.cargas for cp in CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all()}
+    docentes_y_cargas_encuesta = {cp.docente: cp.cargas
+                                  for cp in CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all()}
     # calculo diferencias contra encuesta
     diferencias_encuesta = {d: (len(docentes_y_cargas_nuestras[d]),
                                 docentes_y_cargas_encuesta[d],
-                                OtrosDatos.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=d).first())
+                                OtrosDatos.objects.filter(anno=anno, cuatrimestre__contains=cuatrimestre, docente=d).first())
                             for d in sorted(set(docentes_y_cargas_nuestras) & set(docentes_y_cargas_encuesta),
                                             key=lambda d: strxfrm(d.apellido_nombre))
                             if len(docentes_y_cargas_nuestras[d]) != docentes_y_cargas_encuesta[d]
@@ -404,9 +442,11 @@ def administrar_cargas_de_un_docente(request, anno, cuatrimestre, docente_id):
 
     else:
         try:
-            cargas_pedidas = CargasPedidas.objects.get(anno=anno, cuatrimestre=cuatrimestre, docente=docente).cargas
+            cargas_pedidas = CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=docente) \
+                                                  .order_by('fecha_encuesta').last() \
+                                                  .cargas
             completo_la_encuesta = True
-        except CargasPedidas.DoesNotExist:
+        except (CargasPedidas.DoesNotExist, AttributeError):
             cargas_pedidas = 0
             completo_la_encuesta = False
         cargas = docente.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre)

@@ -1,3 +1,9 @@
+#
+# este código estuvo pensado para usarse solo una vez, para una distribución específica
+# que se había hecho con el sistema anterior.
+# Ya no montamos ../sitio_anterior en el docker-compose así que probablemente falle
+# si lo pretendés usar ahora.
+#
 import datetime
 import pytz
 import logging
@@ -62,7 +68,7 @@ class LectorDeCsv:
     _a_dedicacion = {
         '1': Dedicaciones.Exc,
         '2': Dedicaciones.Smx,
-        '3': Dedicaciones.Sim,
+        '3': Dedicaciones.Par,
     }
 
     @classmethod
