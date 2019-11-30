@@ -475,3 +475,13 @@ class TestPaginas(TestCase):
         self.assertEqual(encuesta.tipo_docente, tipo_docente)
         self.assertAlmostEqual(encuesta.desde, now, delta=datetime.timedelta(days=1))
         self.assertAlmostEqual(encuesta.hasta, now, delta=datetime.timedelta(days=1))
+
+    def test_borrar_habilitacion(self):
+        self.client.login(username='autorizado', password='1234')
+        fecha = datetime.datetime(2101, 2, 3, 4, 5, 0, tzinfo=datetime.timezone.utc)
+        habilitacion = EncuestasHabilitadas.objects.create(anno=2101, cuatrimestres=Cuatrimestres.P.name,
+                                                           tipo_docente=TipoDocentes.P.name,
+                                                           desde=fecha, hasta=fecha)
+        response = self.client.get(reverse('encuestas:borrar_habilitacion', args=(habilitacion.id,)), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(EncuestasHabilitadas.objects.count(), 0)
