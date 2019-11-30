@@ -232,8 +232,8 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
         for materia in tmaterias:
             mat_turnos = []
             for turno in sorted(turnos_ac.filter(materia=materia)):
-                turno.asignaciones = list(asignaciones_moviles[turno].items())
-                turno.cargas = list(asignaciones_fijas[turno].items())
+                turno.asignaciones = [(tipo, asignaciones_moviles[turno][tipo]) for tipo in TipoDocentes]
+                turno.cargas = [(tipo, asignaciones_fijas[turno][tipo]) for tipo in TipoDocentes]
                 turno.necesidades_insatisfechas = {tipo: necesidades_por_turno[turno][tipo] \
                                                          - len(asignaciones_moviles[turno][tipo]) \
                                                          - len(asignaciones_fijas[turno][tipo])
