@@ -177,6 +177,9 @@ class Turno(models.Model):
         aulas = join([h.aula_y_pabellon() for h in horarios])
         return TurnoInfo(tipoynumero, dias_y_horas, aulas)
 
+    def clave_para_ordenar(self):
+        return sorted((Dias[horario.dia], horario.comienzo) for horario in self.horario_set.all()) + [self.numero]
+
     def __lt__(self, other):
         if other.__class__ is self.__class__:
             if other.materia == self.materia:
