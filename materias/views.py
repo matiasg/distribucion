@@ -5,7 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_time
 from django.contrib.auth.decorators import permission_required, login_required
-from django.db.models import Max, Min, Count
+from django.db.models import Max, Min, Count, F
 
 from locale import strxfrm
 from collections import Counter, namedtuple, defaultdict
@@ -70,9 +70,20 @@ def por_anno_y_cuatrimestre(request, anno_cuat):
     except ValueError as e:
         raise Http404(e.args[0])
     else:
-        materias = filtra_materias(anno=anno, cuatrimestre=cuat)
-        context = {'materias': materias}
-        return render(request, 'materias/index.html', context)
+        # la separación por obligatoriedad se podría emular con
+        # turnos = Turno.objects.filter(anno=anno, cuatrimestre=cuat) \
+        #             .order_by('materia__obligatoriedad', 'materia') \
+        #             .annotate(obligatoriedad=F('materia__obligatoriedad'))
+        # pero no vi que se ganara tiempo y complica el html
+        turnos = [
+            (tipo_largo,
+             Turno.objects.filter(anno=anno, cuatrimestre=cuat, materia__obligatoriedad=tipo.name) \
+             .order_by('materia')
+             )
+            for tipo, tipo_largo in TIPO_DICT.items()
+        ]
+        return render(request, 'materias/index.html',
+                      {'turnos_por_obligatoriedad': turnos})
 
 
 def filtra_materias(**kwargs):
