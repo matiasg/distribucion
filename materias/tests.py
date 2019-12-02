@@ -185,6 +185,16 @@ class TestModels(TestCase):
                                       carga_am, carga_an,
                                       carga_bm, carga_bn])
 
+    def test_clave_para_ordenar(self):
+        turno2 = Turno.objects.create(materia=self.materia, anno=2100, cuatrimestre=Cuatrimestres.P.name,
+                                      numero=2, tipo=TipoTurno.T.name,
+                                      necesidad_prof=0, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+        ocho, nueve = datetime.time(8), datetime.time(9)
+        aula_pab = {'aula': 'no', 'pabellon': '0'}
+        h1 = Horario.objects.create(turno=self.turno, dia=Dias.Lu.name, comienzo=ocho, final=nueve, **aula_pab)
+        h2 = Horario.objects.create(turno=self.turno, dia=Dias.Ju.name, comienzo=ocho, final=nueve, **aula_pab)
+        self.assertLess(turno2.clave_para_ordenar(), self.turno.clave_para_ordenar())
+
 
 class TestPaginas(TestCase):
 
