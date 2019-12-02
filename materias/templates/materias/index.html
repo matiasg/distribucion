@@ -6,7 +6,7 @@
 
 
 {% for obligatoriedad, materias in turnos_por_obligatoriedad %}
-<div class="seccion"> {{ obligatoriedad }} </div>
+<div class="seccion">{{ obligatoriedad }}</div>
 
 {% regroup materias by materia as lista_de_materias %}
 {% for materia in lista_de_materias %}
