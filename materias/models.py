@@ -178,7 +178,7 @@ class Turno(models.Model):
         return TurnoInfo(tipoynumero, dias_y_horas, aulas)
 
     def clave_para_ordenar(self):
-        return sorted((Dias[horario.dia], horario.comienzo) for horario in self.horario_set.all()) + [self.numero]
+        return (sorted((Dias[horario.dia], horario.comienzo) for horario in self.horario_set.all()), self.numero)
 
     def __lt__(self, other):
         if other.__class__ is self.__class__:
