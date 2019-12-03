@@ -1,5 +1,6 @@
 Django==2.1.11
 django-extensions
+pytest-django
 bs4
 coloredlogs
 psycopg2-binary

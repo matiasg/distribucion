@@ -19,7 +19,8 @@ install:
   - pip install coveralls
 
 script:
-  - DJANGO_SETTINGS_MODULE=distribucion.test_settings coverage run --source=materias,dborrador,encuestas,usuarios manage.py test
+  - export DJANGO_SETTINGS_MODULE=distribucion.test_settings
+  - coverage run --source=materias,dborrador,encuestas,usuarios manage.py test
 
 after_success:
   - coveralls
