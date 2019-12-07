@@ -124,14 +124,11 @@ def checkear_y_salvar(datos, anno, cuatrimestres, tipo_docente):
     telefono_validator(telefono)
 
     # OtrosDatos
-    otros_datos, _ = OtrosDatos.objects.get_or_create(docente=docente, anno=anno, cuatrimestre=cuatrimestres,
-                                                      defaults={'fecha_encuesta': fecha_encuesta, 'comentario': ''})
-    otros_datos.fecha_encuesta = fecha_encuesta
-    otros_datos.email = email
-    otros_datos.telefono = telefono
-    otros_datos.comentario = datos['comentario']
-    otros_datos.cargas_declaradas = int(datos['cargas_declaradas'])
-    otros_datos.save()
+    otros_datos = OtrosDatos.objects.create(docente=docente, anno=anno, cuatrimestre=cuatrimestres,
+                                            fecha_encuesta=fecha_encuesta, comentario=datos['comentario'],
+                                            email=email, telefono=telefono,
+                                            cargas_declaradas=int(datos['cargas_declaradas'])
+                                            )
 
     #  PreferenciasDocente
     opciones = {}
