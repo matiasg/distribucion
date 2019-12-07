@@ -299,7 +299,7 @@ class TestEncuesta(TestCase):
                                      'cargas_declaradas': 1,
                                      **opciones,
                                      'telefono': '+54911 1234-5678', 'email': 'juan@dm.uba.ar',
-                                     f'cargas{c}': 1, 'comentario': 'pero qué corno'},
+                                     f'cargas{c}': 1, 'comentario': 'pero qué corno 1'},
                                     follow=True)
         self.assertEqual(PreferenciasDocente.objects.count(), 5)
         time.sleep(0.1)
@@ -308,10 +308,13 @@ class TestEncuesta(TestCase):
                                      'cargas_declaradas': 2,
                                      **opciones,
                                      'telefono': '+54911 1234-5678', 'email': 'juan@dm.uba.ar',
-                                     f'cargas{c}': 1, 'comentario': 'pero qué corno'},
+                                     f'cargas{c}': 1, 'comentario': 'pero qué corno 2'},
                                     follow=True)
         self.assertEqual(PreferenciasDocente.objects.count(), 10)
-        self.assertEqual(OtrosDatos.objects.first().cargas_declaradas, 2)
+        self.assertEqual(OtrosDatos.objects.count(), 2)
+        # esto asume que el orden es por fecha
+        self.assertEqual(OtrosDatos.objects.first().cargas_declaradas, 1)
+        self.assertEqual(OtrosDatos.objects.last().cargas_declaradas, 2)
 
     def test_texto_como_pedido(self):
         cs = GrupoCuatrimestral.VPS
