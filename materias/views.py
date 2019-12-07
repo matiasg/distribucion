@@ -481,7 +481,7 @@ def administrar_cargas_de_un_docente(request, anno, cuatrimestre, docente_id):
 
 
 @login_required
-@permission_required('dborrador.add_asignacion')
+@permission_required('materias.add_turno')
 def administrar_cargas_publicadas(request, anno, cuatrimestre):
     cargas_distribuidas = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre,
                                                turno__isnull=False).order_by('docente__na_apellido', 'docente__na_nombre')
@@ -503,7 +503,7 @@ def administrar_cargas_publicadas(request, anno, cuatrimestre):
 
 
 @login_required
-@permission_required('dborrador.add_asignacion')
+@permission_required('materias.add_turno')
 def cambiar_una_carga_publicada(request, carga_id):
     carga = Carga.objects.get(pk=carga_id)
     anno = carga.anno
