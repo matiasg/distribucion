@@ -412,8 +412,7 @@ class TestPaginas(TestCase):
         autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='dborrador',
                                                                codename='add_asignacion'))
 
-    def test_ver_resultados_de_encuestas(self):
-        self.client.login(username='autorizado', password='1234')
+    def _agrega_preferencias(self):
         now = timezone.now()
         now_mas_delta = now + datetime.timedelta(seconds=10)
         pref1 = PreferenciasDocente.objects.create(docente=self.n, turno=self.turno,
@@ -431,6 +430,10 @@ class TestPaginas(TestCase):
                                                cargas=1,
                                                fecha_encuesta=now_mas_delta)
 
+    def test_ver_resultados_de_encuestas(self):
+        self._agrega_preferencias()
+        self.client.login(username='autorizado', password='1234')
+
         response = self.client.get(reverse('encuestas:ver_resultados_de_encuestas',
                                            args=(self.anno, self.cuatrimestre.name)))
         self.assertContains(response, self.n.apellido_nombre)
@@ -439,6 +442,18 @@ class TestPaginas(TestCase):
                                            args=(self.n.id, self.anno, self.cuatrimestre.name)))
         self.assertContains(response, self.n.nombre)
         self.assertContains(response, str(self.turno), count=2)
+
+    def test_dos_encuestas_no_provocan_excepciones(self):
+        self.client.login(username='autorizado', password='1234')
+        self._agrega_preferencias()
+        primera = PreferenciasDocente.objects.order_by('fecha_encuesta').first()
+        primeros_otros_datos = OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                                         fecha_encuesta=primera.fecha_encuesta, comentario='estúpido comentario',
+                                                         cargas_declaradas=2)
+        response = self.client.get(reverse('encuestas:encuestas_de_un_docente',
+                                           args=(self.n.id, self.anno, self.cuatrimestre.name)),
+                                   follow=True)
+
 
     def test_agregar_habilitacion(self):
         self.client.login(username='autorizado', password='1234')
