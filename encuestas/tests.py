@@ -315,6 +315,10 @@ class TestEncuesta(TestCase):
         # esto asume que el orden es por fecha
         self.assertEqual(OtrosDatos.objects.first().cargas_declaradas, 1)
         self.assertEqual(OtrosDatos.objects.last().cargas_declaradas, 2)
+        for od in OtrosDatos.objects.all():
+            self.assertEqual(od.email, 'juan@dm.uba.ar')
+            self.assertEqual(od.telefono, '+54911 1234-5678')
+            self.assertRegexpMatches(od.comentario, 'pero qué corno \d')
 
     def test_texto_como_pedido(self):
         cs = GrupoCuatrimestral.VPS
