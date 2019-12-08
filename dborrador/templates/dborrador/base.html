@@ -61,6 +61,20 @@
             </div>
         </li>
         <li>
+            <div id="actuar">
+                <a href="#" id="borrar">Borrar asignaciones no publicadas</a>
+            </div>
+            <div id="borrar_distribucion" title="¿Seguro?">
+                <form action="{% url 'dborrador:borrar' anno cuatrimestre.name %}" method="post">
+                {% csrf_token %}
+                <p> ¿Seguro querés borrar las asignaciones? </p>
+                <p> Eso borra todos los intentos de distribución no publicados </p>
+                <button id="dale">Sí</button>
+                </form>
+            </div>
+
+        </li>
+        <li>
           <div id="actuar">
               <a href="#" id=distribuir>Correr el algoritmo</a>
           </div>
