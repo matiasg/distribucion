@@ -125,6 +125,7 @@ def checkear_y_salvar(datos, anno, cuatrimestres, tipo_docente):
 
     # OtrosDatos
     otros_datos = OtrosDatos.objects.create(docente=docente, anno=anno, cuatrimestre=cuatrimestres,
+                                            tipo_docente=tipo_docente,
                                             fecha_encuesta=fecha_encuesta, comentario=datos['comentario'],
                                             email=email, telefono=telefono,
                                             cargas_declaradas=int(datos['cargas_declaradas'])
