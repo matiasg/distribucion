@@ -601,6 +601,8 @@ def exportar_excel(request, anno, cuatrimestre, intento_algoritmo, intento_manua
     return response
 
 
+@login_required
+@permission_required('dborrador.add_asignacion')
 def publicar(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
     intento = Intento(intento_algoritmo, intento_manual)
     asignaciones = Asignacion.validas_en(anno, cuatrimestre, intento).all()
