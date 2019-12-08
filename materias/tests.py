@@ -477,9 +477,19 @@ class TestPaginas(TestCase):
                                      anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                      cargas=2)
 
+        # generamos una encuesta anterior con una carga. Se deben ver ambos comentarios.
+        # La cantidad de cargas pedidas es la última, 2, y por eso tiene que aparecer en "Con diferencias"
+        OtrosDatos.objects.create(docente=self.n, fecha_encuesta=now-datetime.timedelta(minutes=10),
+                                  anno=self.anno, cuatrimestre=cuatris.name,
+                                  comentario='_esto también deberia aparecer_')
+        CargasPedidas.objects.create(docente=self.n, fecha_encuesta=now-datetime.timedelta(minutes=10),
+                                     anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                     cargas=2)
+
         response = self.client.get(f'/materias/administrar_cargas_docentes/{self.anno}/{self.cuatrimestre.name}', follow=True)
         self.assertContains(response, '>nemo X<')
         self.assertContains(response, '_esto deberia aparecer_')
+        self.assertContains(response, '_esto también deberia aparecer_')
         self.assertContains(response, '>mario Y<')
 
     def test_administrar_cargas_de_un_docente(self):
