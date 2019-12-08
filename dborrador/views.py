@@ -40,27 +40,31 @@ def copiar_anno_y_cuatrimestre(anno, cuatrimestre):
         prefs = PreferenciasDocente.objects.filter(turno__anno=anno,
                                                    turno__cuatrimestre=cuatrimestre,
                                                    docente=docente)
-        fecha_ultima_encuesta = prefs.aggregate(Max('fecha_encuesta'))['fecha_encuesta__max']
-        prefs_ultimas = prefs.filter(fecha_encuesta=fecha_ultima_encuesta)
-        # chequeo que no haya repetidos
-        # En la encuesta ya se chequea pero lo repito por si cambio algo
-        # XXX: no quiero tirar una excepción acá pero no copiar no es la solución.
-        #      Quizás haya que agregar una página de chequeos antes de distribuir?
-        cantidad_turnos = len({pref.turno for pref in prefs_ultimas})
-        if cantidad_turnos < prefs_ultimas.count():
-            logger.error('El docente %s tiene preferencias con turnos repetidos: %s. No copio sus preferencias.',
-                         docente, prefs_ultimas)
-            continue
+        tipos_del_docente = {pref.tipo_docente for pref in prefs}
+        for tipo_docente in tipos_del_docente:
+            fecha_ultima_encuesta = prefs.filter(tipo_docente=tipo_docente).order_by('fecha_encuesta').last().fecha_encuesta
+            prefs_ultimas = prefs.filter(fecha_encuesta=fecha_ultima_encuesta)
 
-        peso_total = sum(pref.peso for pref in prefs_ultimas)
-        logger.debug('considerando %d prefs para %s. Peso total: %s',
-                     prefs_ultimas.count(), docente, peso_total)
+            # chequeo que no haya repetidos
+            # En la encuesta ya se chequea pero lo repito por si cambio algo
+            # XXX: no quiero tirar una excepción acá pero no copiar no es la solución.
+            #      Quizás haya que agregar una página de chequeos antes de distribuir?
+            cantidad_turnos = len({pref.turno for pref in prefs_ultimas})
+            if cantidad_turnos < prefs_ultimas.count():
+                logger.error('El docente %s tiene preferencias con turnos repetidos: %s. No copio sus preferencias.',
+                             docente, prefs_ultimas)
+                continue
 
-        for pref in prefs_ultimas:
-            peso_normalizado = pref.peso / peso_total if peso_total else 1 / prefs_ultimas.count()
-            pref_copia = Preferencia.objects.create(preferencia=pref,
-                                                    peso_normalizado=peso_normalizado)
-            copiadas += 1
+            peso_total = sum(pref.peso for pref in prefs_ultimas)
+            logger.debug('considerando %d prefs para %s. Peso total: %s',
+                         prefs_ultimas.count(), docente, peso_total)
+
+            for pref in prefs_ultimas:
+                peso_normalizado = pref.peso / peso_total if peso_total else 1 / prefs_ultimas.count()
+                pref_copia = Preferencia.objects.create(preferencia=pref,
+                                                        peso_normalizado=peso_normalizado)
+                copiadas += 1
+
     return copiadas, borradas
 
 def _anno_cuat_tipos_context():
