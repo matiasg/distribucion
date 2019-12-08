@@ -22,6 +22,8 @@ urlpatterns = [
          views.distribuir, name='distribuir'),
     path('preparar/<int:anno>/<str:cuatrimestre>',
          views.preparar, name='preparar'),
+    path('borrar/<int:anno>/<str:cuatrimestre>',
+         views.borrar, name='borrar'),
     path('publicar/<int:anno>/<str:cuatrimestre>/<int:intento_algoritmo>/<int:intento_manual>',
          views.publicar, name='publicar'),
     path('predistribuir/<int:anno>/<str:cuatrimestre>/<int:intento_algoritmo>/<int:intento_manual>',

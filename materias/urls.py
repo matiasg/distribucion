@@ -35,6 +35,8 @@ urlpatterns = [
          views.generar_cuatrimestre, name='generar_cuatrimestre'),
     path('administrar_docentes',
          views.administrar_docentes, name='administrar_docentes'),
+    path('copiar_datos/<int:anno>/<str:cuatrimestre>',
+         views.copiar_datos, name='copiar_datos'),
     path('administrar_un_docente/<int:docente_id>',
          views.administrar_un_docente, name='administrar_un_docente'),
     path('borrar_turno/<int:turno_id>', views.borrar_turno, name='borrar_turno'),

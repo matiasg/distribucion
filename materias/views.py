@@ -146,6 +146,8 @@ def administrar(request):
             return HttpResponseRedirect(reverse('materias:generar_cuatrimestre', args=(anno, cuatrimestre)))
         elif 'administrar_docentes' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_docentes'))
+        elif 'copiar_datos' in request.POST:
+            return HttpResponseRedirect(reverse('materias:copiar_datos', args=(anno, cuatrimestre)))
         elif 'retocar_materias' in request.POST:
             return HttpResponseRedirect(reverse('materias:retocar_materias'))
         elif 'ver_materias' in request.POST:
@@ -942,6 +944,22 @@ def administrar_docentes(request):
         'docentes': _docentes_por_cargo(),
     }
     return render(request, 'materias/administrar_docentes.html', context)
+
+
+@login_required
+@permission_required('materias.add_turno')
+def copiar_datos(request, anno, cuatrimestre):
+    otros_datos = OtrosDatos.objects.filter(anno=anno, cuatrimestre__contains=cuatrimestre)
+    logger.debug('Voy a coopiar datos de %d registros', otros_datos.count())
+    docentes = {od.docente for od in otros_datos.all()}
+    with transaction.atomic():
+        for docente in docentes:
+            doc_datos = otros_datos.filter(docente=docente).order_by('fecha_encuesta').last()
+            docente.email = doc_datos.email
+            docente.telefono = doc_datos.telefono
+            docente.save()
+    logger.info('cambié teléfono y mail de %d docentes', len(docentes))
+    return HttpResponseRedirect(f"{reverse('materias:administrar')}#docentes")
 
 
 @login_required
