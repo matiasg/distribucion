@@ -127,3 +127,7 @@ table.contentbold tr td {
   padding: 5px;
   border: 1px black solid;
 }
+
+.nocorresponde {
+  color: #999;
+}
