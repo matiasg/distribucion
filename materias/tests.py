@@ -964,6 +964,23 @@ class TestPaginas(TestCase):
                     cargas = Carga.objects.filter(docente=docente, anno=self.anno+1, cuatrimestre=cuatrimestre.name, cargo=cargo)
                     self.assertEquals(cargas.count(), 0 if cuatrimestre is Cuatrimestres.V else 1)
 
+    def test_copiar_datos(self):
+        self.client.login(username='autorizado', password='1234')
+        self._agrega_docentes()
+        now = timezone.now()
+        OtrosDatos.objects.create(docente=self.n, fecha_encuesta=now-datetime.timedelta(minutes=10),
+                                  tipo_docente=TipoDocentes.P.name,
+                                  anno=self.anno, cuatrimestre=f'{Cuatrimestres.V.name}{Cuatrimestres.P.name}',
+                                  comentario='', email='nonono@email', telefono='nonono')
+        OtrosDatos.objects.create(docente=self.n, fecha_encuesta=now,
+                                  tipo_docente=TipoDocentes.P.name,
+                                  anno=self.anno, cuatrimestre=f'{Cuatrimestres.V.name}{Cuatrimestres.P.name}',
+                                  comentario='', email='nuevo@email.de', telefono='+0303456')
+        response = self.client.get(reverse('materias:copiar_datos', args=(self.anno, Cuatrimestres.P.name)))
+        self.n.refresh_from_db()
+        self.assertEqual(self.n.telefono, '+0303456')
+        self.assertEqual(self.n.email, 'nuevo@email.de')
+
 
 
 class TestCasosBorde(TestCase):
