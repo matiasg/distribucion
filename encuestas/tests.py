@@ -320,6 +320,27 @@ class TestEncuesta(TestCase):
             self.assertEqual(od.telefono, '+54911 1234-5678')
             self.assertRegexpMatches(od.comentario, 'pero qué corno \d')
 
+    def test_encuesta_con_pocos_turnos(self):
+        c = Cuatrimestres.P.name
+        opciones = {}
+        for opcion in range(1, 3):
+            turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
+                                         numero=opcion, tipo=TipoTurno.T.name,
+                                         necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+            opciones[f'opcion{c}{opcion}'] = turno.id
+            opciones[f'peso{c}{opcion}'] = 0
+        for opcion in range(3, 6):
+            opciones[f'opcion{c}{opcion}'] = -1
+            opciones[f'peso{c}{opcion}'] = 0
+        response = self.client.post(f'/encuestas/encuesta/{self.anno}/{c}/{TipoDocentes.P.name}',
+                                    {'docente': self.docente.id,
+                                     'cargas_declaradas': 1,
+                                     **opciones,
+                                     'telefono': '+54911 1234-5678', 'email': 'juan@dm.uba.ar',
+                                     f'cargas{c}': 1, 'comentario': 'pero qué corno 1'},
+                                    follow=True)
+        self.assertContains(response, 'La cantidad mínima de turnos')
+
     def test_texto_como_pedido(self):
         cs = GrupoCuatrimestral.VPS
         now = timezone.now()
