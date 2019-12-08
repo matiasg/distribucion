@@ -33,7 +33,10 @@ Distribución del cuat {{ cuatrimestre.value }}, {{ anno }}. Intento {{ intento_
                                 </ul>
                                 <hr>
                                 <span class="titulo">Comentarios:</span>
-                                {{ carga.docente.otrosdatos_set.last.comentario }}
+                                {% for od in carga.docente.otrosdatos_set.all %}
+                                {{ od.comentario }}
+                                {% if not forloop.last %}<hr>{% endif %}
+                                {% endfor %}
                             </span>
                         </div>
                     </li>
@@ -125,7 +128,10 @@ Distribución del cuat {{ cuatrimestre.value }}, {{ anno }}. Intento {{ intento_
                               </ul>
                               <hr>
                               <span class="titulo">Comentarios:</span>
-                              {{ asignacion.carga.docente.otrosdatos_set.last.comentario }}
+                              {% for od in asignacion.carga.docente.otrosdatos_set.all %}
+                              {{ od.comentario }}
+                              {% if not forloop.last %}<hr>{% endif %}
+                              {% endfor %}
                           </span>
                       </a>
                   </div>
