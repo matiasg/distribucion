@@ -86,7 +86,9 @@
                     <td>{{ docente.cargos|join:", " }}</td>
                     <td class=numero>{{ cargas_pedidas.0 }}</td>
                     <td class=numero>{{ cargas_pedidas.1 }}</td>
-                    <td class=comentario>{{ cargas_pedidas.2.comentario|linebreaksbr }}</td>
+                    <td class=comentario>
+                        {{ cargas_pedidas.2|join:"<hr>"|linebreaksbr }}
+                    </td>
                 </tr>
                 {% endfor %}
             </table>
