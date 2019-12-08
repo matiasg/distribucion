@@ -346,8 +346,9 @@ def cargas_docentes_anuales(request, anno):
         docentes_cargos_ordenados = {tipo: sorted(por_tipo_cargo[tipo], key=lambda dc: strxfrm(dc[0].apellido_nombre))
                                      for tipo in TipoDocentes}
 
-        def comentarios_y_cargas_declaradas(doc_cargo):
-            otros_datos = OtrosDatos.objects.filter(anno=anno, docente=doc_cargo[0]).order_by('-fecha_encuesta')
+        def comentarios_y_cargas_declaradas(doc_cargo, tipo):
+            otros_datos = OtrosDatos.objects.filter(anno=anno, docente=doc_cargo[0], tipo_docente=tipo.name) \
+                                            .order_by('-fecha_encuesta')
             if otros_datos:
                 ultimos_datos = otros_datos.first()
                 asignadas_al_periodo = sum(contados[Cuatrimestres[cuat]][doc_cargo]
@@ -366,7 +367,7 @@ def cargas_docentes_anuales(request, anno):
         def asignadas_pedidas_declaradas_comentario(doc_cargo, tipo):
             asignadas_pedidas = [AsignadasPedidas(contados[cuat][doc_cargo], pedidas(doc_cargo[0], cuat, tipo))
                                  for cuat in (Cuatrimestres.V, Cuatrimestres.P, Cuatrimestres.S)]
-            return asignadas_pedidas + comentarios_y_cargas_declaradas(doc_cargo)
+            return asignadas_pedidas + comentarios_y_cargas_declaradas(doc_cargo, tipo)
 
         cargas = {tipo: {doc_cargo: asignadas_pedidas_declaradas_comentario(doc_cargo, tipo)
                          for doc_cargo in docentes_cargos_ordenados[tipo]}
