@@ -621,3 +621,15 @@ def publicar(request, anno, cuatrimestre, intento_algoritmo, intento_manual):
 
     redirect = reverse('materias:por_anno_y_cuatrimestre', args=(f'{anno}{Cuatrimestres[cuatrimestre].value}',))
     return HttpResponseRedirect(redirect)
+
+
+def borrar(request, anno, cuatrimestre):
+    borradas, _ = Preferencia.objects.filter(preferencia__turno__anno=anno,
+                                             preferencia__turno__cuatrimestre=cuatrimestre).delete()
+    logger.info('Borré: %d preferencias', borradas)
+    borradas, _ = Asignacion.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre).delete()
+    logger.info('Borré: %d asignaciones', borradas)
+    borrados, _ = IntentoRegistrado.objects.filter(anno=anno, cuatrimestre=cuatrimestre).delete()
+    logger.info('Borré: %d intentos', borrados)
+    distribucion_url = reverse('dborrador:distribucion', args=(anno, cuatrimestre, 0, 0))
+    return HttpResponseRedirect(distribucion_url)
