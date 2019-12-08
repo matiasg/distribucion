@@ -138,7 +138,6 @@ def checkear_y_salvar(datos, anno, cuatrimestres, tipo_docente):
         cargas_pedidas = CargasPedidas.objects.create(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
                                                       tipo_docente=tipo_docente,
                                                       fecha_encuesta=fecha_encuesta, cargas=cargas)
-        cargas_pedidas.save()
 
         opciones_cuat = []
         for opcion in range(1, _turnos_maximos_por_cuatrimestre(cuatrimestre) + 1):
