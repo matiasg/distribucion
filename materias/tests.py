@@ -884,6 +884,31 @@ class TestPaginas(TestCase):
         self.assertContains(response, comentario)
         self.assertContains(response, 571)
 
+    def test_cargas_docentes_anuales_con_dos_encuestas(self):
+        self.client.login(username='autorizado', password='1234')
+        self._agrega_docentes()
+
+        fecha_segunda = timezone.now()
+        fecha_primera = fecha_segunda - datetime.timedelta(minutes=10)
+
+        CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+                                     cargas=331, tipo_docente=TipoDocentes.P.name, fecha_encuesta=fecha_primera)
+        CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+                                     cargas=279, tipo_docente=TipoDocentes.P.name, fecha_encuesta=fecha_segunda)
+
+        comentario1 = '_este comentario debe aparecer_'
+        comentario2 = '_este comentario también debe aparecer_'
+        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+                                  comentario=comentario1, cargas_declaradas=571, fecha_encuesta=fecha_primera)
+        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+                                  comentario=comentario2, cargas_declaradas=348, fecha_encuesta=fecha_segunda)
+
+        response = self.client.get(reverse('materias:cargas_docentes_anuales', args=(self.anno,)))
+        self.assertRegex(response.content.decode(), r'<mark id="mal">\s*279\s*</mark>')  # en cargas pedidas tomamos la última encuesta
+        self.assertContains(response, 348)  # en cargas declaradas tomamos la última encuesta
+        self.assertContains(response, comentario1)
+        self.assertContains(response, comentario2)
+
     def test_cambio_cargas_docentes_anuales(self):
         self.client.login(username='autorizado', password='1234')
         self._agrega_docentes()
