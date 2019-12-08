@@ -113,9 +113,9 @@
                 <td class="borde_izquierda">
                     {% if cantidades.3|length %}
                         <div class="tooltip">
-                            {{ cantidades.3|truncatewords:9 }}
+                            {{ cantidades.3|join:". "|truncatewords:9 }}
                             <span class="tooltiptext">
-                                {{ cantidades.3 }}
+                                {{ cantidades.3|join:"<hr>" }}
                             </span>
                         </div>
                     {% endif %}

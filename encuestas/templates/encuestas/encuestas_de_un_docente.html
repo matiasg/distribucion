@@ -15,7 +15,7 @@
         <thead>
             <tr>
                 <th>fecha</th>
-                <th>cargas pedidas</th>
+                <th>cargas<br>pedidas</th>
                 <th>turno</th>
                 <th>peso</th>
             </tr>
@@ -24,7 +24,7 @@
         {% for fecha_encuesta, turnos_y_cargas in preferencias.items %}
         <tr>
             <td class="borde_alto" rowspan={{ turnos_y_cargas.0|length|add:"1" }}>
-                {{ fecha_encuesta|date:"d/m/Y" }} {{ fecha_encuesta|time:"H:i:s" }}
+                {{ fecha_encuesta|date:"d/m/Y" }} <br> {{ fecha_encuesta|time:"H:i:s" }}
             </td>
             <td class="borde_alto" rowspan={{ turnos_y_cargas.0|length|add:"1" }}>
                 {{ turnos_y_cargas.1 }}
@@ -41,13 +41,25 @@
 
     <hr>
     <div id="subtitulo">Comentarios</div>
-    {{ otros_datos.comentario }}
+    <ul>
+        {% for od in otros_datos %}
+        <li> ({{ od.fecha_encuesta }}): {{ od.comentario }} </li>
+        {% endfor %}
+    </ul>
 
     <hr>
     <div id="subtitulo">Teléfono</div>
-    {{ otros_datos.telefono }}
+    <ul>
+        {% for od in otros_datos %}
+        <li> ({{ od.fecha_encuesta }}): {{ od.telefono }} </li>
+        {% endfor %}
+    </ul>
 
     <hr>
     <div id="subtitulo">email</div>
-    {{ otros_datos.email }}
+    <ul>
+        {% for od in otros_datos %}
+        <li> ({{ od.fecha_encuesta }}): {{ od.email }} </li>
+        {% endfor %}
+    </ul>
 </body>

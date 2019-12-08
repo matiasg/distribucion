@@ -346,13 +346,15 @@ def cargas_docentes_anuales(request, anno):
         docentes_cargos_ordenados = {tipo: sorted(por_tipo_cargo[tipo], key=lambda dc: strxfrm(dc[0].apellido_nombre))
                                      for tipo in TipoDocentes}
 
-        def comentario_y_cargas_declaradas(doc_cargo):
-            otros_datos = OtrosDatos.objects.filter(anno=anno, docente=doc_cargo[0]).order_by('fecha_encuesta')
+        def comentarios_y_cargas_declaradas(doc_cargo, tipo):
+            otros_datos = OtrosDatos.objects.filter(anno=anno, docente=doc_cargo[0], tipo_docente=tipo.name) \
+                                            .order_by('-fecha_encuesta')
             if otros_datos:
-                ultimos_datos = otros_datos.last()
+                ultimos_datos = otros_datos.first()
                 asignadas_al_periodo = sum(contados[Cuatrimestres[cuat]][doc_cargo]
                                            for cuat in ultimos_datos.cuatrimestre)
-                return [ultimos_datos.comentario, ultimos_datos.cargas_declaradas,
+                return [[od.comentario for od in otros_datos.all()],
+                        ultimos_datos.cargas_declaradas,
                         asignadas_al_periodo, ultimos_datos.cuatrimestre]
             else:
                 return ['', None, None, None]
@@ -365,7 +367,7 @@ def cargas_docentes_anuales(request, anno):
         def asignadas_pedidas_declaradas_comentario(doc_cargo, tipo):
             asignadas_pedidas = [AsignadasPedidas(contados[cuat][doc_cargo], pedidas(doc_cargo[0], cuat, tipo))
                                  for cuat in (Cuatrimestres.V, Cuatrimestres.P, Cuatrimestres.S)]
-            return asignadas_pedidas + comentario_y_cargas_declaradas(doc_cargo)
+            return asignadas_pedidas + comentarios_y_cargas_declaradas(doc_cargo, tipo)
 
         cargas = {tipo: {doc_cargo: asignadas_pedidas_declaradas_comentario(doc_cargo, tipo)
                          for doc_cargo in docentes_cargos_ordenados[tipo]}
@@ -393,11 +395,15 @@ def administrar_cargas_docentes(request, anno, cuatrimestre):
                                  key=lambda d: d.na_apellido)
     # docentes con diferencias con la encuesta
     docentes_y_cargas_encuesta = {cp.docente: cp.cargas
-                                  for cp in CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre).all()}
+                                  for cp in CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre) \
+                                                                 .order_by('-fecha_encuesta').all()}
     # calculo diferencias contra encuesta
     diferencias_encuesta = {d: (len(docentes_y_cargas_nuestras[d]),
                                 docentes_y_cargas_encuesta[d],
-                                OtrosDatos.objects.filter(anno=anno, cuatrimestre__contains=cuatrimestre, docente=d).first())
+                                [od.comentario
+                                 for od in OtrosDatos.objects.filter(anno=anno, cuatrimestre__contains=cuatrimestre, docente=d) \
+                                                             .order_by('-fecha_encuesta').all()]
+                                )
                             for d in sorted(set(docentes_y_cargas_nuestras) & set(docentes_y_cargas_encuesta),
                                             key=lambda d: strxfrm(d.apellido_nombre))
                             if len(docentes_y_cargas_nuestras[d]) != docentes_y_cargas_encuesta[d]

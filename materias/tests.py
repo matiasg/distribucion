@@ -471,15 +471,29 @@ class TestPaginas(TestCase):
                                            tipo_docente=TipoDocentes.P.name,
                                            peso=2, fecha_encuesta=now)
         OtrosDatos.objects.create(docente=self.n, fecha_encuesta=now,
+                                  tipo_docente=TipoDocentes.P.name,
                                   anno=self.anno, cuatrimestre=cuatris.name,
                                   comentario='_esto deberia aparecer_')
         CargasPedidas.objects.create(docente=self.n, fecha_encuesta=now,
+                                     tipo_docente=TipoDocentes.P.name,
+                                     anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                     cargas=2)
+
+        # generamos una encuesta anterior con una carga. Se deben ver ambos comentarios.
+        # La cantidad de cargas pedidas es la última, 2, y por eso tiene que aparecer en "Con diferencias"
+        OtrosDatos.objects.create(docente=self.n, fecha_encuesta=now-datetime.timedelta(minutes=10),
+                                  tipo_docente=TipoDocentes.P.name,
+                                  anno=self.anno, cuatrimestre=cuatris.name,
+                                  comentario='_esto también deberia aparecer_')
+        CargasPedidas.objects.create(docente=self.n, fecha_encuesta=now-datetime.timedelta(minutes=10),
+                                     tipo_docente=TipoDocentes.P.name,
                                      anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                      cargas=2)
 
         response = self.client.get(f'/materias/administrar_cargas_docentes/{self.anno}/{self.cuatrimestre.name}', follow=True)
         self.assertContains(response, '>nemo X<')
         self.assertContains(response, '_esto deberia aparecer_')
+        self.assertContains(response, '_esto también deberia aparecer_')
         self.assertContains(response, '>mario Y<')
 
     def test_administrar_cargas_de_un_docente(self):
@@ -493,8 +507,10 @@ class TestPaginas(TestCase):
                                   anno=self.anno, cuatrimestre=self.cuatrimestre.name)
         now = timezone.now()
         OtrosDatos.objects.create(docente=self.n, fecha_encuesta=now,
+                                  tipo_docente=TipoDocentes.P.name,
                                   anno=self.anno, cuatrimestre=self.cuatrimestre.name)
         CargasPedidas.objects.create(docente=self.n, fecha_encuesta=now,
+                                     tipo_docente=TipoDocentes.P.name,
                                      anno=self.anno, cuatrimestre=self.cuatrimestre.name,
                                      cargas=2)
         cm = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.TitExc.name,
@@ -726,8 +742,10 @@ class TestPaginas(TestCase):
         pref = PreferenciasDocente.objects.create(docente=self.m, turno=self.turno11,
                                                   tipo_docente=TipoDocentes.P.name, peso=2, fecha_encuesta=now)
         otrosdatos = OtrosDatos.objects.create(docente=self.m, fecha_encuesta=now,
+                                               tipo_docente=TipoDocentes.P.name,
                                                anno=self.anno, cuatrimestre=self.cuatrimestre.name, comentario='')
         pedidas = CargasPedidas.objects.create(docente=self.m, fecha_encuesta=now,
+                                               tipo_docente=TipoDocentes.P.name,
                                                anno=self.anno, cuatrimestre=self.cuatrimestre.name, cargas=2)
         post = {f'juntar_{self.n.id}': True, f'juntar_{self.m.id}': True, 'nombre': f'nombre_{self.n.id}', 'confirmar': True}
         response = self.client.post(reverse('materias:administrar_docentes'), post)
@@ -867,12 +885,40 @@ class TestPaginas(TestCase):
                                      cargas=331, tipo_docente=TipoDocentes.P.name, fecha_encuesta=now)
         comentario = '_este comentario debe aparecer_'
         OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+                                  tipo_docente=TipoDocentes.P.name,
                                   comentario=comentario, cargas_declaradas=571, fecha_encuesta=now,)
 
         response = self.client.get(reverse('materias:cargas_docentes_anuales', args=(self.anno,)))
         self.assertRegex(response.content.decode(), r'<mark id="mal">\s*331\s*</mark>')
         self.assertContains(response, comentario)
         self.assertContains(response, 571)
+
+    def test_cargas_docentes_anuales_con_dos_encuestas(self):
+        self.client.login(username='autorizado', password='1234')
+        self._agrega_docentes()
+
+        fecha_segunda = timezone.now()
+        fecha_primera = fecha_segunda - datetime.timedelta(minutes=10)
+
+        CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+                                     cargas=331, tipo_docente=TipoDocentes.P.name, fecha_encuesta=fecha_primera)
+        CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+                                     cargas=279, tipo_docente=TipoDocentes.P.name, fecha_encuesta=fecha_segunda)
+
+        comentario1 = '_este comentario debe aparecer_'
+        comentario2 = '_este comentario también debe aparecer_'
+        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+                                  tipo_docente=TipoDocentes.P.name,
+                                  comentario=comentario1, cargas_declaradas=571, fecha_encuesta=fecha_primera)
+        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+                                  tipo_docente=TipoDocentes.P.name,
+                                  comentario=comentario2, cargas_declaradas=348, fecha_encuesta=fecha_segunda)
+
+        response = self.client.get(reverse('materias:cargas_docentes_anuales', args=(self.anno,)))
+        self.assertRegex(response.content.decode(), r'<mark id="mal">\s*279\s*</mark>')  # en cargas pedidas tomamos la última encuesta
+        self.assertContains(response, 348)  # en cargas declaradas tomamos la última encuesta
+        self.assertContains(response, comentario1)
+        self.assertContains(response, comentario2)
 
     def test_cambio_cargas_docentes_anuales(self):
         self.client.login(username='autorizado', password='1234')

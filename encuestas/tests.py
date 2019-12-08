@@ -299,7 +299,7 @@ class TestEncuesta(TestCase):
                                      'cargas_declaradas': 1,
                                      **opciones,
                                      'telefono': '+54911 1234-5678', 'email': 'juan@dm.uba.ar',
-                                     f'cargas{c}': 1, 'comentario': 'pero qué corno'},
+                                     f'cargas{c}': 1, 'comentario': 'pero qué corno 1'},
                                     follow=True)
         self.assertEqual(PreferenciasDocente.objects.count(), 5)
         time.sleep(0.1)
@@ -308,10 +308,38 @@ class TestEncuesta(TestCase):
                                      'cargas_declaradas': 2,
                                      **opciones,
                                      'telefono': '+54911 1234-5678', 'email': 'juan@dm.uba.ar',
-                                     f'cargas{c}': 1, 'comentario': 'pero qué corno'},
+                                     f'cargas{c}': 1, 'comentario': 'pero qué corno 2'},
                                     follow=True)
         self.assertEqual(PreferenciasDocente.objects.count(), 10)
-        self.assertEqual(OtrosDatos.objects.first().cargas_declaradas, 2)
+        self.assertEqual(OtrosDatos.objects.count(), 2)
+        # esto asume que el orden es por fecha
+        self.assertEqual(OtrosDatos.objects.first().cargas_declaradas, 1)
+        self.assertEqual(OtrosDatos.objects.last().cargas_declaradas, 2)
+        for od in OtrosDatos.objects.all():
+            self.assertEqual(od.email, 'juan@dm.uba.ar')
+            self.assertEqual(od.telefono, '+54911 1234-5678')
+            self.assertRegexpMatches(od.comentario, 'pero qué corno \d')
+
+    def test_encuesta_con_pocos_turnos(self):
+        c = Cuatrimestres.P.name
+        opciones = {}
+        for opcion in range(1, 3):
+            turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
+                                         numero=opcion, tipo=TipoTurno.T.name,
+                                         necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+            opciones[f'opcion{c}{opcion}'] = turno.id
+            opciones[f'peso{c}{opcion}'] = 0
+        for opcion in range(3, 6):
+            opciones[f'opcion{c}{opcion}'] = -1
+            opciones[f'peso{c}{opcion}'] = 0
+        response = self.client.post(f'/encuestas/encuesta/{self.anno}/{c}/{TipoDocentes.P.name}',
+                                    {'docente': self.docente.id,
+                                     'cargas_declaradas': 1,
+                                     **opciones,
+                                     'telefono': '+54911 1234-5678', 'email': 'juan@dm.uba.ar',
+                                     f'cargas{c}': 1, 'comentario': 'pero qué corno 1'},
+                                    follow=True)
+        self.assertContains(response, 'La cantidad mínima de turnos')
 
     def test_texto_como_pedido(self):
         cs = GrupoCuatrimestral.VPS
@@ -405,8 +433,7 @@ class TestPaginas(TestCase):
         autorizado.user_permissions.add(Permission.objects.get(content_type__app_label='dborrador',
                                                                codename='add_asignacion'))
 
-    def test_ver_resultados_de_encuestas(self):
-        self.client.login(username='autorizado', password='1234')
+    def _agrega_preferencias(self):
         now = timezone.now()
         now_mas_delta = now + datetime.timedelta(seconds=10)
         pref1 = PreferenciasDocente.objects.create(docente=self.n, turno=self.turno,
@@ -424,6 +451,10 @@ class TestPaginas(TestCase):
                                                cargas=1,
                                                fecha_encuesta=now_mas_delta)
 
+    def test_ver_resultados_de_encuestas(self):
+        self._agrega_preferencias()
+        self.client.login(username='autorizado', password='1234')
+
         response = self.client.get(reverse('encuestas:ver_resultados_de_encuestas',
                                            args=(self.anno, self.cuatrimestre.name)))
         self.assertContains(response, self.n.apellido_nombre)
@@ -432,6 +463,18 @@ class TestPaginas(TestCase):
                                            args=(self.n.id, self.anno, self.cuatrimestre.name)))
         self.assertContains(response, self.n.nombre)
         self.assertContains(response, str(self.turno), count=2)
+
+    def test_dos_encuestas_no_provocan_excepciones(self):
+        self.client.login(username='autorizado', password='1234')
+        self._agrega_preferencias()
+        primera = PreferenciasDocente.objects.order_by('fecha_encuesta').first()
+        primeros_otros_datos = OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                                         fecha_encuesta=primera.fecha_encuesta, comentario='estúpido comentario',
+                                                         cargas_declaradas=2)
+        response = self.client.get(reverse('encuestas:encuestas_de_un_docente',
+                                           args=(self.n.id, self.anno, self.cuatrimestre.name)),
+                                   follow=True)
+
 
     def test_agregar_habilitacion(self):
         self.client.login(username='autorizado', password='1234')

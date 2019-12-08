@@ -124,14 +124,12 @@ def checkear_y_salvar(datos, anno, cuatrimestres, tipo_docente):
     telefono_validator(telefono)
 
     # OtrosDatos
-    otros_datos, _ = OtrosDatos.objects.get_or_create(docente=docente, anno=anno, cuatrimestre=cuatrimestres,
-                                                      defaults={'fecha_encuesta': fecha_encuesta, 'comentario': ''})
-    otros_datos.fecha_encuesta = fecha_encuesta
-    otros_datos.email = email
-    otros_datos.telefono = telefono
-    otros_datos.comentario = datos['comentario']
-    otros_datos.cargas_declaradas = int(datos['cargas_declaradas'])
-    otros_datos.save()
+    otros_datos = OtrosDatos.objects.create(docente=docente, anno=anno, cuatrimestre=cuatrimestres,
+                                            tipo_docente=tipo_docente,
+                                            fecha_encuesta=fecha_encuesta, comentario=datos['comentario'],
+                                            email=email, telefono=telefono,
+                                            cargas_declaradas=int(datos['cargas_declaradas'])
+                                            )
 
     #  PreferenciasDocente
     opciones = {}
@@ -141,7 +139,6 @@ def checkear_y_salvar(datos, anno, cuatrimestres, tipo_docente):
         cargas_pedidas = CargasPedidas.objects.create(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
                                                       tipo_docente=tipo_docente,
                                                       fecha_encuesta=fecha_encuesta, cargas=cargas)
-        cargas_pedidas.save()
 
         opciones_cuat = []
         for opcion in range(1, _turnos_maximos_por_cuatrimestre(cuatrimestre) + 1):
@@ -291,7 +288,9 @@ def encuestas_de_un_docente(request, docente_id, anno, cuatrimestre):
                                                       fecha_encuesta=fecha).cargas
                             )
                     for fecha in sorted(fechas, reverse=True)}
-    otros_datos = OtrosDatos.objects.get(docente=docente, anno=anno, cuatrimestre__contains=cuatrimestre)
+    otros_datos = OtrosDatos.objects.filter(docente=docente, anno=anno, cuatrimestre__contains=cuatrimestre) \
+                                    .order_by('-fecha_encuesta')
+
 
     return render(request, 'encuestas/encuestas_de_un_docente.html',
                   {'anno': anno, 'cuatrimestre': Cuatrimestres[cuatrimestre],
