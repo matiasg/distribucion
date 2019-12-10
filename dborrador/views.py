@@ -364,8 +364,8 @@ def hacer_distribucion(anno_cuat, tipo, intento_algoritmo):
 @login_required
 @permission_required('dborrador.add_asignacion')
 def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_manual):
-    logger.info('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s',
-                tipo, cuatrimestre, anno)
+    logger.info('comienzo una distribución para docentes tipo %s, cuatrimestre %s, año %s a partir de Intento(%d, %d)',
+                tipo, cuatrimestre, anno, intento_algoritmo, intento_manual)
 
     ##   Distribuimos a partir de I = Intento(a, m), generamos Intento(a+1, 0)
     ##   Lo que hacemos es:
@@ -379,10 +379,11 @@ def distribuir(request, anno, cuatrimestre, tipo, intento_algoritmo, intento_man
     with transaction.atomic():
         intento = Intento(intento_algoritmo, intento_manual)
 
-        IntentoRegistrado.objects.filter(intento__gt=intento.valor, anno=anno, cuatrimestre=cuatrimestre).delete()
+        borrados, _ = IntentoRegistrado.objects.filter(intento__gt=intento.valor, anno=anno, cuatrimestre=cuatrimestre).delete()
+        logger.info('Borré %d intentos', borrados)
 
         para_borrar = Asignacion.objects.filter(intentos__startswith__gt=intento.valor,
-                                                carga__turno__anno=anno, carga__turno__cuatrimestre=cuatrimestre)
+                                                turno__anno=anno, turno__cuatrimestre=cuatrimestre)
         logger.warning('Borro %d asignaciones', para_borrar.count())
         para_borrar.delete()
 
