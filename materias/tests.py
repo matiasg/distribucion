@@ -333,7 +333,6 @@ class TestPaginas(TestCase):
         botones_urls = {
             'turnos_docentes': 'materias/administrar_necesidades_docentes',
             'turnos_alumnos': 'materias/administrar_alumnos',
-            'cargas_docentes': 'materias/administrar_cargas_docentes',
             'administrar_docentes': 'materias/administrar_docentes',
             'exportar_informacion': 'materias/exportar_informacion',
             'cargas_docentes_publicadas': 'materias/administrar_cargas_publicadas',
@@ -455,46 +454,6 @@ class TestPaginas(TestCase):
         post[f'alumnos_{self.turno12.id}'] = 'x'
         with self.assertRaises(ValueError):
             self.client.post(url, post)
-
-    def test_administrar_cargas_docentes(self):
-        self.client.login(username='autorizado', password='1234')
-        self._agrega_docentes()
-        now = timezone.now()
-        cuatris = GrupoCuatrimestral.VPS
-        Carga.objects.create(docente=self.n, cargo=CargoDedicacion.TitExc.name,
-                             anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-        Carga.objects.create(docente=self.m, cargo=CargoDedicacion.TitExc.name,
-                             anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-        Carga.objects.create(docente=self.m, cargo=CargoDedicacion.Ay1Smx.name,
-                             anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-        PreferenciasDocente.objects.create(docente=self.n, turno=self.turno11,
-                                           tipo_docente=TipoDocentes.P.name,
-                                           peso=2, fecha_encuesta=now)
-        OtrosDatos.objects.create(docente=self.n, fecha_encuesta=now,
-                                  tipo_docente=TipoDocentes.P.name,
-                                  anno=self.anno, cuatrimestre=cuatris.name,
-                                  comentario='_esto deberia aparecer_')
-        CargasPedidas.objects.create(docente=self.n, fecha_encuesta=now,
-                                     tipo_docente=TipoDocentes.P.name,
-                                     anno=self.anno, cuatrimestre=self.cuatrimestre.name,
-                                     cargas=2)
-
-        # generamos una encuesta anterior con una carga. Se deben ver ambos comentarios.
-        # La cantidad de cargas pedidas es la última, 2, y por eso tiene que aparecer en "Con diferencias"
-        OtrosDatos.objects.create(docente=self.n, fecha_encuesta=now-datetime.timedelta(minutes=10),
-                                  tipo_docente=TipoDocentes.P.name,
-                                  anno=self.anno, cuatrimestre=cuatris.name,
-                                  comentario='_esto también deberia aparecer_')
-        CargasPedidas.objects.create(docente=self.n, fecha_encuesta=now-datetime.timedelta(minutes=10),
-                                     tipo_docente=TipoDocentes.P.name,
-                                     anno=self.anno, cuatrimestre=self.cuatrimestre.name,
-                                     cargas=2)
-
-        response = self.client.get(f'/materias/administrar_cargas_docentes/{self.anno}/{self.cuatrimestre.name}', follow=True)
-        self.assertContains(response, '>nemo X<')
-        self.assertContains(response, '_esto deberia aparecer_')
-        self.assertContains(response, '_esto también deberia aparecer_')
-        self.assertContains(response, '>mario Y<')
 
     def test_administrar_cargas_de_un_docente(self):
         self.client.login(username='autorizado', password='1234')
