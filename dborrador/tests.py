@@ -8,7 +8,7 @@ import re
 import datetime
 
 from dborrador.models import Preferencia, Asignacion, Intento, IntentoRegistrado
-from dborrador.views import hacer_distribucion, _cambiar_docente, NoTurno
+from dborrador.views import distribuir, hacer_distribucion, _cambiar_docente, NoTurno
 from materias.models import (Docente, Materia, Turno, Cuatrimestres, Cargos, Carga, CargoDedicacion,
                              TipoTurno, TipoMateria, AnnoCuatrimestre)
 from materias.misc import TipoDocentes, Mapeos
@@ -388,6 +388,25 @@ class TestDistribuir(TestCase):
         self.assertEqual(Asignacion.objects.count(), 2)
         turnos_asignados = {a.turno for a in Asignacion.objects.all()}
         self.assertEqual(turnos_asignados, {self.turno2, turno_otro_cuat})
+
+    def test_distribucion_automatica_borra_asignaciones(self):
+        now = timezone.now()
+        p1 = PreferenciasDocente.objects.create(docente=self.docente1, turno=self.turno2, peso=1,
+                                                tipo_docente=TipoDocentes.P.name,
+                                                fecha_encuesta=now)
+        p2 = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=3,
+                                                tipo_docente=TipoDocentes.P.name,
+                                                fecha_encuesta=now)
+        Preferencia.objects.create(preferencia=p1, peso_normalizado=1)
+        Preferencia.objects.create(preferencia=p2, peso_normalizado=1)
+        # primero distribuimos en Intento(1, 0) y tiene que haber dos asignaciones que empiezan en Intento(2, 0)
+        self.client.post(reverse('dborrador:distribuir', args=(self.ac.anno, self.ac.cuatrimestre, TipoDocentes.P.name, 1, 0)))
+        self.assertEqual(Asignacion.objects.count(), 2)
+        self.assertTrue(all(a.intentos.lower == Intento(2, 0).valor for a in Asignacion.objects.all()))
+        # ahora distribuimos en Intento(0, 0). Tiene que borrar las anteriores y agregar dos que empiezan en Intento(1, 0)
+        self.client.post(reverse('dborrador:distribuir', args=(self.ac.anno, self.ac.cuatrimestre, TipoDocentes.P.name, 0, 0)))
+        self.assertEqual(Asignacion.objects.count(), 2)
+        self.assertTrue(all(a.intentos.lower == Intento(1, 0).valor for a in Asignacion.objects.all()))
 
 
 class TestModel(TestCase):
