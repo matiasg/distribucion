@@ -16,8 +16,6 @@ urlpatterns = [
          views.administrar_necesidades_docentes, name='administrar_necesidades_docentes'),
     path('cargas_docentes_anuales/<int:anno>',
          views.cargas_docentes_anuales, name='cargas_docentes_anuales'),
-    path('administrar_cargas_docentes/<int:anno>/<str:cuatrimestre>',
-         views.administrar_cargas_docentes, name='administrar_cargas_docentes'),
     path('administrar_cargas_publicadas/<int:anno>/<str:cuatrimestre>',
          views.administrar_cargas_publicadas, name='administrar_cargas_publicadas'),
     path('cambiar_una_carga_publicada/<int:carga_id>',
