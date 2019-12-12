@@ -455,43 +455,6 @@ class TestPaginas(TestCase):
         with self.assertRaises(ValueError):
             self.client.post(url, post)
 
-    def test_administrar_cargas_de_un_docente(self):
-        self.client.login(username='autorizado', password='1234')
-        self._agrega_docentes()
-        self.n.cargos = [CargoDedicacion.TitExc.name, CargoDedicacion.Ay1Smx.name]
-        self.n.save()
-        c1 = Carga.objects.create(docente=self.n, cargo=CargoDedicacion.TitExc.name,
-                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-        c2 = Carga.objects.create(docente=self.n, cargo=CargoDedicacion.TitExc.name,
-                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-        now = timezone.now()
-        OtrosDatos.objects.create(docente=self.n, fecha_encuesta=now,
-                                  tipo_docente=TipoDocentes.P.name,
-                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-        CargasPedidas.objects.create(docente=self.n, fecha_encuesta=now,
-                                     tipo_docente=TipoDocentes.P.name,
-                                     anno=self.anno, cuatrimestre=self.cuatrimestre.name,
-                                     cargas=2)
-        cm = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.TitExc.name,
-                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-
-        url = f'/materias/administrar_cargas_un_docente/{self.anno}/{self.cuatrimestre.name}/{self.n.id}'
-        response = self.client.get(url, follow=True)
-        self.assertContains(response, 'cargo_TitExc')
-        self.assertContains(response, 'cargo_Ay1Smx')
-
-        response = self.client.post(f'/materias/administrar_cargas_un_docente/{self.anno}/{self.cuatrimestre.name}/{self.n.id}',
-                                    {'salvar': True, 'anno': self.anno, 'cuatrimestre': self.cuatrimestre.name,
-                                     'cargo_TitExc': 1, 'cargo_Ay1Smx': 1},
-                                    follow=True)
-        self.assertEquals(Carga.objects.filter(docente=self.n, cargo='TitExc').count(), 1)
-        self.assertEquals(Carga.objects.filter(docente=self.n, cargo='Ay1Smx').count(), 1)
-
-        url = f'/materias/administrar_cargas_un_docente/{self.anno}/{self.cuatrimestre.name}/{self.m.id}'
-        response = self.client.get(url, follow=True)
-        self.assertContains(response, 'no completó la encuesta')
-        self.assertContains(response, 'cargo_TitExc')
-
     def test_adminitrar_materia_requiere_login(self):
         url = reverse('materias:administrar_materia', args=(self.materia1.id, self.anno, self.cuatrimestre.name))
 
