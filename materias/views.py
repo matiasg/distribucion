@@ -153,8 +153,6 @@ def administrar(request):
         elif 'ver_materias' in request.POST:
             return HttpResponseRedirect(reverse('materias:por_anno_y_cuatrimestre',
                                                 args=(f'{anno}{Cuatrimestres[cuatrimestre].value}',)))
-        elif 'cargas_docentes' in request.POST:
-            return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
         elif 'cargas_docentes_anuales' in request.POST:
             return HttpResponseRedirect(reverse('materias:cargas_docentes_anuales', args=(anno,)))
         elif 'cargas_docentes_publicadas' in request.POST:
