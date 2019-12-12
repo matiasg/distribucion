@@ -387,51 +387,6 @@ def cargas_docentes_anuales(request, anno):
 
 @login_required
 @permission_required('dborrador.add_asignacion')
-def administrar_cargas_docentes(request, anno, cuatrimestre):
-    docentes_y_cargas_nuestras = {d: d.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre) for d in Docente.objects.all()}
-    # todos los docentes, con y sin cargas en este cuatrimestre
-    docentes = Docente.objects.all()
-    docentes_con_cargas = {d: cargas for d, cargas in docentes_y_cargas_nuestras.items()
-                           if cargas.count() > 0}
-    docentes_sin_cargas = sorted(set(docentes) - set(docentes_con_cargas),
-                                 key=lambda d: d.na_apellido)
-    # docentes con diferencias con la encuesta
-    docentes_y_cargas_encuesta = {cp.docente: cp.cargas
-                                  for cp in CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre) \
-                                                                 .order_by('-fecha_encuesta').all()}
-    # calculo diferencias contra encuesta
-    diferencias_encuesta = {d: (len(docentes_y_cargas_nuestras[d]),
-                                docentes_y_cargas_encuesta[d],
-                                [od.comentario
-                                 for od in OtrosDatos.objects.filter(anno=anno, cuatrimestre__contains=cuatrimestre, docente=d) \
-                                                             .order_by('-fecha_encuesta').all()]
-                                )
-                            for d in sorted(set(docentes_y_cargas_nuestras) & set(docentes_y_cargas_encuesta),
-                                            key=lambda d: strxfrm(d.apellido_nombre))
-                            if len(docentes_y_cargas_nuestras[d]) != docentes_y_cargas_encuesta[d]
-                            }
-
-    # calculo docentes que deberían haber completado encuesta y no completaron
-    docentes_sin_distribuir = {d: cargas.filter(turno__isnull=True)
-                               for d, cargas in docentes_y_cargas_nuestras.items()}
-    docentes_con_encuesta = {pref.docente
-                             for pref in PreferenciasDocente.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre)}
-    docentes_sin_encuesta = {d: cargas.count()
-                             for d, cargas in docentes_sin_distribuir.items()
-                             if cargas.count() > 0 and d not in docentes_con_encuesta}
-
-    context = {'anno': anno,
-               'cuatrimestre': Cuatrimestres[cuatrimestre],
-               'docentes_con_cargas': docentes_con_cargas,
-               'docentes_sin_cargas': docentes_sin_cargas,
-               'diferencias_encuesta': diferencias_encuesta,
-               'docentes_sin_encuesta': docentes_sin_encuesta,
-               }
-
-    return render(request, 'materias/administrar_cargas_docentes.html', context)
-
-@login_required
-@permission_required('dborrador.add_asignacion')
 def administrar_cargas_de_un_docente(request, anno, cuatrimestre, docente_id):
     docente = Docente.objects.get(pk=docente_id)
 
