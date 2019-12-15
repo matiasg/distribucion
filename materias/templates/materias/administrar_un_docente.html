@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
 
@@ -32,7 +33,7 @@
     {% csrf_token %}
 
     <div id="tabladoscolumnas">
-        <table>
+        <table id="cargas_docentes">
             {% for field in form %}
             <tr>
                 <td> {{ field.label_tag }} </td>
@@ -55,5 +56,22 @@
     {% endif %}
 
     </form>
+
+    <h3>Cargas durante el cuatrimestre</h3>
+    <table id="cargas_docentes">
+        <thead>
+            <tr>
+                <th>Turno</th>
+                <th>Cargo</th>
+            </tr>
+        </thead>
+        {% for carga in cargas.all %}
+        <tr>
+            <td> {{ carga.turno }} </td>
+            <td> {{ carga.cargo }} </td>
+        </tr>
+        {% endfor %}
+    </table>
+
 </body>
 
