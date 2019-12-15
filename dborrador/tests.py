@@ -175,15 +175,25 @@ class TestVerDistribucion(TestCase):
                                   carga=self.carga1, turno=self.turno1,
                                   cargo_que_ocupa=TipoDocentes.P.name)
         IntentoRegistrado.objects.create(intento=Intento(1, 0).valor, anno=self.anno, cuatrimestre=self.cuatrimestre.name)
-        response = self.client.get(reverse('dborrador:distribucion',
-                                           args=(self.anno, self.cuatrimestre.name, 1, 0)),
+        response = self.client.get(reverse('dborrador:distribucion', args=(self.anno, self.cuatrimestre.name, 1, 0)),
                                    follow=True)
         content = response.content.decode()
 
         self.assertContains(response, 'Docentes no distribuidos')
-        self.assertTrue(re.search((f'<a href="/dborrador/cambiar_docente/{self.anno}/{self.cuatrimestre.name}/1/0/{self.carga2.id}">'
+        self.assertTrue(re.search((f'<a href="/dborrador/cambiar_docente/{self.anno}/{self.cuatrimestre.name}/1/0/{self.carga2.id}".*>'
                                    f'\s*{self.docente2.nombre}'), content, flags=re.DOTALL),
                         'No figura un docente no distribuido')
+        # hay un docente sin preferencias
+        self.assertContains(response, 'class="sinencuesta"')
+        # le agrego preferencias y veo que no está más marcado como sinencuesta
+        now = timezone.now()
+        pd = PreferenciasDocente.objects.create(docente=self.docente2, turno=self.turno1, peso=1,
+                                                tipo_docente=TipoDocentes.P.name,
+                                                fecha_encuesta=now)
+        Preferencia.objects.create(preferencia=pd, peso_normalizado=1)
+        response = self.client.get(reverse('dborrador:distribucion', args=(self.anno, self.cuatrimestre.name, 1, 0)),
+                                   follow=True)
+        self.assertNotContains(response, 'class="sinencuesta"')
 
     def test_figuran_pedidos_de_docentes_no_distribuidos(self):
         Asignacion.objects.create(intentos=(Intento(1, 0).valor, Intento(2, 0).valor),

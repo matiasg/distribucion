@@ -81,6 +81,10 @@ div#selector_intento_manual.ui-slider {
   text-decoration: underline; 
 }
 
+.sinencuesta {
+  background: #f88;
+}
+
 td.datosdoc .cargas_fijas {
   background-color: #8f8;
 }

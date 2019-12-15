@@ -153,8 +153,6 @@ def administrar(request):
         elif 'ver_materias' in request.POST:
             return HttpResponseRedirect(reverse('materias:por_anno_y_cuatrimestre',
                                                 args=(f'{anno}{Cuatrimestres[cuatrimestre].value}',)))
-        elif 'cargas_docentes' in request.POST:
-            return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
         elif 'cargas_docentes_anuales' in request.POST:
             return HttpResponseRedirect(reverse('materias:cargas_docentes_anuales', args=(anno,)))
         elif 'cargas_docentes_publicadas' in request.POST:
@@ -383,109 +381,6 @@ def cargas_docentes_anuales(request, anno):
             'cuatrimestres': [Cuatrimestres.V, Cuatrimestres.P, Cuatrimestres.S],
         }
         return render(request, 'materias/cargas_docentes_anuales.html', context)
-
-
-@login_required
-@permission_required('dborrador.add_asignacion')
-def administrar_cargas_docentes(request, anno, cuatrimestre):
-    docentes_y_cargas_nuestras = {d: d.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre) for d in Docente.objects.all()}
-    # todos los docentes, con y sin cargas en este cuatrimestre
-    docentes = Docente.objects.all()
-    docentes_con_cargas = {d: cargas for d, cargas in docentes_y_cargas_nuestras.items()
-                           if cargas.count() > 0}
-    docentes_sin_cargas = sorted(set(docentes) - set(docentes_con_cargas),
-                                 key=lambda d: d.na_apellido)
-    # docentes con diferencias con la encuesta
-    docentes_y_cargas_encuesta = {cp.docente: cp.cargas
-                                  for cp in CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre) \
-                                                                 .order_by('-fecha_encuesta').all()}
-    # calculo diferencias contra encuesta
-    diferencias_encuesta = {d: (len(docentes_y_cargas_nuestras[d]),
-                                docentes_y_cargas_encuesta[d],
-                                [od.comentario
-                                 for od in OtrosDatos.objects.filter(anno=anno, cuatrimestre__contains=cuatrimestre, docente=d) \
-                                                             .order_by('-fecha_encuesta').all()]
-                                )
-                            for d in sorted(set(docentes_y_cargas_nuestras) & set(docentes_y_cargas_encuesta),
-                                            key=lambda d: strxfrm(d.apellido_nombre))
-                            if len(docentes_y_cargas_nuestras[d]) != docentes_y_cargas_encuesta[d]
-                            }
-
-    # calculo docentes que deberían haber completado encuesta y no completaron
-    docentes_sin_distribuir = {d: cargas.filter(turno__isnull=True)
-                               for d, cargas in docentes_y_cargas_nuestras.items()}
-    docentes_con_encuesta = {pref.docente
-                             for pref in PreferenciasDocente.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre)}
-    docentes_sin_encuesta = {d: cargas.count()
-                             for d, cargas in docentes_sin_distribuir.items()
-                             if cargas.count() > 0 and d not in docentes_con_encuesta}
-
-    context = {'anno': anno,
-               'cuatrimestre': Cuatrimestres[cuatrimestre],
-               'docentes_con_cargas': docentes_con_cargas,
-               'docentes_sin_cargas': docentes_sin_cargas,
-               'diferencias_encuesta': diferencias_encuesta,
-               'docentes_sin_encuesta': docentes_sin_encuesta,
-               }
-
-    return render(request, 'materias/administrar_cargas_docentes.html', context)
-
-@login_required
-@permission_required('dborrador.add_asignacion')
-def administrar_cargas_de_un_docente(request, anno, cuatrimestre, docente_id):
-    docente = Docente.objects.get(pk=docente_id)
-
-    if 'salvar' in request.POST:
-        for cargo_label in request.POST:
-            if cargo_label.startswith('cargo_'):
-                cargo = CargoDedicacion[cargo_label[-6:]]
-                cantidad_que_le_dejamos = int(request.POST[cargo_label])
-                cantidad_que_tiene = docente.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre, cargo=cargo.name).count()
-                logger.info('cargas %s', docente.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre, cargo=cargo))
-                logger.info('le dejamos %d, tiene %d', cantidad_que_le_dejamos, cantidad_que_tiene)
-
-                if cantidad_que_le_dejamos > cantidad_que_tiene:
-                    for i in range(cantidad_que_tiene, cantidad_que_le_dejamos):
-                        Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre, docente=docente, cargo=cargo.name)
-                        logger.debug('generé una carga para %s con cargo %s', docente, cargo)
-
-                elif cantidad_que_le_dejamos < cantidad_que_tiene:
-                    for i in range(cantidad_que_le_dejamos, cantidad_que_tiene):
-                        Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=docente, cargo=cargo.name).last().delete()
-                        logger.debug('borré una carga para %s con cargo %s', docente, cargo)
-
-                else:
-                    logger.debug('no cambié la cantidad de cargas de %s con cargo %s', docente, cargo)
-
-        return HttpResponseRedirect(reverse('materias:administrar_cargas_docentes', args=(anno, cuatrimestre)))
-
-    else:
-        try:
-            cargas_pedidas = CargasPedidas.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=docente) \
-                                                  .order_by('fecha_encuesta').last() \
-                                                  .cargas
-            completo_la_encuesta = True
-        except (CargasPedidas.DoesNotExist, AttributeError):
-            cargas_pedidas = 0
-            completo_la_encuesta = False
-        cargas = docente.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre)
-        cargas_por_tipo = dict(Counter(carga.cargo for carga in cargas))
-        # Corrección para el caso en que un docente no tiene cargas de un cargo.
-        # Esto pasa por ejemplo si hay diferencias entre docente.cargos y cargas.cargo
-        for cargo in docente.cargos:
-            if cargo not in cargas_por_tipo:
-                cargas_por_tipo[cargo] = 0
-
-        context = {
-            'anno': anno,
-            'cuatrimestre': cuatrimestre,
-            'docente': docente,
-            'cargas': cargas,
-            'cargas_pedidas': cargas_pedidas,
-            'cargas_por_tipo': cargas_por_tipo,
-            'completo_la_encuesta': completo_la_encuesta,
-        }
-        return render(request, 'materias/administrar_cargas_un_docente.html', context)
 
 
 @login_required

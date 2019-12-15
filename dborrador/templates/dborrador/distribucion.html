@@ -21,7 +21,9 @@ Distribución del cuat {{ cuatrimestre.value }}, {{ anno }}. Intento {{ intento_
                 <td> <ul> {% for carga, preferencias in info_tipo.sin_distribuir %}
                     <li>
                         <div class="tooltip">
-                            <a href="{{ cambiar_docente_url }}{{ carga.id }}"> {{ carga.docente }} </a>
+                            <a href="{{ cambiar_docente_url }}{{ carga.id }}" {% if not preferencias %}class="sinencuesta"{% endif %}>
+                                {{ carga.docente }}
+                            </a>
                             <span class="tooltiptext">
                                 <span class="titulo">Encuesta de {{ carga.docente }}:</span>
                                 <ul>
