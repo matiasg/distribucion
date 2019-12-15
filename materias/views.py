@@ -11,6 +11,7 @@ from locale import strxfrm
 from collections import Counter, namedtuple, defaultdict
 import re
 import logging
+import json
 logger = logging.getLogger(__name__)
 
 from .models import (Materia, AliasDeMateria, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
@@ -837,6 +838,9 @@ def administrar_docentes(request):
 
     context = {
         'docentes': _docentes_por_cargo(),
+        'lista': json.dumps(
+            [{'nombre': d.nombre, 'id': d.id}
+             for d in Docente.objects.order_by('na_nombre', 'na_apellido').all()])
     }
     return render(request, 'materias/administrar_docentes.html', context)
 
