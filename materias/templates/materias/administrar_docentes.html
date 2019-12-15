@@ -28,6 +28,10 @@
                 source: {
                     data: {{ lista|safe }}
                 },
+                cancelButton: true,
+                maxItem: false,
+                hint: true,
+                accent: true,
                 callback: {
                     onNavigateAfter: function (node, lis, a, item, query, event) {
                         if (~[38,40].indexOf(event.keyCode)) {
@@ -54,12 +58,16 @@
         })
     </script>
 
+    <div id="actuar">
+        <a href="{% url 'materias:administrar' %}#docentes">Volver a: administrar</a>
+    </div>
 
     <form>
         <div class="typeahead__container">
             <div class="typeahead__field">
                 <div class="typeahead__query">
                     <input class="js-typeahead"
+                           placeholder="Nombre y Apellido"
                            name="q"
                            autocomplete="off">
                 </div>
@@ -71,10 +79,6 @@
             </div>
         </div>
     </form>
-
-    <div id="actuar">
-        <a href="{% url 'materias:administrar' %}#docentes">Volver a: administrar</a>
-    </div>
 
     <form action="{% url 'materias:administrar_docentes' %}" method="post">
     {% csrf_token %}
