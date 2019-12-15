@@ -897,6 +897,18 @@ class TestPaginas(TestCase):
         self.assertEqual(self.n.telefono, '+0303456')
         self.assertEqual(self.n.email, 'nuevo@email.de')
 
+    def test_cambiar_una_carga_publicada(self):
+        self.client.login(username='autorizado', password='1234')
+        self._agrega_docentes()
+        carga = Carga.objects.create(docente=self.n, cargo=self.n.cargos[0],
+                                     anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                     turno=self.turno11)
+        context = {'salvar': True, 'turno': self.turno12.id}
+        response = self.client.post(reverse('materias:cambiar_una_carga_publicada', args=(f'{carga.id}',)),
+                                    context, follow=True)
+        carga.refresh_from_db()
+        self.assertEqual(carga.turno, self.turno12)
+        self.assertEqual(carga.docente, self.n)
 
 
 class TestCasosBorde(TestCase):
