@@ -3,6 +3,7 @@ $(document).ready(function(){
     $( ".borrar_turno_dialogo" ).dialog({ autoOpen: false });
     $( ".borrar_horario_dialogo" ).dialog({ autoOpen: false });
     $( ".cambiar_carga_publicada_dialogo" ).dialog({ autoOpen: false });
+    $( "#borrar_carga_dialogo" ).dialog({ autoOpen: false });
 });
 $(document).ready(function(){
     $( "#administrar_materia #borrar_turno" ).click(function() {
@@ -47,6 +48,20 @@ $(document).ready(function(){
                     text: 'Sí',
                     click: function() {
                         $("#cambio_de_carga").submit();
+                    },
+                    icons: { primary: 'ui-icon-check' }
+                }
+            ]
+        });
+    });
+    $( "#borrar_carga" ).click(function() {
+        $( "#borrar_carga_dialogo" ).dialog("open");
+        $( "#borrar_carga_dialogo" ).dialog({
+            buttons: [
+                {
+                    text: 'Sí',
+                    click: function() {
+                        $("#borrado_de_carga").submit();
                     },
                     icons: { primary: 'ui-icon-check' }
                 }

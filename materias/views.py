@@ -425,6 +425,11 @@ def cambiar_una_carga_publicada(request, carga_id):
         carga.save()
         return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas',
                                             args=(anno, cuatrimestre)))
+    elif 'borrar' in request.POST:
+        logger.info('Borro carga: %s', carga)
+        carga.delete()
+        return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas',
+                                            args=(anno, cuatrimestre)))
     else:
         cargo = carga.cargo
         turnos = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
