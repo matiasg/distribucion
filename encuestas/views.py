@@ -6,6 +6,7 @@ from django.forms import ValidationError
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required, login_required
 from django.core.validators import EmailValidator
+from django.core.mail import send_mail
 from django.db.models import Count, Q
 
 from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres, TipoDocentes, AnnoCuatrimestre
@@ -218,6 +219,21 @@ def _encuesta_con_mensaje_de_error(request, context, mensaje):
         return render(request, 'encuestas/encuesta.html', context)
 
 
+def mandar_mail(opciones, otros_datos, anno, cuatrimestres, tipo_docente):
+    subject = f'encuesta para {tipo_docente}, año {anno}, cuatrimestres: {cuatrimestres}'
+    mensaje = f'''
+    Opciones: {opciones}
+    Datos:
+        email:    {otros_datos.email}
+        teléfono: {otros_datos.telefono}
+    '''
+    from_email = 'distribuciones@dm.uba.ar'
+    try:
+        send_mail(subject, mensaje, from_email, [otros_datos.email])
+    except Exception as e:  # TODO: poner una excepción adecuada
+        logger.exception('no puedo mandar el mail')
+
+
 def encuesta(request, anno, cuatrimestres, tipo_docente):
     if not EncuestasHabilitadas.esta_habilitada(anno, cuatrimestres, tipo_docente, timezone.now()):
         return HttpResponse(status=403, content="La encuesta que querés llenar no está habilitada.")
@@ -248,6 +264,7 @@ def encuesta(request, anno, cuatrimestres, tipo_docente):
         return _encuesta_con_mensaje_de_error(request, context, "No me dijiste quién sos")
     try:
         opciones, otros_datos = checkear_y_salvar(request.POST, anno, cuatrimestres, tipo_docente)
+        mandar_mail(opciones, otros_datos, anno, cuatrimestres, tipo_docente)
         return render(request,
                       'encuestas/final.html',
                       context={'opciones': opciones, 'docente': docente,

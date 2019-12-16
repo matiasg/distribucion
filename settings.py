@@ -23,6 +23,12 @@ SECURE_SSL_REDIRECT = False
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
+EMAIL_USE_TLS = False
+EMAIL_HOST = 'smtp.dm.uba.ar'
+EMAIL_PORT = 25
+EMAIL_HOST_USER = 'distribucion@dm.uba.ar'
+EMAIL_HOST_PASSWORD = ''
+
 LOGIN_URL = '/admin/login'
 ALLOWED_HOSTS = ['*']
 
