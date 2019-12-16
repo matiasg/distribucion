@@ -733,6 +733,23 @@ class TestPaginas(TestCase):
                           })
         n.refresh_from_db()
         self.assertEqual(n.na_apellido, 'nuevo apellido')
+        # aprieto botón de agregar una carga
+        session = self.client.session
+        session['anno'] = self.anno
+        session['cuatrimestre'] = self.cuatrimestre.name
+        session.save()
+        response = self.client.post(reverse('materias:administrar_un_docente', args=(n.id,)),
+                                    {'agregar_carga': True}, follow=True)
+        self.assertEqual(Carga.objects.filter(docente=n).count(), 0)
+        self.assertContains(response, 'Agregar una carga')
+        response = self.client.post(reverse('materias:administrar_un_docente', args=(n.id,)),
+                                    {'turno': self.turno13.id, 'cargo': CargoDedicacion.JTPPar.name,
+                                     'agregar_la_carga': True},
+                                    follow=True)
+        self.assertEqual(Carga.objects.filter(docente=n).count(), 1)
+        carga = Carga.objects.get(docente=n)
+        self.assertEqual(carga.turno, self.turno13)
+
 
     def test_agregar_y_modificar_materias(self):
         # miramos que modificar materias tiene links a todas las materias
