@@ -66,6 +66,13 @@ li input:hover {
   color: white;
 }
 
+.actuar::-moz-focus-inner,
+#actuar::-moz-focus-inner,
+input.actuar::-moz-focus-inner,
+li input::-moz-focus-inner {
+    border: 0;
+}
+
 #actuar a,
 a #actuar,
 a.actuar,

@@ -3,11 +3,14 @@
 <link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'materias/horarios.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'materias/jquery.typeahead.min.css' %}">
+
 
 <link rel="stylesheet" type="text/css" href="{% static 'dborrador/jquery-ui.min.css' %}">
 <script src="{% static 'dborrador/jquery-1.12.4.min.js' %}"></script>
 <script src="{% static 'dborrador/jquery-ui.min.js' %}"></script>
 <script src="{% static 'materias/scripts.js' %}"></script>
+<script src="{% static 'materias/jquery.typeahead.min.js' %}"></script>
 
 <head>
     <h2>
@@ -16,9 +19,66 @@
 </head>
 <body>
 
+    <script>
+        $(function() {
+            var laurl = "{% url 'materias:administrar_un_docente' 314159265 %}";
+            $('.js-typeahead').typeahead({
+                order: "asc",
+                display: ["nombre"],
+                source: {
+                    data: {{ lista|safe }}
+                },
+                cancelButton: true,
+                maxItem: false,
+                hint: true,
+                accent: true,
+                callback: {
+                    onNavigateAfter: function (node, lis, a, item, query, event) {
+                        if (~[38,40].indexOf(event.keyCode)) {
+                            var resultList = node.closest("form").find("ul.typeahead__list"),
+                                activeLi = lis.filter("li.active"),
+                                offsetTop = activeLi[0] && activeLi[0].offsetTop - (resultList.height() / 2) || 0;
+                            resultList.scrollTop(offsetTop);
+                        }
+                    },
+                    onClickAfter: function (node, a, item, event) {
+                        event.preventDefault();
+                        window.location = laurl.replace("314159265", item.id)
+                    },
+                    onMouseEnter: function (node, a, item, event) {
+                        if (item.group === "country") {
+                            $(a).append('<span class="flag-chart flag-' + item.display.replace(' ', '-').toLowerCase() + '"></span>')
+                        }
+                    },
+                    onMouseLeave: function (node, a, item, event) {
+                        $(a).find('.flag-chart').remove();
+                    }
+                }
+            })
+        })
+    </script>
+
     <div id="actuar">
         <a href="{% url 'materias:administrar' %}#docentes">Volver a: administrar</a>
     </div>
+
+    <form>
+        <div class="typeahead__container">
+            <div class="typeahead__field">
+                <div class="typeahead__query">
+                    <input class="js-typeahead"
+                           placeholder="Nombre y Apellido"
+                           name="q"
+                           autocomplete="off">
+                </div>
+                <div class="typeahead__button">
+                    <button type="submit">
+                        <span class="typeahead__search-icon"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
 
     <form action="{% url 'materias:administrar_docentes' %}" method="post">
     {% csrf_token %}

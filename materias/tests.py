@@ -558,6 +558,25 @@ class TestPaginas(TestCase):
         self.assertContains(response, reverse('materias:cambiar_una_carga_publicada', args=(cm.id,)))
         self.assertContains(response, CargoDedicacion[cn.cargo].value)
 
+    def test_borrar_cargas_publicadas(self):
+        self._agrega_docentes()
+        cn = Carga.objects.create(docente=self.n, cargo=CargoDedicacion.TitExc.name,
+                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name,
+                                  turno=self.turno12)
+        cm = Carga.objects.create(docente=self.m, cargo=CargoDedicacion.JTPPar.name,
+                                  anno=self.anno, cuatrimestre=self.cuatrimestre.name, turno=self.turno11)
+        self.client.login(username='autorizado', password='1234')
+        url = reverse('materias:cambiar_una_carga_publicada', args=(cm.id,))
+        response = self.client.post(url, follow=True)
+        # veo que aparece la carga y el docente y un botón para borrar
+        self.assertContains(response, self.m.nombre)
+        self.assertContains(response, str(cm.turno))
+        self.assertContains(response, 'name="borrar_carga"')
+        # ahora la borro. Veo que borra una y no otra
+        response = self.client.post(url, {'borrar': True}, follow=True)
+        self.assertEqual(Carga.objects.filter(docente=self.m).count(), 0)
+        self.assertEqual(Carga.objects.filter(docente=self.n).count(), 1)
+
     def test_exportar_materias_a_excel(self):
         self.client.login(username='autorizado', password='1234')
         response = self.client.post(reverse('materias:exportar_informacion', args=(self.anno, self.cuatrimestre.name)),
@@ -714,6 +733,23 @@ class TestPaginas(TestCase):
                           })
         n.refresh_from_db()
         self.assertEqual(n.na_apellido, 'nuevo apellido')
+        # aprieto botón de agregar una carga
+        session = self.client.session
+        session['anno'] = self.anno
+        session['cuatrimestre'] = self.cuatrimestre.name
+        session.save()
+        response = self.client.post(reverse('materias:administrar_un_docente', args=(n.id,)),
+                                    {'agregar_carga': True}, follow=True)
+        self.assertEqual(Carga.objects.filter(docente=n).count(), 0)
+        self.assertContains(response, 'Agregar una carga')
+        response = self.client.post(reverse('materias:administrar_un_docente', args=(n.id,)),
+                                    {'turno': self.turno13.id, 'cargo': CargoDedicacion.JTPPar.name,
+                                     'agregar_la_carga': True},
+                                    follow=True)
+        self.assertEqual(Carga.objects.filter(docente=n).count(), 1)
+        carga = Carga.objects.get(docente=n)
+        self.assertEqual(carga.turno, self.turno13)
+
 
     def test_agregar_y_modificar_materias(self):
         # miramos que modificar materias tiene links a todas las materias

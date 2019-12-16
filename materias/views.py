@@ -11,6 +11,7 @@ from locale import strxfrm
 from collections import Counter, namedtuple, defaultdict
 import re
 import logging
+import json
 logger = logging.getLogger(__name__)
 
 from .models import (Materia, AliasDeMateria, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
@@ -422,6 +423,11 @@ def cambiar_una_carga_publicada(request, carga_id):
             logger.info('Le cambio la carga a %s de %s a %s', carga.docente, carga.turno, nuevo_turno)
             carga.turno = nuevo_turno
         carga.save()
+        return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas',
+                                            args=(anno, cuatrimestre)))
+    elif 'borrar' in request.POST:
+        logger.info('Borro carga: %s', carga)
+        carga.delete()
         return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas',
                                             args=(anno, cuatrimestre)))
     else:
@@ -837,6 +843,9 @@ def administrar_docentes(request):
 
     context = {
         'docentes': _docentes_por_cargo(),
+        'lista': json.dumps(
+            [{'nombre': d.nombre, 'id': d.id}
+             for d in Docente.objects.order_by('na_nombre', 'na_apellido').all()])
     }
     return render(request, 'materias/administrar_docentes.html', context)
 
@@ -863,10 +872,10 @@ def administrar_un_docente(request, docente_id):
     docente = Docente.objects.get(pk=docente_id)
     cargos = docente.cargos
     cargo = Mapeos.tipos_de_cargo(cargos[0]).name if cargos else SIN_CARGO[0]
-    context = {
-        'docente': docente,
-        'cargo': cargo,
-    }
+    anno = request.session.get('anno', None)
+    cuatrimestre = request.session.get('cuatrimestre', None)
+    cargas = docente.carga_set.filter(anno=anno, cuatrimestre=cuatrimestre)
+    form = None
     if request.method == 'POST':
         if 'salvar' in request.POST:
             form = DocenteForm(request.POST, instance=docente)
@@ -879,7 +888,29 @@ def administrar_un_docente(request, docente_id):
             borrado = docente.delete()
             logger.warning('Borré un docente: %s. Todo lo borrado es %s', docente, borrado)
             return HttpResponseRedirect(reverse('materias:administrar_docentes'))
-    else:
+        elif 'agregar_carga' in request.POST:
+            turnos = sorted(Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre))
+            context = {
+                'docente': docente,
+                'anno': anno,
+                'cuatrimestre': Cuatrimestres[cuatrimestre],
+                'turnos': turnos,
+                'cargos': reversed(CargoDedicacion),
+            }
+            return render(request, 'materias/agregar_carga_a_docente.html', context)
+        elif 'agregar_la_carga' in request.POST:
+            cargo_de_carga = CargoDedicacion[request.POST['cargo']]
+            turno = Turno.objects.get(pk=int(request.POST['turno']))
+            carga = Carga.objects.create(docente=docente, cargo=cargo_de_carga.name,
+                                         anno=anno, cuatrimestre=cuatrimestre, turno=turno)
+            form = DocenteForm(instance=docente)
+
+    if not form:
         form = DocenteForm(instance=docente)
+    context = {
+        'docente': docente,
+        'cargo': cargo,
+        'cargas': cargas,
+    }
     context['form'] = form
     return render(request, 'materias/administrar_un_docente.html', context)
