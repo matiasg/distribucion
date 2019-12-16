@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+
+<head>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'materias/general.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'materias/administrar.css' %}">
+</head>
+
+<body>
+    <h1>Agregar una carga a {{ docente.nombre }} para {{ anno }}, cuatrimestre {{ cuatrimestre.value }}</h1>
+
+    <div id="actuar">
+        <a href="{% url 'materias:administrar_un_docente' docente.id %}">Volver a {{ docente.nombre }}</a>
+    </div>
+
+
+    <form action="{% url 'materias:administrar_un_docente' docente.id %}" method="post">
+    {% csrf_token %}
+
+    <div id="tabladoscolumnas">
+        <table>
+            <tr>
+                <td>Turno:</td>
+                <td>
+                    <select name="turno">
+                        {% for turno in turnos %}
+                        <option value="{{ turno.id }}">{{ turno.str_corto }}, {{ turno.horarios_info.diayhora }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>Cargo:</td>
+                <td>
+                    <select name="cargo">
+                        {% for cargo in cargos %}
+                        <option value="{{ cargo.name }}">{{ cargo.value }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <input id="actuar" type="submit" name="agregar_la_carga" value="agregar carga">
+    </form>
+
+</body>
