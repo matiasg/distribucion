@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import permission_required, login_required
 from django.core.validators import EmailValidator
 from django.core.mail import send_mail
 from django.db.models import Count, Q
+from django.conf import settings
 
 from materias.models import Turno, Docente, Cargos, CargoDedicacion, TipoTurno, Cuatrimestres, TipoDocentes, AnnoCuatrimestre
 from materias.misc import Mapeos
@@ -227,9 +228,8 @@ def mandar_mail(opciones, otros_datos, anno, cuatrimestres, tipo_docente):
         email:    {otros_datos.email}
         teléfono: {otros_datos.telefono}
     '''
-    from_email = 'distribuciones@dm.uba.ar'
     try:
-        send_mail(subject, mensaje, from_email, [otros_datos.email])
+        send_mail(subject, mensaje, settings.EMAIL_HOST_USER, [otros_datos.email])
     except Exception as e:  # TODO: poner una excepción adecuada
         logger.exception('no puedo mandar el mail')
 
