@@ -135,12 +135,14 @@ def checkear_y_salvar(datos, anno, cuatrimestres, tipo_docente):
 
     #  PreferenciasDocente
     opciones = {}
+    pedidas = {}
     for cuatrimestre in cuatrimestres:
         # CargasPedidas
         cargas = int(datos[f'cargas{cuatrimestre}'])
         cargas_pedidas = CargasPedidas.objects.create(docente=docente, anno=anno, cuatrimestre=cuatrimestre,
                                                       tipo_docente=tipo_docente,
                                                       fecha_encuesta=fecha_encuesta, cargas=cargas)
+        pedidas[Cuatrimestres[cuatrimestre]] = cargas
 
         opciones_cuat = []
         for opcion in range(1, _turnos_maximos_por_cuatrimestre(cuatrimestre) + 1):
@@ -158,7 +160,7 @@ def checkear_y_salvar(datos, anno, cuatrimestres, tipo_docente):
                             docente, turno, peso, fecha_encuesta)
                 opciones_cuat.append(pref)
         opciones[Cuatrimestres[cuatrimestre]] = opciones_cuat
-    return opciones, otros_datos
+    return opciones, otros_datos, pedidas
 
 
 DocenteParaEncuesta = namedtuple('DocenteParaEncuesta', ['id', 'nombre'])
@@ -220,14 +222,21 @@ def _encuesta_con_mensaje_de_error(request, context, mensaje):
         return render(request, 'encuestas/encuesta.html', context)
 
 
-def mandar_mail(opciones, otros_datos, anno, cuatrimestres, tipo_docente):
+def mandar_mail(opciones, otros_datos, cargas_pedidas, anno, cuatrimestres, tipo_docente):
     subject = f'encuesta para {tipo_docente}, año {anno}, cuatrimestres: {cuatrimestres}'
-    mensaje = f'''
-    Opciones: {opciones}
-    Datos:
-        email:    {otros_datos.email}
-        teléfono: {otros_datos.telefono}
-    '''
+    mensae = ''
+    for cuatrimestre, lista in opciones.items():
+        mensae += f'\n\nCuatrimestre: {cuatrimestre.value}'
+        mensae += f'\n  Turnos que quiere cubrir: {cargas_pedidas[cuatrimestre]}'
+        for preferencia in lista:
+            mensae += f'\n\n    Turno: {preferencia.turno}'
+            mensae +=   f'\n    Peso:  {preferencia.peso}'
+
+    mensaje += f'\n\nComentarios:\n{otros_datos.comentario}'
+    mensaje += f'\n\nDatos:'
+    mensaje += f'\n  email:    {otros_datos.email}'
+    mensaje += f'\n  teléfono: {otros_datos.telefono}'
+
     try:
         send_mail(subject, mensaje, settings.EMAIL_HOST_USER, [otros_datos.email])
     except Exception as e:  # TODO: poner una excepción adecuada
@@ -263,8 +272,10 @@ def encuesta(request, anno, cuatrimestres, tipo_docente):
     except Docente.DoesNotExist:
         return _encuesta_con_mensaje_de_error(request, context, "No me dijiste quién sos")
     try:
-        opciones, otros_datos = checkear_y_salvar(request.POST, anno, cuatrimestres, tipo_docente)
-        mandar_mail(opciones, otros_datos, anno, cuatrimestres, tipo_docente)
+        opciones, otros_datos, cargas_pedidas = checkear_y_salvar(request.POST,
+                                                                  anno, cuatrimestres,
+                                                                  tipo_docente)
+        mandar_mail(opciones, otros_datos, cargas_pedidas, anno, cuatrimestres, tipo_docente)
         return render(request,
                       'encuestas/final.html',
                       context={'opciones': opciones, 'docente': docente,
