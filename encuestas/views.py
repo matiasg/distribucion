@@ -224,13 +224,14 @@ def _encuesta_con_mensaje_de_error(request, context, mensaje):
 
 def mandar_mail(opciones, otros_datos, cargas_pedidas, anno, cuatrimestres, tipo_docente):
     subject = f'encuesta para {tipo_docente}, año {anno}, cuatrimestres: {cuatrimestres}'
-    mensae = ''
+
+    mensaje = ''
     for cuatrimestre, lista in opciones.items():
-        mensae += f'\n\nCuatrimestre: {cuatrimestre.value}'
-        mensae += f'\n  Turnos que quiere cubrir: {cargas_pedidas[cuatrimestre]}'
+        mensaje += f'\n\nCuatrimestre: {cuatrimestre.value}'
+        mensaje += f'\n  Turnos que quiere cubrir: {cargas_pedidas[cuatrimestre]}'
         for preferencia in lista:
-            mensae += f'\n\n    Turno: {preferencia.turno}'
-            mensae +=   f'\n    Peso:  {preferencia.peso}'
+            mensaje += f'\n\n    Turno: {preferencia.turno}'
+            mensaje +=   f'\n    Peso:  {preferencia.peso}'
 
     mensaje += f'\n\nComentarios:\n{otros_datos.comentario}'
     mensaje += f'\n\nDatos:'
