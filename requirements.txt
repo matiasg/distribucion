@@ -1,4 +1,4 @@
-Django==2.1.15
+Django==2.2.10
 django-extensions
 bs4
 coloredlogs
