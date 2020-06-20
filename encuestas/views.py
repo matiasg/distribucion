@@ -169,11 +169,11 @@ OpcionesParaEncuesta = namedtuple('OpcionesParaEncuesta', ['numero', 'lista_cort
 OpcionesPorCuatrimestre = namedtuple('OpcionesPorCuatrimestre', ['opciones', 'turnos'])
 
 
-def _generar_docentes(anno, tipo_docente):
+def _generar_docentes(anno, cuatrimestres, tipo_docente):
     tipo = TipoDocentes[tipo_docente]
     docentes = [DocenteParaEncuesta(-1, '')]
     docentes += [DocenteParaEncuesta(docente.id, docente.apellido_nombre)
-                 for docente in sorted(Mapeos.docentes_de_tipo(tipo, anno),
+                 for docente in sorted(Mapeos.docentes_de_tipo(tipo, anno, cuatrimestres),
                                        key=lambda d: d.apellido_nombre)]
     return docentes
 
@@ -252,7 +252,7 @@ def encuesta(request, anno, cuatrimestres, tipo_docente):
                                  for cuatri in cuatrimestres}
 
     context = {
-        'docentes': _generar_docentes(anno, tipo_docente),
+        'docentes': _generar_docentes(anno, cuatrimestres, tipo_docente),
         'opciones_por_cuatrimestre': opciones_por_cuatrimestre,
         'anno': anno,
         'cuatrimestres': cuatrimestres,

@@ -77,10 +77,10 @@ class Mapeos:
         return el_mapa[cargodedicacion[:3]]
 
     @staticmethod
-    def docentes_de_tipo(tipo, anno):
+    def docentes_de_tipo(tipo, anno, cuatrimestres='VPS'):
         '''TipoDocentes -> anno -> [docente]'''
         cardeds = Mapeos.cargos_de_tipos(tipo)
-        return {carga.docente for carga in Carga.objects.filter(cargo__in=cardeds, anno=anno)}
+        return {carga.docente for carga in Carga.objects.filter(cargo__in=cardeds, anno=anno, cuatrimestre__in=cuatrimestres)}
 
     @staticmethod
     def docentes_y_cargas(tipo, ac):
