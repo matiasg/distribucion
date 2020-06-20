@@ -1,8 +1,8 @@
-Django==2.1.15
+Django==2.2.13
 django-extensions
 bs4
 coloredlogs
 psycopg2-binary
-django-simple-history==2.7.2
+django-simple-history==2.10.0
 xlwt
 gunicorn
