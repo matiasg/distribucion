@@ -131,6 +131,18 @@ class TestEncuesta(TestCase):
         response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.S.name, TipoDocentes.J.name)))
         self.assertNotContains(response, self.turno.materia.nombre)
 
+    def test_docentes_con_carga_en_otros_cuatrimestres(self):
+        now = timezone.now()
+        for docente, cuatri in (('juan', Cuatrimestres.P), ('maria', Cuatrimestres.S)):
+            d = Docente.objects.create(na_nombre=f'{docente}', na_apellido='X', email='mail@nada.org', telefono='1234',
+                                   cargos=[CargoDedicacion.JTPSmx.name])
+            Carga.objects.create(docente=d, cargo=CargoDedicacion.JTPSmx.name, anno=self.anno, cuatrimestre=cuatri.name)
+
+        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.P.name, TipoDocentes.J.name)))
+        # la encuesta es del primer cuatrimestre. Tiene que tener a juan en el desplegable y no a maria
+        self.assertContains(response, 'juan')
+        self.assertNotContains(response, 'maria')
+
     def test_turnos_otros_annos(self):
         now = timezone.now()
         EncuestasHabilitadas.objects.create(anno=self.anno+1, cuatrimestres=Cuatrimestres.P.name,
