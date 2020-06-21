@@ -1,6 +1,7 @@
 {% extends "dborrador/base.html" %}
 
 {% load static %}
+{% load dborrador_tags %}
 
 {% block subtitulo %}
 Cambiar a {{ carga.docente }} de turno
@@ -52,7 +53,7 @@ Cambiar a {{ carga.docente }} de turno
             <p>
                 <div class="titulo">Comentarios</div>
                 <ul>
-                    {% for od in carga.docente.otrosdatos_set.all %}
+                    {% for od in carga.docente.otrosdatos_set|de_este_anno:anno|de_este_cuatrimestre:cuatrimestre.name %}
                     <li>
                         <div class="{% if od.tipo_docente == tipo_docente %}corresponde{% else %}nocorresponde{% endif %}">
                             {{ od.fecha_encuesta }}
