@@ -13,3 +13,11 @@ def preferencias_docentes(docente, preferencias):
 @register.filter(name='tipo_docente_largo')
 def preferencias_docentes(tipo):
     return TipoDocentes[tipo].value
+
+@register.filter(name='de_este_anno')
+def de_este_anno(queryset, anno):
+    return queryset.filter(anno=anno)
+
+@register.filter(name='de_este_cuatrimestre')
+def de_este_cuatrimestre(queryset, cuatrimestre):
+    return queryset.filter(cuatrimestre__contains=cuatrimestre)
