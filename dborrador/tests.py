@@ -296,6 +296,21 @@ class TestDistribuir(TestCase):
         for asignacion in Asignacion.objects.all():
             self.assertEqual(asignacion.intentos, NumericRange(Intento.de_algoritmo(1).valor, Intento.de_algoritmo(2).valor))
 
+    def test_distribuye_otro_tipo(self):
+        # self.docente1 tiene cargo de Prof y de JTP. Tiene una preferencia por turno3 como Prof.
+        # Se distribuyen JTP y no debería contar su preferencia.
+        now = timezone.now()
+        turno3 = Turno.objects.create(materia=self.materia, anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre,
+                                      numero=2, tipo=TipoTurno.A.name,
+                                      necesidad_prof=1, necesidad_jtp=1, necesidad_ay1=0, necesidad_ay2=0)
+        carga = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.JTPPar.name,
+                                     anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre)
+        p = PreferenciasDocente.objects.create(docente=self.docente1, turno=turno3, peso=1,
+                                               tipo_docente=TipoDocentes.P.name, fecha_encuesta=now)
+        Preferencia.objects.create(preferencia=p, peso_normalizado=1)
+        hacer_distribucion(self.ac, TipoDocentes.J, 1)
+        self.assertEqual(Asignacion.objects.count(), 0)
+
     def test_cambiar_docente(self):
         url = reverse('dborrador:distribucion', args=(self.ac.anno, self.ac.cuatrimestre, 0, 0))
         response = self.client.get(url, follow=True)
