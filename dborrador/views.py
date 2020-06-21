@@ -319,7 +319,7 @@ def hacer_distribucion(anno_cuat, tipo, intento_algoritmo):
 
 
     # docentes a distribuir
-    preferencias = Preferencia.objects.all()
+    preferencias = Preferencia.objects.filter(preferencia__tipo_docente=tipo.name).all()
     pesos = []
     for carga in todavia_sin_distribuir:
         doc_pref = preferencias.filter(preferencia__docente=carga.docente)
