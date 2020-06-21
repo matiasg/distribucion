@@ -174,7 +174,7 @@ def _generar_docentes(anno, cuatrimestres, tipo_docente):
     docentes = [DocenteParaEncuesta(-1, '')]
     docentes += [DocenteParaEncuesta(docente.id, docente.apellido_nombre)
                  for docente in sorted(Mapeos.docentes_de_tipo(tipo, anno, cuatrimestres),
-                                       key=lambda d: d.apellido_nombre)]
+                                       key=lambda d: strxfrm(d.apellido_nombre))]
     return docentes
 
 
