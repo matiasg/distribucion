@@ -180,8 +180,8 @@ class TestVerDistribucion(TestCase):
         content = response.content.decode()
 
         self.assertContains(response, 'Docentes no distribuidos')
-        self.assertTrue(re.search((f'<a href="/dborrador/cambiar_docente/{self.anno}/{self.cuatrimestre.name}/1/0/{self.carga2.id}".*>'
-                                   f'\s*{self.docente2.nombre}'), content, flags=re.DOTALL),
+        self.assertTrue(re.search((rf'<a href="/dborrador/cambiar_docente/{self.anno}/{self.cuatrimestre.name}/1/0/{self.carga2.id}".*>'
+                                   rf'\s*{self.docente2.nombre}'), content, flags=re.DOTALL),
                         'No figura un docente no distribuido')
         # hay un docente sin preferencias
         self.assertContains(response, 'class="sinencuesta"')
