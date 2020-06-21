@@ -180,8 +180,8 @@ class TestVerDistribucion(TestCase):
         content = response.content.decode()
 
         self.assertContains(response, 'Docentes no distribuidos')
-        self.assertTrue(re.search((f'<a href="/dborrador/cambiar_docente/{self.anno}/{self.cuatrimestre.name}/1/0/{self.carga2.id}".*>'
-                                   f'\s*{self.docente2.nombre}'), content, flags=re.DOTALL),
+        self.assertTrue(re.search((rf'<a href="/dborrador/cambiar_docente/{self.anno}/{self.cuatrimestre.name}/1/0/{self.carga2.id}".*>'
+                                   rf'\s*{self.docente2.nombre}'), content, flags=re.DOTALL),
                         'No figura un docente no distribuido')
         # hay un docente sin preferencias
         self.assertContains(response, 'class="sinencuesta"')
@@ -214,9 +214,9 @@ class TestVerDistribucion(TestCase):
                                            args=(self.anno, self.cuatrimestre.name, 1, 0)),
                                    follow=True)
         content = response.content.decode()
-        self.assertTrue(re.search((f'Encuesta de jose\s*:'
-                                   f'(<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*'
-                                   f'{self.materia.nombre}'),
+        self.assertTrue(re.search((rf'Encuesta de jose\s*:'
+                                   rf'(<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*'
+                                   rf'{self.materia.nombre}'),
                                   content, flags=re.DOTALL),
                         'No figuran las preferencias de un docente no distribuido')
 
@@ -230,9 +230,9 @@ class TestVerDistribucion(TestCase):
                                    follow=True)
 
         content = response.content.decode()
-        self.assertTrue(re.search(('<div class="tooltip">Teórico-Práctica 1'
-                                   '(Docentes que lo pidieron:|<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*'
-                                   'Profesor:\s*jose'),
+        self.assertTrue(re.search((r'<div class="tooltip">Teórico-Práctica 1'
+                                   r'(Docentes que lo pidieron:|<span[^>]*>|</span>|\s|<span[^>]*>[^>]*</span>|<ul>|<li>)*'
+                                   r'Profesor:\s*jose'),
                                   content, flags=re.DOTALL),
                         'No figuran los docentes que prefieren un turno sin docentes')
 
@@ -250,7 +250,7 @@ class TestVerDistribucion(TestCase):
                                    follow=True)
         self.assertContains(response, 'intento 1 : 0')
         self.assertContains(response, self.materia.nombre.upper())
-        self.assertTrue(re.search(f'{TipoDocentes.P.value}:\s*{self.carga1.docente.nombre}',
+        self.assertTrue(re.search(rf'{TipoDocentes.P.value}:\s*{self.carga1.docente.nombre}',
                                   response.content.decode(), flags=re.DOTALL),
                         'La página de espiar distribución no contiene una materia')
 
@@ -296,6 +296,21 @@ class TestDistribuir(TestCase):
         for asignacion in Asignacion.objects.all():
             self.assertEqual(asignacion.intentos, NumericRange(Intento.de_algoritmo(1).valor, Intento.de_algoritmo(2).valor))
 
+    def test_distribuye_otro_tipo(self):
+        # self.docente1 tiene cargo de Prof y de JTP. Tiene una preferencia por turno3 como Prof.
+        # Se distribuyen JTP y no debería contar su preferencia.
+        now = timezone.now()
+        turno3 = Turno.objects.create(materia=self.materia, anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre,
+                                      numero=2, tipo=TipoTurno.A.name,
+                                      necesidad_prof=1, necesidad_jtp=1, necesidad_ay1=0, necesidad_ay2=0)
+        carga = Carga.objects.create(docente=self.docente1, cargo=CargoDedicacion.JTPPar.name,
+                                     anno=self.ac.anno, cuatrimestre=self.ac.cuatrimestre)
+        p = PreferenciasDocente.objects.create(docente=self.docente1, turno=turno3, peso=1,
+                                               tipo_docente=TipoDocentes.P.name, fecha_encuesta=now)
+        Preferencia.objects.create(preferencia=p, peso_normalizado=1)
+        hacer_distribucion(self.ac, TipoDocentes.J, 1)
+        self.assertEqual(Asignacion.objects.count(), 0)
+
     def test_cambiar_docente(self):
         url = reverse('dborrador:distribucion', args=(self.ac.anno, self.ac.cuatrimestre, 0, 0))
         response = self.client.get(url, follow=True)
@@ -305,7 +320,7 @@ class TestDistribuir(TestCase):
         # el formulario apunta a la misma página y hay turnos en el select
         response = self.client.get(cambiar_url, follow=True)
         self.assertContains(response, cambiar_url)
-        link = f'<option value="{self.turno1.id}"\s*>\s*{self.turno1.str_corto()}[,\s]*</option>'
+        link = rf'<option value="{self.turno1.id}"\s*>\s*{self.turno1.str_corto()}[,\s]*</option>'
         self.assertTrue(re.search(link, response.content.decode()))
         # con post se agrega la asignación
         self.client.post(cambiar_url,
