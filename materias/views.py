@@ -176,7 +176,7 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url, seccion=
                     objetos = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
                 elif  modelo == Horario:
                     objetos = Horario.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre)
-                logger.info('modifico %d objetos tipo %s', objetos.count(), modelo.__class__.__name__)
+                logger.info('modifico %d objetos tipo %s', objetos.count(), modelo.__name__)
 
                 for objeto in objetos:
                     for page_field, (field, _type) in modelo_key_to_field.items():
