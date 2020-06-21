@@ -256,7 +256,8 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
                                        key=lambda c: c.docente.nombre)
                           for tipo in TipoDocentes}
     # agrego preferencias al dict
-    cargas_sin_asignar_anotadas = {tipo: [(carga, preferencias.filter(preferencia__docente=carga.docente).all())
+    cargas_sin_asignar_anotadas = {tipo: [(carga, preferencias.filter(preferencia__docente=carga.docente,
+                                                                      preferencia__tipo_docente=tipo.name).all())
                                           for carga in cargas]
                                    for tipo, cargas in cargas_sin_asignar.items()}
 
