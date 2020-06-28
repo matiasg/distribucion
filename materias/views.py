@@ -50,7 +50,8 @@ def anno_y_cuatrimestre_actuales():
 def index(request):
     # Llamada sin anno y cuatrimestre. Tomamos el período actual
     anno, c = anno_y_cuatrimestre_actuales()
-    return por_anno_y_cuatrimestre(request, f'{anno}{c.value}')
+    cuatrimestre = Cuatrimestres[c]
+    return por_anno_y_cuatrimestre(request, f'{anno}{cuatrimestre.value}')
 
 
 def anno_y_cuatrimestre(anno_cuat):
