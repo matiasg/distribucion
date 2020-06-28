@@ -28,6 +28,9 @@ TIPO_DICT = {TipoMateria.B: 'Obligatorias',
 
 
 def anno_y_cuatrimestre_actuales():
+    ''' returno anno y cuatrimestre según now().
+    El cuatrimestre es un str (es el .name del enum)
+    '''
     # Fechas inventadas de período actual:
     # Cuatrimestre de Verano: 1/1 al 15/3
     # Primer Cuatrimestre: 16/3 al 31/7
@@ -41,13 +44,14 @@ def anno_y_cuatrimestre_actuales():
         cuatrimestre = Cuatrimestres.P
     else:
         cuatrimestre = Cuatrimestres.S
-    return anno, cuatrimestre
+    return anno, cuatrimestre.name
 
 
 def index(request):
     # Llamada sin anno y cuatrimestre. Tomamos el período actual
     anno, c = anno_y_cuatrimestre_actuales()
-    return por_anno_y_cuatrimestre(request, f'{anno}{c.value}')
+    cuatrimestre = Cuatrimestres[c]
+    return por_anno_y_cuatrimestre(request, f'{anno}{cuatrimestre.value}')
 
 
 def anno_y_cuatrimestre(anno_cuat):
