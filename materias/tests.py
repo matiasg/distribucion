@@ -15,6 +15,8 @@ from dborrador.models import Asignacion
 from usuarios.models import Usuario
 from django.contrib.auth.models import Permission
 from django.urls import reverse
+from materias.views import anno_y_cuatrimestre_default_para_distribuir
+
 
 class TestModels(TestCase):
 
@@ -290,6 +292,20 @@ class TestPaginas(TestCase):
         with patch.object(timezone, 'now', return_value=datetime.datetime(self.anno, 10, 1)):
             response = self.client.get('/materias/')
             self.assertNotContains(response, 'Teórica')
+
+    def test_pagina_administrar_sin_ac(self):
+        # No pude loguearme y a la vez hacer el patch de timezone.now a una fecha posterior a 14 días de .now()
+        # Por eso este test es unitario.
+        with patch.object(timezone, 'now', return_value=datetime.datetime(self.anno, 1, 2)):
+            anno, cuat = anno_y_cuatrimestre_default_para_distribuir()
+            self.assertEqual((self.anno, Cuatrimestres.V.name), (anno, cuat))
+        with patch.object(timezone, 'now', return_value=datetime.datetime(self.anno, 5, 2)):
+            anno, cuat = anno_y_cuatrimestre_default_para_distribuir()
+            self.assertEqual((self.anno, Cuatrimestres.S.name), (anno, cuat))
+        with patch.object(timezone, 'now', return_value=datetime.datetime(self.anno, 10, 2)):
+            anno, cuat = anno_y_cuatrimestre_default_para_distribuir()
+            self.assertEqual((self.anno + 1, Cuatrimestres.V.name), (anno, cuat))
+
 
     def test_pagina_principal_ordena_cargas_por_tipo_docente(self):
         cargos = (CargoDedicacion.AdjPar, CargoDedicacion.JTPPar, CargoDedicacion.Ay1Par, CargoDedicacion.Ay2Par)
