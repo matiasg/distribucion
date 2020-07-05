@@ -27,17 +27,35 @@ TIPO_DICT = {TipoMateria.B: 'Obligatorias',
              TipoMateria.N: 'Optativas no regulares'}
 
 
+def anno_y_cuatrimestre_default_para_distribuir():
+    ''' similar a anno_y_cuatrimestre_actuales pero devolviendo
+    Verano de anno a entre 1/10/a-1 y 1/5/a
+    Segundo de anno a entre 1/5/a y 1/10/a
+    '''
+    anno, mes_dia = _anno_mes_dia()
+    if mes_dia < (5, 1):
+        return anno, Cuatrimestres.V.name
+    if mes_dia < (10, 1):
+        return anno, Cuatrimestres.S.name
+    return anno + 1, Cuatrimestres.V.name
+
+
+def _anno_mes_dia():
+    now = timezone.now()
+    anno = now.year
+    mes_dia = (now.month, now.day)
+    return anno, mes_dia
+
+
 def anno_y_cuatrimestre_actuales():
-    ''' returno anno y cuatrimestre según now().
+    ''' return anno y cuatrimestre según now().
     El cuatrimestre es un str (es el .name del enum)
     '''
     # Fechas inventadas de período actual:
     # Cuatrimestre de Verano: 1/1 al 15/3
     # Primer Cuatrimestre: 16/3 al 31/7
     # Segundo: 1/8 al 31/12
-    now = timezone.now()
-    anno = now.year
-    mes_dia = (now.month, now.day)
+    anno, mes_dia = _anno_mes_dia()
     if mes_dia < (3, 16):
         cuatrimestre = Cuatrimestres.V
     elif mes_dia < (8, 1):
@@ -126,7 +144,7 @@ def anno_y_cuatrimestre_de_request(request):
         cuatrimestre = request.POST.get('cuatrimestre', cuatrimestre)
 
     if anno is None:
-        anno, cuatrimestre = anno_y_cuatrimestre_actuales()
+        anno, cuatrimestre = anno_y_cuatrimestre_default_para_distribuir()
     else:
         anno = int(anno)
         request.session['anno'] = anno
