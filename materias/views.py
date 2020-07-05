@@ -12,13 +12,17 @@ from collections import Counter, namedtuple, defaultdict
 import re
 import logging
 import json
-logger = logging.getLogger(__name__)
+import datetime
 
 from .models import (Materia, AliasDeMateria, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
                      TipoDocentes, Docente, CargoDedicacion, Carga, Pabellon, Dias, choice_enum,)
 from .misc import Mapeos, NoTurno
 from .forms import DocenteForm, MateriaForm
 from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
+
+
+logger = logging.getLogger(__name__)
+
 
 TURNOS_MAX = 4
 
@@ -376,7 +380,7 @@ def cargas_docentes_anuales(request, anno, cuatrimestre):
                 ultimos_datos = otros_datos.first()
                 asignadas_al_periodo = sum(contados[Cuatrimestres[cuat]][doc_cargo]
                                            for cuat in ultimos_datos.cuatrimestre)
-                return [[od.comentario for od in otros_datos.all()],
+                return [[od.comentario for od in otros_datos.filter(anno=anno, cuatrimestre__contains=cuatrimestre)],
                         ultimos_datos.cargas_declaradas,
                         asignadas_al_periodo, ultimos_datos.cuatrimestre]
             else:
