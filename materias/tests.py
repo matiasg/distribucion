@@ -425,7 +425,7 @@ class TestPaginas(TestCase):
         self.assertEqual(nhorario112.aula, 'xyz')
         self.assertEqual(nhorario112.pabellon, '0')
 
-    def test_administrar_converte_vacio_a_0_en_int(self):
+    def test_administrar_convierte_vacio_a_0_en_int(self):
         self.client.login(username='autorizado', password='1234')
 
         model_to_ktf = {Turno: {'alumnos': ('alumnos', int)},
