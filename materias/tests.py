@@ -15,6 +15,8 @@ from dborrador.models import Asignacion
 from usuarios.models import Usuario
 from django.contrib.auth.models import Permission
 from django.urls import reverse
+from materias.views import anno_y_cuatrimestre_default_para_distribuir
+
 
 class TestModels(TestCase):
 
@@ -291,6 +293,20 @@ class TestPaginas(TestCase):
             response = self.client.get('/materias/')
             self.assertNotContains(response, 'Teórica')
 
+    def test_pagina_administrar_sin_ac(self):
+        # No pude loguearme y a la vez hacer el patch de timezone.now a una fecha posterior a 14 días de .now()
+        # Por eso este test es unitario.
+        with patch.object(timezone, 'now', return_value=datetime.datetime(self.anno, 1, 2)):
+            anno, cuat = anno_y_cuatrimestre_default_para_distribuir()
+            self.assertEqual((self.anno, Cuatrimestres.V.name), (anno, cuat))
+        with patch.object(timezone, 'now', return_value=datetime.datetime(self.anno, 5, 2)):
+            anno, cuat = anno_y_cuatrimestre_default_para_distribuir()
+            self.assertEqual((self.anno, Cuatrimestres.S.name), (anno, cuat))
+        with patch.object(timezone, 'now', return_value=datetime.datetime(self.anno, 10, 2)):
+            anno, cuat = anno_y_cuatrimestre_default_para_distribuir()
+            self.assertEqual((self.anno + 1, Cuatrimestres.V.name), (anno, cuat))
+
+
     def test_pagina_principal_ordena_cargas_por_tipo_docente(self):
         cargos = (CargoDedicacion.AdjPar, CargoDedicacion.JTPPar, CargoDedicacion.Ay1Par, CargoDedicacion.Ay2Par)
         prenombres = ('y', 'x', 'z')
@@ -425,7 +441,7 @@ class TestPaginas(TestCase):
         self.assertEqual(nhorario112.aula, 'xyz')
         self.assertEqual(nhorario112.pabellon, '0')
 
-    def test_administrar_converte_vacio_a_0_en_int(self):
+    def test_administrar_convierte_vacio_a_0_en_int(self):
         self.client.login(username='autorizado', password='1234')
 
         model_to_ktf = {Turno: {'alumnos': ('alumnos', int)},
@@ -836,11 +852,12 @@ class TestPaginas(TestCase):
         CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
                                      cargas=331, tipo_docente=TipoDocentes.P.name, fecha_encuesta=now)
         comentario = '_este comentario debe aparecer_'
-        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=GrupoCuatrimestral.VP.name,
                                   tipo_docente=TipoDocentes.P.name,
                                   comentario=comentario, cargas_declaradas=571, fecha_encuesta=now,)
 
-        response = self.client.get(reverse('materias:cargas_docentes_anuales', args=(self.anno,)))
+        response = self.client.get(reverse('materias:cargas_docentes_anuales',
+                                           args=(self.anno, self.cuatrimestre.name)))
         self.assertRegex(response.content.decode(), r'<mark id="mal">\s*331\s*</mark>')
         self.assertContains(response, comentario)
         self.assertContains(response, 571)
@@ -859,14 +876,14 @@ class TestPaginas(TestCase):
 
         comentario1 = '_este comentario debe aparecer_'
         comentario2 = '_este comentario también debe aparecer_'
-        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=GrupoCuatrimestral.VP.name,
                                   tipo_docente=TipoDocentes.P.name,
                                   comentario=comentario1, cargas_declaradas=571, fecha_encuesta=fecha_primera)
-        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=GrupoCuatrimestral.VP.name,
                                   tipo_docente=TipoDocentes.P.name,
                                   comentario=comentario2, cargas_declaradas=348, fecha_encuesta=fecha_segunda)
 
-        response = self.client.get(reverse('materias:cargas_docentes_anuales', args=(self.anno,)))
+        response = self.client.get(reverse('materias:cargas_docentes_anuales', args=(self.anno, self.cuatrimestre.name)))
         self.assertRegex(response.content.decode(), r'<mark id="mal">\s*279\s*</mark>')  # en cargas pedidas tomamos la última encuesta
         self.assertContains(response, 348)  # en cargas declaradas tomamos la última encuesta
         self.assertContains(response, comentario1)
@@ -888,7 +905,7 @@ class TestPaginas(TestCase):
             # le pongo una asignación a una de las de self.m
             Asignacion.objects.create(intentos=(0, 1), carga=asignada, turno=turnos[cuat], cargo_que_ocupa=TipoDocentes.P.name)
 
-        response = self.client.get(reverse('materias:cargas_docentes_anuales', args=(self.anno,)))
+        response = self.client.get(reverse('materias:cargas_docentes_anuales', args=(self.anno, self.cuatrimestre.name)))
         for cuat in Cuatrimestres:
             self.assertContains(response, f'<input type="number" name="cargas_{self.n.id}_{self.n.cargos[0]}_{cuat.name}"')
             self.assertContains(response, f'<input type="number" name="cargas_{self.m.id}_{self.m.cargos[0]}_{cuat.name}"')
@@ -898,7 +915,7 @@ class TestPaginas(TestCase):
             **{f'cargas_{self.m.id}_{self.m.cargos[0]}_{cuat.name}': 1  for i, cuat in enumerate(Cuatrimestres)},
             'salvar': True,
         }
-        self.client.post(reverse('materias:cargas_docentes_anuales', args=(self.anno,)), cambios)
+        self.client.post(reverse('materias:cargas_docentes_anuales', args=(self.anno, self.cuatrimestre.name)), cambios)
         for i, cuat in enumerate(Cuatrimestres):
             self.assertEqual(Carga.objects.filter(docente=self.n, anno=self.anno, cuatrimestre=cuat.name).count(), i)
             self.assertEqual(Carga.objects.filter(docente=self.m, anno=self.anno, cuatrimestre=cuat.name).count(), 1)
@@ -909,7 +926,8 @@ class TestPaginas(TestCase):
         self.client.login(username='autorizado', password='1234')
         self._agrega_docentes()
         context = {'generar': True}
-        response = self.client.post(reverse('materias:cargas_docentes_anuales', args=(self.anno + 1,)), context)
+        response = self.client.post(reverse('materias:cargas_docentes_anuales',
+                                            args=(self.anno + 1, self.cuatrimestre.name)), context)
         for docente in (self.n, self.m):
             for cuatrimestre in Cuatrimestres:
                 for cargo in docente.cargos:

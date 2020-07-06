@@ -14,7 +14,7 @@
     </div>
 
     <hr>
-    <form action="{% url 'materias:cargas_docentes_anuales' anno %}" method="post">
+    <form action="{% url 'materias:cargas_docentes_anuales' anno cuatrimestre %}" method="post">
     {% csrf_token %}
 
     {% if generar_cargas %}

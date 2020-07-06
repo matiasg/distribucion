@@ -12,13 +12,17 @@ from collections import Counter, namedtuple, defaultdict
 import re
 import logging
 import json
-logger = logging.getLogger(__name__)
+import datetime
 
 from .models import (Materia, AliasDeMateria, Turno, Horario, Cuatrimestres, TipoMateria, TipoTurno,
                      TipoDocentes, Docente, CargoDedicacion, Carga, Pabellon, Dias, choice_enum,)
 from .misc import Mapeos, NoTurno
 from .forms import DocenteForm, MateriaForm
 from encuestas.models import PreferenciasDocente, OtrosDatos, CargasPedidas
+
+
+logger = logging.getLogger(__name__)
+
 
 TURNOS_MAX = 4
 
@@ -27,17 +31,35 @@ TIPO_DICT = {TipoMateria.B: 'Obligatorias',
              TipoMateria.N: 'Optativas no regulares'}
 
 
+def anno_y_cuatrimestre_default_para_distribuir():
+    ''' similar a anno_y_cuatrimestre_actuales pero devolviendo
+    Verano de anno a entre 1/10/a-1 y 1/5/a
+    Segundo de anno a entre 1/5/a y 1/10/a
+    '''
+    anno, mes_dia = _anno_mes_dia()
+    if mes_dia < (5, 1):
+        return anno, Cuatrimestres.V.name
+    if mes_dia < (10, 1):
+        return anno, Cuatrimestres.S.name
+    return anno + 1, Cuatrimestres.V.name
+
+
+def _anno_mes_dia():
+    now = timezone.now()
+    anno = now.year
+    mes_dia = (now.month, now.day)
+    return anno, mes_dia
+
+
 def anno_y_cuatrimestre_actuales():
-    ''' returno anno y cuatrimestre según now().
+    ''' return anno y cuatrimestre según now().
     El cuatrimestre es un str (es el .name del enum)
     '''
     # Fechas inventadas de período actual:
     # Cuatrimestre de Verano: 1/1 al 15/3
     # Primer Cuatrimestre: 16/3 al 31/7
     # Segundo: 1/8 al 31/12
-    now = timezone.now()
-    anno = now.year
-    mes_dia = (now.month, now.day)
+    anno, mes_dia = _anno_mes_dia()
     if mes_dia < (3, 16):
         cuatrimestre = Cuatrimestres.V
     elif mes_dia < (8, 1):
@@ -126,7 +148,7 @@ def anno_y_cuatrimestre_de_request(request):
         cuatrimestre = request.POST.get('cuatrimestre', cuatrimestre)
 
     if anno is None:
-        anno, cuatrimestre = anno_y_cuatrimestre_actuales()
+        anno, cuatrimestre = anno_y_cuatrimestre_default_para_distribuir()
     else:
         anno = int(anno)
         request.session['anno'] = anno
@@ -159,7 +181,7 @@ def administrar(request):
             return HttpResponseRedirect(reverse('materias:por_anno_y_cuatrimestre',
                                                 args=(f'{anno}{Cuatrimestres[cuatrimestre].value}',)))
         elif 'cargas_docentes_anuales' in request.POST:
-            return HttpResponseRedirect(reverse('materias:cargas_docentes_anuales', args=(anno,)))
+            return HttpResponseRedirect(reverse('materias:cargas_docentes_anuales', args=(anno, cuatrimestre)))
         elif 'cargas_docentes_publicadas' in request.POST:
             return HttpResponseRedirect(reverse('materias:administrar_cargas_publicadas', args=(anno, cuatrimestre)))
         elif 'administrar_encuestas' in request.POST:
@@ -294,7 +316,7 @@ AsignadasPedidas = namedtuple('AsignadasPedidas', ['asignadas', 'pedidas'])
 
 @login_required
 @permission_required('dborrador.add_asignacion')
-def cargas_docentes_anuales(request, anno):
+def cargas_docentes_anuales(request, anno, cuatrimestre):
     if request.method == 'POST':
         if 'salvar' in request.POST:
             reg = re.compile('^cargas_(\d+)_([a-zA-Z12]{6})_([VPS])$')
@@ -305,23 +327,23 @@ def cargas_docentes_anuales(request, anno):
                         docente_id = int(m.group(1))
                         docente = Docente.objects.get(pk=docente_id)
                         cargo = m.group(2)
-                        cuatrimestre = m.group(3)
+                        cuatri = m.group(3)
 
                         cantidad = int(request.POST[carga_docid_cuat])
-                        actuales = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre, docente=docente, cargo=cargo)
+                        actuales = Carga.objects.filter(anno=anno, cuatrimestre=cuatri, docente=docente, cargo=cargo)
                         a_generar = cantidad - actuales.count()
 
                         if a_generar < 0:
                             logger.warning('voy a borrar %d cargas de %s (%s) para el cuatrimestre %s',
-                                           -a_generar, docente, cargo, cuatrimestre)
+                                           -a_generar, docente, cargo, cuatri)
                             for c in range(-a_generar):
                                 actuales.annotate(asignaciones=Count('asignacion')).order_by('asignaciones').first().delete()
 
                         elif a_generar > 0:
                             logger.warning('voy a generar %d cargas de %s (%s) para el cuatrimestre %s',
-                                           a_generar, docente, cargo, cuatrimestre)
+                                           a_generar, docente, cargo, cuatri)
                             for c in range(a_generar):
-                                Carga.objects.create(anno=anno, cuatrimestre=cuatrimestre, docente=docente, cargo=cargo)
+                                Carga.objects.create(anno=anno, cuatrimestre=cuatri, docente=docente, cargo=cargo)
 
             return HttpResponseRedirect(f"{reverse('materias:administrar')}#docentes")
 
@@ -332,7 +354,7 @@ def cargas_docentes_anuales(request, anno):
                     Carga.objects.create(docente=docente, anno=anno, cuatrimestre=Cuatrimestres.P.name, cargo=cargo)
                     Carga.objects.create(docente=docente, anno=anno, cuatrimestre=Cuatrimestres.S.name, cargo=cargo)
 
-            return HttpResponseRedirect(reverse('materias:cargas_docentes_anuales', args=(anno,)))
+            return HttpResponseRedirect(reverse('materias:cargas_docentes_anuales', args=(anno, cuatrimestre)))
 
     else:
         cargas_anno = Carga.objects.filter(anno=anno)
@@ -344,9 +366,9 @@ def cargas_docentes_anuales(request, anno):
                                  for (docente, cargo) in docentes_y_cargos if Mapeos.tipos_de_cargo(cargo) == tipo}
                           for tipo in TipoDocentes}
 
-        contados = {cuatrimestre: Counter((carga.docente, carga.cargo)
-                                          for carga in cargas_anno.filter(cuatrimestre=cuatrimestre.name))
-                    for cuatrimestre in Cuatrimestres}
+        contados = {cuatri: Counter((carga.docente, carga.cargo)
+                                          for carga in cargas_anno.filter(cuatrimestre=cuatri.name))
+                    for cuatri in Cuatrimestres}
 
         docentes_cargos_ordenados = {tipo: sorted(por_tipo_cargo[tipo], key=lambda dc: strxfrm(dc[0].apellido_nombre))
                                      for tipo in TipoDocentes}
@@ -358,7 +380,7 @@ def cargas_docentes_anuales(request, anno):
                 ultimos_datos = otros_datos.first()
                 asignadas_al_periodo = sum(contados[Cuatrimestres[cuat]][doc_cargo]
                                            for cuat in ultimos_datos.cuatrimestre)
-                return [[od.comentario for od in otros_datos.all()],
+                return [[od.comentario for od in otros_datos.filter(anno=anno, cuatrimestre__contains=cuatrimestre)],
                         ultimos_datos.cargas_declaradas,
                         asignadas_al_periodo, ultimos_datos.cuatrimestre]
             else:
@@ -380,6 +402,7 @@ def cargas_docentes_anuales(request, anno):
 
         context = {
             'anno': anno,
+            'cuatrimestre': cuatrimestre,
             'cargas': cargas,
             'generar_cargas': cargas_anno.count() == 0,
             'tipos': list(TipoDocentes),
