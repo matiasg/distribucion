@@ -852,7 +852,7 @@ class TestPaginas(TestCase):
         CargasPedidas.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
                                      cargas=331, tipo_docente=TipoDocentes.P.name, fecha_encuesta=now)
         comentario = '_este comentario debe aparecer_'
-        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=GrupoCuatrimestral.VP.name,
                                   tipo_docente=TipoDocentes.P.name,
                                   comentario=comentario, cargas_declaradas=571, fecha_encuesta=now,)
 
@@ -876,10 +876,10 @@ class TestPaginas(TestCase):
 
         comentario1 = '_este comentario debe aparecer_'
         comentario2 = '_este comentario también debe aparecer_'
-        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=GrupoCuatrimestral.VP.name,
                                   tipo_docente=TipoDocentes.P.name,
                                   comentario=comentario1, cargas_declaradas=571, fecha_encuesta=fecha_primera)
-        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=Cuatrimestres.V.name,
+        OtrosDatos.objects.create(docente=self.n, anno=self.anno, cuatrimestre=GrupoCuatrimestral.VP.name,
                                   tipo_docente=TipoDocentes.P.name,
                                   comentario=comentario2, cargas_declaradas=348, fecha_encuesta=fecha_segunda)
 
