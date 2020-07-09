@@ -122,7 +122,7 @@ Distribución del cuat {{ cuatrimestre.value }}, {{ anno }}. Intento {{ intento_
                           <span class="tooltiptext">
                               <span class="titulo">Encuesta de {{ asignacion.carga.docente }}:</span>
                               <ul>
-                                  {% for preferencia in asignacion.carga.docente|sus_preferencias_en:todas_las_preferencias %}
+                                  {% for preferencia in asignacion.carga.docente|sus_preferencias_en:todas_las_preferencias|para_tipo_de_carga:asignacion.carga %}
                                   <li>{{ preferencia.preferencia.turno.str_corto }}
                                       ({{preferencia.peso_normalizado|floatformat:4}})
                                   </li>
