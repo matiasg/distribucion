@@ -21,3 +21,7 @@ def de_este_anno(queryset, anno):
 @register.filter(name='de_este_cuatrimestre')
 def de_este_cuatrimestre(queryset, cuatrimestre):
     return queryset.filter(cuatrimestre__contains=cuatrimestre)
+
+@register.filter(name='de_este_tipo')
+def de_este_tipo(queryset, tipo):
+    return queryset.filter(tipo_docente=tipo)
