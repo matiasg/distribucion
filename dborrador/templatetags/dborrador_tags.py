@@ -30,3 +30,7 @@ def de_este_tipo(queryset, tipo):
 @register.filter(name='para_tipo_de_carga')
 def para_tipo_de_carga(queryset, carga):
     return queryset.filter(preferencia__tipo_docente=Mapeos.tipo_de_carga(carga).name)
+
+@register.filter(name='de_este_tipo_de_carga')
+def de_este_tipo_de_carga(queryset, carga):
+    return queryset.filter(tipo_docente=Mapeos.tipo_de_carga(carga).name)
