@@ -253,7 +253,7 @@ def ver_distribucion(request, anno, cuatrimestre, intento_algoritmo, intento_man
     cargas_sin_distribuir = Distribucion.no_distribuidas_por_cargo(anno_cuat)
     cargas_de_asignaciones_moviles = {a.carga for a in Asignacion.validas_en(anno, cuatrimestre, intento)}
     cargas_sin_asignar = {tipo: sorted(set(cargas_sin_distribuir[tipo]) - cargas_de_asignaciones_moviles,
-                                       key=lambda c: c.docente.nombre)
+                                       key=lambda c: c.docente.apellido_nombre)
                           for tipo in TipoDocentes}
     # agrego preferencias al dict
     cargas_sin_asignar_anotadas = {tipo: [(carga, preferencias.filter(preferencia__docente=carga.docente,
