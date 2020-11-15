@@ -294,7 +294,7 @@ class Carga(models.Model):
     class Meta:
         verbose_name = 'carga docente'
         verbose_name_plural = 'cargas docentes'
-        ordering = ['cargo', 'docente__na_appellido', 'docente__na_nombre']
+        ordering = ['cargo', 'docente__na_apellido', 'docente__na_nombre']
 
     def __str__(self):
         return f'{self.docente} -> {self.turno}'
