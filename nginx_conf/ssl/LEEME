@@ -1,5 +1,5 @@
 * Cambiar en nginx.conf
-1. mi_sitio... por el sitio que aparece en el certificado.
+1. mi_host.mi_dominio... por el sitio que aparece en el certificado.
 2. ssl_certificate y ssl_certificate_key para que apunten a fullchain.pem y privkey.pem
    El prefijo /etc/nginx/conf.d/ssl/pems no hay que cambiarlo
    porque es lo que figura en docker-compose.yaml
