@@ -22,4 +22,5 @@ script:
   - DJANGO_SETTINGS_MODULE=distribucion.test_settings coverage run --source=materias,dborrador,encuestas,usuarios --omit=*/migrations/* manage.py test
 
 after_success:
+  - export COVERALLS_REPO_TOKEN=01ukomYk5xS4USQbV3GABMl5mIkblVIcR
   - coveralls
