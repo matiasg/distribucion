@@ -191,8 +191,7 @@ class Turno(models.Model):
                 if not horarios_other:
                     return False
                 return horarios_self[0] < horarios_other[0]
-            else:
-                return self.materia.nombre < other.materia.nombre
+            return self.materia.nombre < other.materia.nombre
         return NotImplemented
 
     def docentes(self):
@@ -247,8 +246,7 @@ class Horario(models.Model):
         if self.pabellon and self.aula:
             pab = [p for p in Pabellon if p.value[0] == self.pabellon][0]
             return f'{self.aula} (P.{pab.value[1]})'
-        else:
-            return ''
+        return ''
 
 
 telefono_validator = RegexValidator(regex=r'^\+?[0-9 -]{9,15}$',
