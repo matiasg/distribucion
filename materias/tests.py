@@ -85,6 +85,13 @@ class TestModels(TestCase):
         self.assertEquals(t3.necesidad_ay1, 1)
         self.assertEquals(t3.necesidad_ay2, 2)
 
+        t4 = Turno.objects.create(numero=1, tipo=TipoTurno.L.name, alumnos=89, **tdict)
+        t4.poner_necesidades_segun_alumnos()
+        self.assertEquals(t4.necesidad_prof, 0)
+        self.assertEquals(t4.necesidad_jtp, 1)
+        self.assertEquals(t4.necesidad_ay1, 1)
+        self.assertEquals(t4.necesidad_ay2, 2)
+
     def test_orden_dias(self):
         self.assertLess(Dias.Lu, Dias.Ma)
         self.assertLess(Dias.Ma, Dias.Mi)
