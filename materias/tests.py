@@ -85,6 +85,13 @@ class TestModels(TestCase):
         self.assertEquals(t3.necesidad_ay1, 1)
         self.assertEquals(t3.necesidad_ay2, 2)
 
+        t4 = Turno.objects.create(numero=1, tipo=TipoTurno.L.name, alumnos=89, **tdict)
+        t4.poner_necesidades_segun_alumnos()
+        self.assertEquals(t4.necesidad_prof, 0)
+        self.assertEquals(t4.necesidad_jtp, 1)
+        self.assertEquals(t4.necesidad_ay1, 1)
+        self.assertEquals(t4.necesidad_ay2, 2)
+
     def test_orden_dias(self):
         self.assertLess(Dias.Lu, Dias.Ma)
         self.assertLess(Dias.Ma, Dias.Mi)
@@ -509,8 +516,8 @@ class TestPaginas(TestCase):
         for horario in self.turno11.horario_set.all():
             boton = f'input type="button" id="borrar_horario" data-horario="{horario.id}" value="Borrar horario">'
             self.assertContains(response, boton)
-        self.assertContains(response, '<input type="submit" name="cambiar" value="cambiar">')
-        self.assertContains(response, '<input type="submit" name="cancelar" value="cancelar">')
+        self.assertContains(response, '<input type="submit" name="cambiar" value="cambiar / agregar">')
+        self.assertContains(response, '<input type="submit" name="cancelar" value="cancelar / volver">')
         # se puede agregar un horario
         self.assertEqual(self.turno11.horario_set.count(), 2)
         self.client.post(url, {'nuevo_2_dia': Dias.Vi.name, 'nuevo_2_comienzo': '01:23:45', 'nuevo_2_final': '12:34:56',

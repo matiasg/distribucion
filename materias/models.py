@@ -75,6 +75,7 @@ class TipoTurno(Enum):
     T = 'Teórica'
     P = 'Práctica'
     A = 'Teórico-Práctica'
+    L = 'Laboratorio'
 
 
 class Cuatrimestres(Enum):
@@ -190,8 +191,7 @@ class Turno(models.Model):
                 if not horarios_other:
                     return False
                 return horarios_self[0] < horarios_other[0]
-            else:
-                return self.materia.nombre < other.materia.nombre
+            return self.materia.nombre < other.materia.nombre
         return NotImplemented
 
     def docentes(self):
@@ -203,6 +203,8 @@ class Turno(models.Model):
         elif self.tipo == TipoTurno.A.name:
             necesidades = (1, 1, 1, max(0, int(self.alumnos / 20 - 3)))
         elif self.tipo == TipoTurno.P.name:
+            necesidades = (0, 1, 1, max(0, int(self.alumnos / 20 - 2)))
+        elif self.tipo == TipoTurno.L.name:
             necesidades = (0, 1, 1, max(0, int(self.alumnos / 20 - 2)))
         self.necesidad_prof = necesidades[0]
         self.necesidad_jtp = necesidades[1]
@@ -244,8 +246,7 @@ class Horario(models.Model):
         if self.pabellon and self.aula:
             pab = [p for p in Pabellon if p.value[0] == self.pabellon][0]
             return f'{self.aula} (P.{pab.value[1]})'
-        else:
-            return ''
+        return ''
 
 
 telefono_validator = RegexValidator(regex=r'^\+?[0-9 -]{9,15}$',

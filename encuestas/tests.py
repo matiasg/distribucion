@@ -123,6 +123,15 @@ class TestEncuesta(TestCase):
         self.assertContains(response, self.turno.materia.nombre)
         self.assertContains(response, f'{self.turno} (sin horario)')
 
+    def test_laboratorio_elegible(self):
+        labo = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
+                                    numero=1, tipo=TipoTurno.L.name,
+                                    necesidad_prof=0, necesidad_jtp=0, necesidad_ay1=1, necesidad_ay2=1)
+        response = self.client.get(reverse('encuestas:encuesta',
+                                           args=(str(self.anno), Cuatrimestres.P.name, TipoDocentes.J.name)
+                                           ))
+        self.assertContains(response, f'{labo} (sin horario)')
+
     def test_turnos_otros_cuatrimestres(self):
         now = timezone.now()
         EncuestasHabilitadas.objects.create(anno=self.anno, cuatrimestres=Cuatrimestres.S.name,
