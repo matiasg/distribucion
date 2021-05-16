@@ -124,9 +124,9 @@ class Mapeos:
         Para auxiliares: prácticas y teórico-prácticas.
         '''
         el_mapa = {TipoDocentes.P: [TipoTurno.T.name, TipoTurno.A.name],
-                   TipoDocentes.J: [TipoTurno.P.name, TipoTurno.A.name],
-                   TipoDocentes.A1: [TipoTurno.P.name, TipoTurno.A.name],
-                   TipoDocentes.A2: [TipoTurno.P.name, TipoTurno.A.name],
+                   TipoDocentes.J: [TipoTurno.P.name, TipoTurno.A.name, TipoTurno.L.name],
+                   TipoDocentes.A1: [TipoTurno.P.name, TipoTurno.A.name, TipoTurno.L.name],
+                   TipoDocentes.A2: [TipoTurno.P.name, TipoTurno.A.name, TipoTurno.L.name],
                    }
         tipos = el_mapa[tipo_docente]
         return Turno.objects.filter(tipo__in=tipos)
