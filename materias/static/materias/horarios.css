@@ -99,6 +99,13 @@ td.fondoA
   width: 10em;
 }
 
+td.fondoL
+{
+  background-color: #aa522f;
+  color: #FFFFFF;
+  width: 10em;
+}
+
 td.diayhora
 {
   width: 10em;
