@@ -516,8 +516,8 @@ class TestPaginas(TestCase):
         for horario in self.turno11.horario_set.all():
             boton = f'input type="button" id="borrar_horario" data-horario="{horario.id}" value="Borrar horario">'
             self.assertContains(response, boton)
-        self.assertContains(response, '<input type="submit" name="cambiar" value="cambiar">')
-        self.assertContains(response, '<input type="submit" name="cancelar" value="cancelar">')
+        self.assertContains(response, '<input type="submit" name="cambiar" value="cambiar / agregar">')
+        self.assertContains(response, '<input type="submit" name="cancelar" value="cancelar / volver">')
         # se puede agregar un horario
         self.assertEqual(self.turno11.horario_set.count(), 2)
         self.client.post(url, {'nuevo_2_dia': Dias.Vi.name, 'nuevo_2_comienzo': '01:23:45', 'nuevo_2_final': '12:34:56',
