@@ -75,6 +75,7 @@ class TipoTurno(Enum):
     T = 'Teórica'
     P = 'Práctica'
     A = 'Teórico-Práctica'
+    L = 'Laboratorio'
 
 
 class Cuatrimestres(Enum):
@@ -203,6 +204,8 @@ class Turno(models.Model):
         elif self.tipo == TipoTurno.A.name:
             necesidades = (1, 1, 1, max(0, int(self.alumnos / 20 - 3)))
         elif self.tipo == TipoTurno.P.name:
+            necesidades = (0, 1, 1, max(0, int(self.alumnos / 20 - 2)))
+        elif self.tipo == TipoTurno.L.name:
             necesidades = (0, 1, 1, max(0, int(self.alumnos / 20 - 2)))
         self.necesidad_prof = necesidades[0]
         self.necesidad_jtp = necesidades[1]
