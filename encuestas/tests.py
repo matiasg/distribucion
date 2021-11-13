@@ -136,8 +136,10 @@ class TestEncuesta(TestCase):
         now = timezone.now()
         EncuestasHabilitadas.objects.create(anno=self.anno, cuatrimestres=Cuatrimestres.S.name,
                                             tipo_docente=TipoDocentes.J.name,
-                                            desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
-        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.S.name, TipoDocentes.J.name)))
+                                            desde=now-datetime.timedelta(minutes=1),
+                                            hasta=now+datetime.timedelta(minutes=1))
+        response = self.client.get(reverse('encuestas:encuesta',
+                                           args=(str(self.anno), Cuatrimestres.S.name, TipoDocentes.J.name)))
         self.assertNotContains(response, self.turno.materia.nombre)
 
     def test_docentes_con_carga_en_otros_cuatrimestres(self):

@@ -584,10 +584,10 @@ def cambiar_turno(request, turno_id):
             'turnosmax': TURNOS_MAX,
             'materia': turno.materia,
             'tipoturno': TipoTurno[turno.tipo],
-            'dias': [d for d in Dias],
+            'dias': list(Dias),
             'horas': [('', ''),
                       *((f'{hora:02d}:{minutos:02d}:00', f'{hora:02d}:{minutos:02d}')
-                        for hora in range(6, 24) for minutos in (0, 30) ) ]
+                        for hora in range(6, 24) for minutos in (0, 15, 30, 45) ) ]
         }
         return render(request, 'materias/cambiar_turno.html', context)
 
