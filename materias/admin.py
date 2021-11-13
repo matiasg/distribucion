@@ -7,7 +7,7 @@ from .models import Materia, Turno, Horario, Docente, Carga
 
 hora_choices = (('', ''),
                 *((f'{hora:02d}:{minutos:02d}:00', f'{hora:02d}:{minutos:02d}')
-                  for hora in range(6, 24) for minutos in (0, 30) )
+                  for hora in range(6, 24) for minutos in (0, 15, 30, 45) )
                 )
 
 class HorariosInLine(admin.TabularInline):
