@@ -2,7 +2,9 @@ Django==2.2.20
 django-extensions
 bs4
 coloredlogs
-psycopg2-binary
+# la versión 2.9 de psycopg2 tiene esto
+# https://stackoverflow.com/questions/68024060/assertionerror-database-connection-isnt-set-to-utc
+psycopg2-binary==2.8.6
 django-simple-history==2.10.0
 xlwt
 gunicorn
