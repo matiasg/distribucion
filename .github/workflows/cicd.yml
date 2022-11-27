@@ -56,8 +56,6 @@ jobs:
         run: |
           DJANGO_SETTINGS_MODULE=distribucion.test_settings coverage run --source=materias,dborrador,encuestas,usuarios --omit=*/migrations/* manage.py test
           # pytest -v --cov=quaternions --cov-report=  tests/
-      - name: GitHub Checks
-        uses: LouisBrunner/checks-action@v1.5.0
       - name: Publish coverage to Coveralls
         # If pushed / is a pull request against main repo
         if:
