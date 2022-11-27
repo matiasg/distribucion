@@ -1,21 +1,20 @@
 from django.test import TestCase
-from django.test.utils import setup_test_environment
 from django.utils import timezone
 from django.urls import reverse
 from django.forms import ValidationError
 from django.contrib.auth.models import Permission
+from unittest.mock import patch
 
 import re
 import datetime
 import time
 
-from materias.models import (Docente, Carga, Cargos, Materia, Turno, TipoTurno, TipoMateria,
-                             CargoDedicacion, Cuatrimestres)
-from materias.misc import TipoDocentes, Mapeos, Cargos, Docente
+from materias.models import (Docente, Carga, Materia, Turno, TipoTurno, TipoMateria,
+                             CargoDedicacion, Cuatrimestres, Horario, Dias)
+from materias.misc import TipoDocentes
 from usuarios.models import Usuario
 from .models import PreferenciasDocente, OtrosDatos, CargasPedidas, EncuestasHabilitadas, GrupoCuatrimestral
-from .views import checkear_y_salvar
-from usuarios.models import Usuario
+from .views import checkear_y_salvar, mandar_mail
 
 
 class TestEncuesta(TestCase):
@@ -114,12 +113,14 @@ class TestEncuesta(TestCase):
             checkear_y_salvar(datos, self.anno, Cuatrimestres.P.name, TipoDocentes.J.name)
 
     def test_titulo_correcto(self):
-        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.P.name, TipoDocentes.J.name)))
+        response = self.client.get(reverse('encuestas:encuesta', args=(
+            str(self.anno), Cuatrimestres.P.name, TipoDocentes.J.name)))
         self.assertEqual(response.request['PATH_INFO'], f'/encuestas/encuesta/{self.anno}/P/J')
         self.assertTrue(re.search('Preferencias para el\s*primer cuatrimestre', response.content.decode(), re.DOTALL))
 
     def test_turnos_correctos(self):
-        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), Cuatrimestres.P.name, TipoDocentes.J.name)))
+        response = self.client.get(reverse('encuestas:encuesta', args=(
+            str(self.anno), Cuatrimestres.P.name, TipoDocentes.J.name)))
         self.assertContains(response, self.turno.materia.nombre)
         self.assertContains(response, f'{self.turno} (sin horario)')
 
@@ -146,17 +147,19 @@ class TestEncuesta(TestCase):
         now = timezone.now()
         for docente, cuatri in (('juan', Cuatrimestres.P), ('maria', Cuatrimestres.S)):
             d = Docente.objects.create(na_nombre=f'{docente}', na_apellido='X', email='mail@nada.org', telefono='1234',
-                                   cargos=[CargoDedicacion.JTPSmx.name])
+                                       cargos=[CargoDedicacion.JTPSmx.name])
             Carga.objects.create(docente=d, cargo=CargoDedicacion.JTPSmx.name, anno=self.anno, cuatrimestre=cuatri.name)
 
-        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), GrupoCuatrimestral.P.name, TipoDocentes.J.name)))
+        response = self.client.get(reverse('encuestas:encuesta', args=(
+            str(self.anno), GrupoCuatrimestral.P.name, TipoDocentes.J.name)))
         # la encuesta es del primer cuatrimestre. Tiene que tener a juan en el desplegable y no a maria
         self.assertContains(response, 'juan')
         self.assertNotContains(response, 'maria')
 
         EncuestasHabilitadas.objects.create(anno=self.anno, cuatrimestres=GrupoCuatrimestral.VPS.name, tipo_docente=TipoDocentes.J.name,
                                             desde=now-datetime.timedelta(minutes=1), hasta=now+datetime.timedelta(minutes=1))
-        response = self.client.get(reverse('encuestas:encuesta', args=(str(self.anno), GrupoCuatrimestral.VPS.name, TipoDocentes.J.name)))
+        response = self.client.get(reverse('encuestas:encuesta', args=(
+            str(self.anno), GrupoCuatrimestral.VPS.name, TipoDocentes.J.name)))
         # esta encuesta tiene que tener a los dos
         self.assertContains(response, 'juan')
         self.assertContains(response, 'maria')
@@ -173,16 +176,16 @@ class TestEncuesta(TestCase):
     def test_turnos_repetidos(self):
         datos = {'docente': self.docente.id}
         turnos = [Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
-                                          numero=t, tipo=TipoTurno.T.name,
-                                         necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+                                       numero=t, tipo=TipoTurno.T.name,
+                                       necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
                   for t in range(1, 6)
                   ]
 
         c = Cuatrimestres.P.name
         datos[f'cargas{c}'] = 1
-        datos[f'email'] = 'sarasa@com.ar'
-        datos[f'telefono'] = '1 2345 6789'
-        datos[f'comentario'] = ''
+        datos['email'] = 'sarasa@com.ar'
+        datos['telefono'] = '1 2345 6789'
+        datos['comentario'] = ''
         for opcion, turno in enumerate(turnos, 1):
             datos[f'opcion{c}{opcion}'] = turno.id
             datos[f'peso{c}{opcion}'] = str(1)
@@ -229,7 +232,7 @@ class TestEncuesta(TestCase):
     def test_orden_docentes(self):
         for docente in [5, 1, 3, 8, 9, 6, 0, 7, 2, 4]:
             d = Docente.objects.create(na_nombre=f'doc{docente}', na_apellido='X', email='mail@nada.org', telefono='1234',
-                                   cargos=[CargoDedicacion.JTPSmx.name])
+                                       cargos=[CargoDedicacion.JTPSmx.name])
             Carga.objects.create(docente=d, cargo=CargoDedicacion.JTPSmx.name, anno=self.anno, cuatrimestre=Cuatrimestres.P.name)
         response = self.client.get(f'/encuestas/encuesta/{self.anno}/{Cuatrimestres.P.name}/{TipoDocentes.J.name}')
 
@@ -256,14 +259,14 @@ class TestEncuesta(TestCase):
 
         materias = re.findall('materia([0-9]),', response.content.decode())
         self.assertEqual(materias, [f'{materia}' for opcion in range(5)
-                                                 for materia in orden
-                                                 for turno in orden])
+                                    for materia in orden
+                                    for turno in orden])
 
         turnos = re.findall(f'materia[0-9],.*, {TipoTurno.T.value} ([0-9]) ', response.content.decode())
         # por alguna razón, unittest se cuelga con un assertEqual para turnos igual al de materias, así que los convierto en str
         esperados = [f'{turno}' for opcion in range(5)
-                                for materia in orden
-                                for turno in orden]
+                     for materia in orden
+                     for turno in orden]
         self.assertEqual(''.join(turnos), ''.join(esperados))
 
     def test_orden_materias_argentina(self):
@@ -285,7 +288,7 @@ class TestEncuesta(TestCase):
 
         materias = re.findall('materia(.),', response.content.decode())
         self.assertEqual(materias, [f'{materia}' for opcion in range(5)
-                                                 for materia in orden])
+                                    for materia in orden])
 
     def test_encuesta_mas_de_un_cuatri(self):
         now = timezone.now()
@@ -468,6 +471,28 @@ class TestEncuesta(TestCase):
         od = OtrosDatos.objects.get(docente=self.docente.id)
         self.assertEqual(od.cuatrimestre, cs.name)
 
+    def test_email_tiene_info(self):
+        datos = {'docente': self.docente.id, **self.otros_datos}
+        c = Cuatrimestres.P.name
+        for opcion in range(1, 6):
+            turno = Turno.objects.create(materia=self.materia, anno=self.anno, cuatrimestre=Cuatrimestres.P.name,
+                                         numero=1, tipo=TipoTurno.T.name,
+                                         necesidad_prof=1, necesidad_jtp=0, necesidad_ay1=0, necesidad_ay2=0)
+            Horario.objects.create(dia=Dias.Lu.name, comienzo=datetime.time(9 + opcion), final=datetime.time(10 + opcion), turno=turno)
+            datos[f'opcion{c}{opcion}'] = turno.id
+            datos[f'peso{c}{opcion}'] = str(opcion)
+        datos[f'cargas{c}'] = 1
+        opciones, otros_datos, cargas_pedidas = checkear_y_salvar(datos, self.anno, c, TipoDocentes.J.name)
+        import encuestas.views
+        with patch.object(encuestas.views, 'send_mail') as mm:
+            mandar_mail(opciones, otros_datos, cargas_pedidas, self.anno, c, TipoDocentes.J.name)
+            self.assertEqual(mm.call_count, 1)
+
+            email_content = mm.call_args[0][1]
+            for opcion in opciones[Cuatrimestres.P]:
+                horario = opcion.turno.horarios_info()
+                self.assertIn(horario.diayhora, email_content)
+
 
 class TestPaginas(TestCase):
 
@@ -528,7 +553,6 @@ class TestPaginas(TestCase):
         response = self.client.get(reverse('encuestas:encuestas_de_un_docente',
                                            args=(self.n.id, self.anno, self.cuatrimestre.name)),
                                    follow=True)
-
 
     def test_agregar_habilitacion(self):
         self.client.login(username='autorizado', password='1234')
