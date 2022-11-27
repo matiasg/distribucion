@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: ["3.7"]
+        python-version: ["3.7", "3.10"]
     defaults:
       run:
         shell: bash
