@@ -1,7 +1,7 @@
+import os
 import locale
 locale.setlocale(locale.LC_COLLATE, 'es_AR.UTF-8')
 
-import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -82,6 +82,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'postgres',
         'USER': 'postgres',
+        'PASSWORD': 'postgres',
         'HOST': 'localhost',
         'PORT': 5432,
     }
@@ -129,7 +130,7 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-	'verbose': {
+        'verbose': {
             'format': '[{levelname}] ({asctime} {module}) {message}',
             'style': '{',
         },

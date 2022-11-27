@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    paths-ignore:
+      - "*.md"
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python-version: ["3.7", "3.10"]
+    defaults:
+      run:
+        shell: bash
+
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Prepare Environment
+        run: |
+          sudo apt -y install language-pack-es
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          git clone https://github.com/matiasg/allocation.git
+          pip install -e allocation
+          pip install -r allocation/requirements.txt
+          pip install coveralls
+
+      - name: Tests
+        run: |
+          DJANGO_SETTINGS_MODULE=distribucion.test_settings coverage run --source=materias,dborrador,encuestas,usuarios --omit=*/migrations/* manage.py test
+          # pytest -v --cov=quaternions --cov-report=  tests/
+
+      - name: Publish coverage to Coveralls
+        # If pushed / is a pull request against main repo
+        if:
+          ((github.event_name == 'push' && github.repository == 'matiasg/distribucion') ||
+          github.event.pull_request.base.repo.full_name == 'matiasg/distribucion')
+        uses: AndreMiras/coveralls-python-action@v20201129
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          flag-name: py${{ matrix.python-version }}
+          parallel: true
+          debug: true
+
+  coveralls-finish:
+    needs: build
+    # If pushed / is a pull request against main repo
+    if:
+      (github.event_name == 'push' && github.repository == 'matiasg/distribucion') ||
+      github.event.pull_request.base.repo.full_name == 'matiasg/distribucion'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Coveralls finished
+        uses: AndreMiras/coveralls-python-action@v20201129
+        with:
+          parallel-finished: true
+          debug: true
