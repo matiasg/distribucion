@@ -230,7 +230,7 @@ def mandar_mail(opciones, otros_datos, cargas_pedidas, anno, cuatrimestres, tipo
         mensaje += f'\n\nCuatrimestre: {cuatrimestre.value}'
         mensaje += f'\n  Turnos que quiere cubrir: {cargas_pedidas[cuatrimestre]}'
         for preferencia in lista:
-            mensaje += f'\n\n    Turno: {preferencia.turno}'
+            mensaje += f'\n\n    Turno: {preferencia.turno} ({preferencia.turno.horarios_info().diayhora or "sin horario"})'
             mensaje +=   f'\n    Peso:  {preferencia.peso}'
 
     mensaje += f'\n\nComentarios:\n{otros_datos.comentario}'
