@@ -36,7 +36,7 @@ class Cargos(Enum):
     Ay2 = 'Ayudante de 2da'
 
 
-class Dedicaciones(Enum) :
+class Dedicaciones(Enum):
     Exc = 'Exclusiva'
     Smx = 'Semiexclusiva'
     Par = 'Parcial'
@@ -251,6 +251,7 @@ class Horario(models.Model):
 
 telefono_validator = RegexValidator(regex=r'^\+?[0-9 -]{9,15}$',
                                     message=('El celular debe ser del estilo "area número" (por ejemplo, +11 1234-5678)'))
+
 
 class Docente(models.Model):
     na_nombre = models.CharField(max_length=30)
