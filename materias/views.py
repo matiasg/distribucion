@@ -97,18 +97,20 @@ def por_anno_y_cuatrimestre(request, anno_cuat):
     except ValueError as e:
         raise Http404(e.args[0])
     else:
-        # la separación por obligatoriedad se podría emular con
-        # turnos = Turno.objects.filter(anno=anno, cuatrimestre=cuat) \
-        #             .order_by('materia__obligatoriedad', 'materia') \
-        #             .annotate(obligatoriedad=F('materia__obligatoriedad'))
-        # pero no vi que se ganara tiempo y complica el html
-        turnos = [
-            (tipo_largo,
-             Turno.objects.filter(anno=anno, cuatrimestre=cuat, materia__obligatoriedad=tipo.name) \
-             .order_by('materia')
-             )
-            for tipo, tipo_largo in TIPO_DICT.items()
-        ]
+        turnos_ac = Turno.objects.filter(anno=anno, cuatrimestre=cuat).order_by('materia')
+        turnos = []
+        for tipo, tipo_largo in TIPO_DICT.items():
+            turnos_de_tipo = [(t.materia.nombre, t.clave_para_ordenar(), t)
+                              for t in turnos_ac.filter(materia__obligatoriedad=tipo.name).all()]
+            materias_de_tipo = defaultdict(list)
+            # aqui se usa que los dict quedan ordenados por momento de inserción y por eso las materias quedan ordenadas
+            for materia_nombre, clave, turno in turnos_de_tipo:
+                materias_de_tipo[materia_nombre].append((clave, turno))
+            for materia_nombre, clave_turnos in materias_de_tipo.items():
+                materias_de_tipo[materia_nombre] = [t for _, t in sorted(clave_turnos)]
+
+            turnos.append((tipo_largo, list(materias_de_tipo.items())))
+
         return render(request, 'materias/index.html',
                       {'turnos_por_obligatoriedad': turnos})
 
@@ -120,9 +122,9 @@ def filtra_materias(**kwargs):
     for tipo, tipo_largo in TIPO_DICT.items():
         tmaterias = Materia.objects.filter(obligatoriedad=tipo.name)
         materias_turnos = [
-                (materia, sorted(turnos_filtrados.filter(materia=materia)))
-                for materia in tmaterias
-                ]
+            (materia, sorted(turnos_filtrados.filter(materia=materia)))
+            for materia in tmaterias
+        ]
         materias.append((tipo_largo, materias_turnos))
 
     return materias
@@ -157,8 +159,8 @@ def anno_y_cuatrimestre_de_request(request):
     return anno, cuatrimestre
 
 
-@login_required
-@permission_required('materias.view_docente')
+@ login_required
+@ permission_required('materias.view_docente')
 def administrar(request):
     anno, cuatrimestre = anno_y_cuatrimestre_de_request(request)
 
@@ -200,7 +202,7 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url, seccion=
 
                 if modelo == Turno:
                     objetos = Turno.objects.filter(anno=anno, cuatrimestre=cuatrimestre)
-                elif  modelo == Horario:
+                elif modelo == Horario:
                     objetos = Horario.objects.filter(turno__anno=anno, turno__cuatrimestre=cuatrimestre)
                 logger.info('modifico %d objetos tipo %s', objetos.count(), modelo.__name__)
 
@@ -242,8 +244,8 @@ def administrar_general(request, anno, cuatrimestre, key_to_field, url, seccion=
         return render(request, url, context)
 
 
-@login_required
-@permission_required('materias.add_turno')
+@ login_required
+@ permission_required('materias.add_turno')
 def administrar_alumnos(request, anno, cuatrimestre):
     key_to_field = {Turno: {'alumnos': ('alumnos', int)},
                     Horario: {'aula': ('aula', str),
@@ -254,8 +256,8 @@ def administrar_alumnos(request, anno, cuatrimestre):
                                'materias/administrar_alumnos.html', seccion='materias')
 
 
-@login_required
-@permission_required('dborrador.add_asignacion')
+@ login_required
+@ permission_required('dborrador.add_asignacion')
 def administrar_necesidades_docentes(request, anno, cuatrimestre):
     key_to_field = {Turno: {'alumnos': ('alumnos', int),
                             'necesidadprof': ('necesidad_prof', int),
@@ -279,15 +281,15 @@ def administrar_necesidades_docentes(request, anno, cuatrimestre):
                                seccion='docentes', necesidades_y_recursos=necesidades_y_recursos)
 
 
-@login_required
-@permission_required('materias.add_turno')
+@ login_required
+@ permission_required('materias.add_turno')
 def agregar_materia(request):
     nueva_materia, creada = Materia.objects.get_or_create(nombre='__ nueva materia __')
     return HttpResponseRedirect(reverse('materias:modificar_materia', args=(nueva_materia.id,)))
 
 
-@login_required
-@permission_required('materias.add_turno')
+@ login_required
+@ permission_required('materias.add_turno')
 def modificar_materia(request, materia_id):
     materia = Materia.objects.get(pk=materia_id)
     context = {
@@ -314,8 +316,9 @@ def modificar_materia(request, materia_id):
 
 AsignadasPedidas = namedtuple('AsignadasPedidas', ['asignadas', 'pedidas'])
 
-@login_required
-@permission_required('dborrador.add_asignacion')
+
+@ login_required
+@ permission_required('dborrador.add_asignacion')
 def cargas_docentes_anuales(request, anno, cuatrimestre):
     if request.method == 'POST':
         if 'salvar' in request.POST:
@@ -367,7 +370,7 @@ def cargas_docentes_anuales(request, anno, cuatrimestre):
                           for tipo in TipoDocentes}
 
         contados = {cuatri: Counter((carga.docente, carga.cargo)
-                                          for carga in cargas_anno.filter(cuatrimestre=cuatri.name))
+                                    for carga in cargas_anno.filter(cuatrimestre=cuatri.name))
                     for cuatri in Cuatrimestres}
 
         docentes_cargos_ordenados = {tipo: sorted(por_tipo_cargo[tipo], key=lambda dc: strxfrm(dc[0].apellido_nombre))
@@ -375,7 +378,7 @@ def cargas_docentes_anuales(request, anno, cuatrimestre):
 
         def comentarios_y_cargas_declaradas(doc_cargo, tipo):
             otros_datos = OtrosDatos.objects.filter(anno=anno, docente=doc_cargo[0], tipo_docente=tipo.name) \
-                                            .order_by('-fecha_encuesta')
+                .order_by('-fecha_encuesta')
             if otros_datos:
                 ultimos_datos = otros_datos.first()
                 asignadas_al_periodo = sum(contados[Cuatrimestres[cuat]][doc_cargo]
@@ -389,7 +392,7 @@ def cargas_docentes_anuales(request, anno, cuatrimestre):
         def pedidas(docente, cuat, tipo):
             return CargasPedidas.objects.filter(docente=docente, tipo_docente=tipo.name,
                                                 anno=anno, cuatrimestre=cuat.name) \
-                                        .order_by('fecha_encuesta')
+                .order_by('fecha_encuesta')
 
         def asignadas_pedidas_declaradas_comentario(doc_cargo, tipo):
             asignadas_pedidas = [AsignadasPedidas(contados[cuat][doc_cargo], pedidas(doc_cargo[0], cuat, tipo))
@@ -411,16 +414,16 @@ def cargas_docentes_anuales(request, anno, cuatrimestre):
         return render(request, 'materias/cargas_docentes_anuales.html', context)
 
 
-@login_required
-@permission_required('materias.add_turno')
+@ login_required
+@ permission_required('materias.add_turno')
 def administrar_cargas_publicadas(request, anno, cuatrimestre):
     cargas_distribuidas = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre,
                                                turno__isnull=False).order_by('docente__na_apellido', 'docente__na_nombre')
     cargas_no_distribuidas = Carga.objects.filter(anno=anno, cuatrimestre=cuatrimestre,
                                                   turno__isnull=True).order_by('docente__na_apellido', 'docente__na_nombre')
     docentes_con_cargo_sin_cargas = set(Docente.objects.filter(cargos__len__gt=0).all()) \
-                                    - {c.docente for c in cargas_distribuidas} \
-                                    - {c.docente for c in cargas_no_distribuidas}
+        - {c.docente for c in cargas_distribuidas} \
+        - {c.docente for c in cargas_no_distribuidas}
     docentes_con_cargo_sin_cargas = sorted(docentes_con_cargo_sin_cargas, key=lambda d: strxfrm(f'{d.apellido_nombre}'))
 
     context = {
@@ -433,8 +436,8 @@ def administrar_cargas_publicadas(request, anno, cuatrimestre):
     return render(request, 'materias/cambiar_cargas_docentes_publicadas.html', context)
 
 
-@login_required
-@permission_required('materias.add_turno')
+@ login_required
+@ permission_required('materias.add_turno')
 def cambiar_una_carga_publicada(request, carga_id):
     carga = Carga.objects.get(pk=carga_id)
     anno = carga.anno
@@ -466,8 +469,8 @@ def cambiar_una_carga_publicada(request, carga_id):
         return render(request, 'materias/cambiar_una_carga_publicada.html', context)
 
 
-@login_required
-@permission_required('dborrador.add_asignacion')
+@ login_required
+@ permission_required('dborrador.add_asignacion')
 def agregar_carga_y_distribuir(request, docente_id, anno, cuatrimestre):
     docente = Docente.objects.get(pk=docente_id)
     if request.method == 'POST':
@@ -495,9 +498,8 @@ def agregar_carga_y_distribuir(request, docente_id, anno, cuatrimestre):
                        'anno': anno, 'cuatrimestre': Cuatrimestres[cuatrimestre]})
 
 
-
-@login_required
-@permission_required('materias.add_turno')
+@ login_required
+@ permission_required('materias.add_turno')
 def agregar_turno(request, materia_id, tipo, anno, cuatrimestre):
     materia = Materia.objects.get(pk=materia_id)
     turnos = Turno.objects.filter(materia=materia, anno=anno, cuatrimestre=cuatrimestre)
@@ -508,8 +510,8 @@ def agregar_turno(request, materia_id, tipo, anno, cuatrimestre):
     return HttpResponseRedirect(reverse('materias:cambiar_turno', args=(turno.id,)))
 
 
-@login_required
-@permission_required('materias.add_turno')
+@ login_required
+@ permission_required('materias.add_turno')
 def administrar_materia(request, materia_id, anno, cuatrimestre):
     for tipo in TipoTurno:
         boton = f'agregar_turno_{tipo.name}'
@@ -526,11 +528,13 @@ def administrar_materia(request, materia_id, anno, cuatrimestre):
         }
         return render(request, 'materias/administrar_materia.html', context)
 
+
 def _turno_a_materia_args(turno):
     return (turno.materia.id, turno.anno, turno.cuatrimestre)
 
-@login_required
-@permission_required('materias.add_turno')
+
+@ login_required
+@ permission_required('materias.add_turno')
 def borrar_turno(request, turno_id):
     turno = Turno.objects.get(pk=turno_id)
     args = _turno_a_materia_args(turno)
@@ -538,8 +542,8 @@ def borrar_turno(request, turno_id):
     return HttpResponseRedirect(reverse('materias:administrar_materia', args=args))
 
 
-@login_required
-@permission_required('materias.add_turno')
+@ login_required
+@ permission_required('materias.add_turno')
 def cambiar_turno(request, turno_id):
     turno = Turno.objects.get(pk=turno_id)
     if 'cancelar' in request.POST:
@@ -587,7 +591,7 @@ def cambiar_turno(request, turno_id):
             'dias': list(Dias),
             'horas': [('', ''),
                       *((f'{hora:02d}:{minutos:02d}:00', f'{hora:02d}:{minutos:02d}')
-                        for hora in range(6, 24) for minutos in (0, 15, 30, 45) ) ]
+                        for hora in range(6, 24) for minutos in (0, 15, 30, 45))]
         }
         return render(request, 'materias/cambiar_turno.html', context)
 
@@ -595,8 +599,8 @@ def cambiar_turno(request, turno_id):
     return HttpResponseRedirect(reverse('materias:administrar_materia', args=_turno_a_materia_args(turno)))
 
 
-@login_required
-@permission_required('materias.add_turno')
+@ login_required
+@ permission_required('materias.add_turno')
 def borrar_horario(request, horario_id):
     horario = Horario.objects.get(pk=horario_id)
     turno = horario.turno
@@ -604,8 +608,8 @@ def borrar_horario(request, horario_id):
     return HttpResponseRedirect(reverse('materias:cambiar_turno', args=(turno.id,)))
 
 
-@login_required
-@permission_required('materias.add_turno')
+@ login_required
+@ permission_required('materias.add_turno')
 def retocar_materias(request):
     if request.method == 'POST':
 
@@ -638,7 +642,6 @@ def retocar_materias(request):
                 logger.warning('pusieron juntar pero sin ninguna materia')
                 return HttpResponseRedirect(reverse('materias:retocar_materias'))
 
-
             turnos = {materia: {(t.anno, t.cuatrimestre) for t in materia.turno_set.all()} for materia in para_juntar}
             turnos_planos = Counter(cuat for turno in turnos.values() for cuat in turno)
             turnos_juntos = set.union(*turnos.values())
@@ -660,9 +663,8 @@ def retocar_materias(request):
         return render(request, 'materias/juntar_materias.html', context=context)
 
 
-
-@login_required
-@permission_required('materias.add_turno')
+@ login_required
+@ permission_required('materias.add_turno')
 def exportar_informacion(request, anno, cuatrimestre):
     if 'info_anual' in request.POST:
         import xlwt
@@ -737,8 +739,8 @@ def exportar_informacion(request, anno, cuatrimestre):
         return render(request, 'materias/exportar_informacion.html', context)
 
 
-@login_required
-@permission_required('materias.add_turno')
+@ login_required
+@ permission_required('materias.add_turno')
 def generar_cuatrimestre(request, anno, cuatrimestre):
     if request.method == 'POST':
         nuevo_anno = int(request.POST['nuevo_anno'])
@@ -779,6 +781,8 @@ def generar_cuatrimestre(request, anno, cuatrimestre):
 
 
 SIN_CARGO = ('sincargo', 'sin cargo')
+
+
 def _docentes_por_cargo():
     docentes = {(tipo_cargo.name, tipo_cargo.value): sorted(Mapeos.docentes_con_cargo_de_tipo(tipo_cargo),
                                                             key=lambda d: strxfrm(d.apellido_nombre))
@@ -786,13 +790,14 @@ def _docentes_por_cargo():
     docentes[SIN_CARGO] = Docente.objects.filter(cargos__len=0)
     return docentes
 
+
 def _docentes_en_request(request):
     return {docente for docente in Docente.objects.all()
             if f'juntar_{docente.id}' in request.POST}
 
 
-@login_required
-@permission_required('materias.add_turno')
+@ login_required
+@ permission_required('materias.add_turno')
 def administrar_docentes(request):
     if request.method == 'POST':
         if 'juntar' in request.POST:
@@ -877,8 +882,8 @@ def administrar_docentes(request):
     return render(request, 'materias/administrar_docentes.html', context)
 
 
-@login_required
-@permission_required('materias.add_turno')
+@ login_required
+@ permission_required('materias.add_turno')
 def copiar_datos(request, anno, cuatrimestre):
     otros_datos = OtrosDatos.objects.filter(anno=anno, cuatrimestre__contains=cuatrimestre)
     logger.debug('Voy a coopiar datos de %d registros', otros_datos.count())
@@ -893,8 +898,8 @@ def copiar_datos(request, anno, cuatrimestre):
     return HttpResponseRedirect(f"{reverse('materias:administrar')}#docentes")
 
 
-@login_required
-@permission_required('materias.add_turno')
+@ login_required
+@ permission_required('materias.add_turno')
 def administrar_un_docente(request, docente_id):
     docente = Docente.objects.get(pk=docente_id)
     cargos = docente.cargos
