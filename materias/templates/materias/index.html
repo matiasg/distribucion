@@ -8,21 +8,19 @@
 {% for obligatoriedad, materias in turnos_por_obligatoriedad %}
 <div class="seccion">{{ obligatoriedad }}</div>
 
-{% regroup materias by materia as lista_de_materias %}
-{% for materia in lista_de_materias %}
-<table class="horarios">
-    <caption>{{ materia.grouper|upper }}</caption>
-    <tbody>
-        {% for turno in materia.list|dictsort:"clave_para_ordenar" %}
-        <tr>
-            <td class="fondo{{ turno.tipo }}">{{ turno.horarios_info.tipoynumero }}{% if turno.subnumero %} {{ turno.subnumero }}{% endif %}</td>
-            <td class="diayhora">{{ turno.horarios_info.diayhora }}</td>
-            <td class="datosdoc">{{ turno|cargas_ordenadas }}</td>
-            <td class="aula">Aula: {{ turno.horarios_info.aula }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+{% for materia, turnos in materias %}
+    <table class="horarios">
+        <caption>{{ materia|upper }}</caption>
+        <tbody>
+            {% for turno in turnos %}
+            <tr>
+                <td class="fondo{{ turno.tipo }}">{{ turno.horarios_info.tipoynumero }}{% if turno.subnumero %} {{ turno.subnumero }}{% endif %}</td>
+                <td class="diayhora">{{ turno.horarios_info.diayhora }}</td>
+                <td class="datosdoc">{{ turno|cargas_ordenadas }}</td>
+                <td class="aula">Aula: {{ turno.horarios_info.aula }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endfor %}
 {% endfor %}
-
